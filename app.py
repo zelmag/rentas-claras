@@ -37,33 +37,29 @@ def generate_tweet_text(flight_data, compensation_amount):
     """Generate pre-filled tweet for social pressure"""
     airline = flight_data['airline']
     airline_handle = AIRLINE_TWITTER_HANDLES.get(airline, f'@{airline}')
-    flight_number = flight_data['flight_number']
-    date = flight_data['date']
-    delay_hours = flight_data['delay_hours']
-
-    # Format delay text
-    if delay_hours == 1.5:
-        delay_text = "1-2 hrs"
-    elif delay_hours == 3.0:
-        delay_text = "2-4 hrs"
-    elif delay_hours == 5.0:
-        delay_text = "+4 hrs"
-    else:
-        delay_text = f"{delay_hours} hrs"
 
     # Format compensation amount
     comp_text = f"${compensation_amount:,.0f} MXN" if compensation_amount > 0 else "compensación"
 
-    # Build tweet (keeping under 280 chars)
-    tweet = f"""🛫 {airline_handle} mi vuelo {flight_number} tuvo {delay_text} de retraso el {date}
+    # Get the legal source based on delay
+    delay_hours = flight_data['delay_hours']
+    if delay_hours == 5.0:
+        legal_source = "Art. 47 Bis LACM"
+    elif delay_hours == 3.0:
+        legal_source = "Art. 47 Bis LACM"
+    else:
+        legal_source = f"Política de {airline}"
 
-💰 Me deben {comp_text} por ley (Art. 47 Bis LACM)
+    # Build tweet
+    tweet = f"""#VueloDigno me ayudó a darme cuenta que {airline_handle} me debe {comp_text} según {legal_source}
 
-📧 Reclamo enviado hoy - plazo: 10 días
+✈️ Reclamo enviado
 
-Si no responden, presentaré una queja con @Profeco
+📧 Plazo legal: 10 días
 
-#VueloDigno #PROFECO #DerechosDelPasajero"""
+Si no responden, presentaré queja con @Profeco
+
+#DerechosDelPasajero #PROFECO"""
 
     return tweet
 
@@ -150,14 +146,6 @@ def preview():
         if passenger_count < 1 or passenger_count > 10:
             passenger_count = 1
 
-        passenger_name = request.form['passenger_name'].strip()
-
-        # Validate that the number of names matches passenger_count
-        name_list = [n.strip() for n in passenger_name.split(',') if n.strip()]
-        if len(name_list) != passenger_count:
-            flash(f'Error: Ingresaste {len(name_list)} nombre(s), pero indicaste {passenger_count} pasajero(s). Deben coincidir.', 'error')
-            return redirect(url_for('index'))
-
         flight_data = {
             'airline': request.form['airline'],
             'flight_number': request.form['flight_number'],
@@ -165,8 +153,8 @@ def preview():
             'date': request.form['date'],
             'delay_hours': float(request.form['delay_hours']), # Convert to float
             'ticket_price': float(request.form['ticket_price']), # Convert to float
-            'passenger_name': passenger_name,
-            'passenger_email': request.form['passenger_email'],
+            'passenger_name': '',  # Will be filled on preview page
+            'passenger_email': '',  # Will be filled on preview page
             'passenger_count': passenger_count,
             'compensation_choice': request.form.get('compensation_choice', 'reembolso_indemnizacion')  # Only relevant for 4+ hour delays
         }

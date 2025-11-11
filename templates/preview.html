@@ -279,10 +279,41 @@
                 <input type="email" name="airline_email" value="{{ airline_email }}" required readonly style="background-color: #f5f5f5; cursor: not-allowed; color: #6b7280;">
             </div>
 
-            <div class="airline-email" style="margin-top: 15px;">
-                <strong>📤 Con copia a:</strong>
-                <input type="email" name="passenger_email" value="{{ flight_data.passenger_email }}" required>
-                <small style="color: #7f8c8d;">Tu email (verifica que sea correcto)</small>
+            <!-- Contact Information Section -->
+            <div style="background-color: #f0f9ff; border-left: 4px solid #3b82f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
+                    <span style="font-size: 1.8em;">🔒</span>
+                    <div>
+                        <strong style="color: #1e40af; font-size: 1.1em;">Tus Datos de Contacto</strong>
+                        <p style="margin: 5px 0 0 0; color: #1e40af; font-size: 0.9em;">100% protegidos. Solo para enviar el reclamo y darte seguimiento.</p>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: 600; color: #1e40af; font-size: 0.95em;">
+                        Nombre(s) del/los pasajero(s) <span style="color: #ef4444;">*</span>
+                    </label>
+                    <input type="text" name="passenger_name" placeholder="Ej: Juan Pérez{% if flight_data.passenger_count > 1 %}, María Pérez{% endif %}" required
+                           style="width: 100%; padding: 12px; border: 2px solid #3b82f6; border-radius: 8px; font-size: 15px; box-sizing: border-box; font-family: 'Montserrat', sans-serif;">
+                    <small style="color: #1e40af; font-size: 0.85em; display: block; margin-top: 5px;">
+                        {% if flight_data.passenger_count > 1 %}
+                            💡 Ingresa {{ flight_data.passenger_count }} nombres separados por comas
+                        {% else %}
+                            💡 Aparecerá en el email de reclamo
+                        {% endif %}
+                    </small>
+                </div>
+
+                <div>
+                    <label style="display: block; margin-bottom: 5px; font-weight: 600; color: #1e40af; font-size: 0.95em;">
+                        Tu email <span style="color: #ef4444;">*</span>
+                    </label>
+                    <input type="email" name="passenger_email" placeholder="tu@email.com" required
+                           style="width: 100%; padding: 12px; border: 2px solid #3b82f6; border-radius: 8px; font-size: 15px; box-sizing: border-box; font-family: 'Montserrat', sans-serif;">
+                    <small style="color: #1e40af; font-size: 0.85em; display: block; margin-top: 5px;">
+                        💡 Recibirás una copia del reclamo aquí
+                    </small>
+                </div>
             </div>
 
             <h2 style="margin-top: 30px; color: #2c3e50;">

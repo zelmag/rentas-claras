@@ -10,6 +10,31 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        .progress-bar-section {
+            position: sticky;
+            top: 0;
+            background: white;
+            z-index: 100;
+            padding: 10px 0;
+            margin: -30px -30px 20px -30px;
+            padding: 15px 30px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        @media (min-width: 768px) {
+            .progress-bar-section {
+                margin: -40px -40px 20px -40px;
+                padding: 20px 40px;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .progress-bar-section {
+                margin: -50px -50px 20px -50px;
+                padding: 25px 50px;
+            }
+        }
+
         body {
             font-family: 'Montserrat', sans-serif;
             max-width: 600px;
@@ -644,24 +669,6 @@
                     <div class="error-message" id="passenger_count_error">Por favor ingresa un número válido (1-10)</div>
                 </div>
 
-                <div class="form-group">
-                    <label id="passenger_names_label">Nombre(s) del/los pasajero(s):</label>
-                    <input type="text" name="passenger_name" id="passenger_name" placeholder="Ej: Juan Pérez, María Pérez"
-                        required>
-                    <span class="input-checkmark">✓</span>
-                    <small id="passenger_name_hint" style="color: #666; font-size: 0.85em; display: block; margin-top: 5px;">
-                        Separa múltiples nombres con comas
-                    </small>
-                    <div class="error-message" id="passenger_name_error">Por favor ingresa el/los nombre(s)</div>
-                </div>
-
-                <div class="form-group">
-                    <label>Tu email:</label>
-                    <input type="email" name="passenger_email" id="passenger_email" placeholder="tu@email.com" required>
-                    <span class="input-checkmark">✓</span>
-                    <div class="error-message" id="passenger_email_error">Por favor ingresa un email válido</div>
-                </div>
-
                 <!-- Compensation Choice (Only for 4+ hour delays or cancellations) -->
                 <div class="form-group" id="compensation-choice-section" style="display: none;">
                     <hr style="margin: 20px 0;">
@@ -692,14 +699,6 @@
                         </label>
                     </div>
                     <div class="error-message" id="compensation_choice_error">Por favor selecciona una opción de compensación</div>
-                </div>
-
-                <!-- Privacy Statement -->
-                <div style="background-color: #f0f9ff; border-left: 4px solid #3b82f6; padding: 12px 15px; border-radius: 5px; margin: 20px 0; font-size: 0.9em; display: flex; align-items: center; gap: 10px;">
-                    <span style="font-size: 1.5em;">🔒</span>
-                    <p style="margin: 0; color: #1e40af; line-height: 1.4;">
-                        <strong>Tus datos de contacto están 100% protegidos.</strong> Solo los usaremos para enviar el reclamo legal.
-                    </p>
                 </div>
 
                 <div class="btn-group">
