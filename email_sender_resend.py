@@ -71,7 +71,7 @@ def send_confirmation_to_user(flight_data, airline_email, compensation_amount, d
         confirmation_html = f"""
         <html>
         <body style="font-family: 'Montserrat', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <h1 style="color: #27ae60;">✅ Tu Reclamación fue enviada</h1>
+            <h1 style="color: #27ae60;">✅ Tu reclamación fue enviada</h1>
 
             <p>Hola {flight_data['passenger_name']},</p>
 
@@ -91,7 +91,7 @@ def send_confirmation_to_user(flight_data, airline_email, compensation_amount, d
             <ol style="line-height: 1.8;">
                 <li><strong>{flight_data['airline']} debe responder antes del {deadline_date}</strong> según la Ley de Aviación Civil (10 días naturales).</li>
                 <li>Revisa tu email regularmente para ver su respuesta.</li>
-                <li>Si no responden, presenta tu queja en <a href="https://conciliaexpress.profeco.gob.mx/" target="_blank">PROFECO</a>.</li>
+                <li>Si no responden, presenta tu queja en <a href="https://www.gob.mx/profeco/articulos/proceso-y-requisitos-de-quejas-y-denuncias" target="_blank">PROFECO</a>.</li>
             </ol>
 
             <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ffc107;">
