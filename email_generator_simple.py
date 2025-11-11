@@ -124,10 +124,10 @@ def generate_mexico_claim_letter(flight_data):
     Generate letter using the logic from compare_compensations
     """
     comp_data = compare_compensations(flight_data)
-    
+
     if not comp_data:
         return "Error: Retraso no califica para compensación bajo las leyes mexicanas."
-    
+
     # Determine the readable text for the delay hours
     if flight_data['delay_hours'] == 1.5:
         delay_text = "entre 1 y 2 horas"
@@ -137,6 +137,19 @@ def generate_mexico_claim_letter(flight_data):
         delay_text = "más de 4 horas"
     else:
         delay_text = f"{flight_data['delay_hours']} horas"
+
+    # Calculate total compensation based on passenger count
+    passenger_count = flight_data.get('passenger_count', 1)
+    per_passenger_amount = comp_data['amount']
+    total_amount = per_passenger_amount * passenger_count
+
+    # Format passenger information
+    if passenger_count > 1:
+        passenger_text = f"* Pasajeros: **{flight_data['passenger_name']}** ({passenger_count} personas)"
+        compensation_text = f"${total_amount:,.2f} MXN (${per_passenger_amount:,.2f} MXN × {passenger_count} pasajeros)"
+    else:
+        passenger_text = f"* Pasajero: **{flight_data['passenger_name']}**"
+        compensation_text = f"${total_amount:,.2f} MXN"
 
 
     letter = f"""**Asunto:** Reclamación Formal - Vuelo {flight_data['flight_number']}
@@ -148,6 +161,7 @@ Estimado Departamento de Atención al Cliente de {flight_data['airline'].title()
 * Código de Reservación: **{flight_data['reservation_code']}**
 * Fecha: **{flight_data['date']}**
 * Retraso: **{delay_text}**
+{passenger_text}
 
 Solicito formalmente la compensación que me corresponde por el retraso de mi vuelo.
 
@@ -156,7 +170,7 @@ Solicito formalmente la compensación que me corresponde por el retraso de mi vu
 {comp_data['description']}
 
 **COMPENSACIÓN SOLICITADA:**
-${comp_data['amount']:,.2f} MXN
+{compensation_text}
 
 **FORMA DE PAGO:**
 {comp_data['payment_method']}
@@ -172,5 +186,5 @@ Atentamente,
 {flight_data['passenger_name']}
 {flight_data['passenger_email']}
 """
-    
+
     return letter

@@ -103,6 +103,10 @@ def preview():
 
     # ⚠️ Input Validation and Data Gathering
     try:
+        passenger_count = int(request.form.get('passenger_count', 1))
+        if passenger_count < 1 or passenger_count > 10:
+            passenger_count = 1
+
         flight_data = {
             'airline': request.form['airline'],
             'flight_number': request.form['flight_number'],
@@ -111,7 +115,8 @@ def preview():
             'delay_hours': float(request.form['delay_hours']), # Convert to float
             'ticket_price': float(request.form['ticket_price']), # Convert to float
             'passenger_name': request.form['passenger_name'],
-            'passenger_email': request.form['passenger_email']
+            'passenger_email': request.form['passenger_email'],
+            'passenger_count': passenger_count
         }
     except ValueError:
         # Handle case where user inputs text for a number field (e.g., ticket_price)
@@ -146,7 +151,8 @@ def preview():
     # Calculate compensation using backend logic (single source of truth)
     from email_generator_simple import compare_compensations
     comp_data = compare_compensations(flight_data)
-    compensation_amount = comp_data['amount'] if comp_data else 0
+    per_passenger_amount = comp_data['amount'] if comp_data else 0
+    total_compensation = per_passenger_amount * passenger_count
 
     # Generate letter
     letter = generate_mexico_claim_letter(flight_data)
@@ -161,7 +167,8 @@ def preview():
                          letter=formatted_letter,
                          flight_data=flight_data,
                          airline_email=airline_email,
-                         compensation_amount=compensation_amount)
+                         compensation_amount=total_compensation,
+                         per_passenger_amount=per_passenger_amount)
 
 @app.route('/send', methods=['POST'])
 def send():

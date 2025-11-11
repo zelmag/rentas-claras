@@ -588,11 +588,25 @@
                 <hr>
 
                 <div class="form-group">
-                    <label>Tu nombre completo:</label>
-                    <input type="text" name="passenger_name" id="passenger_name" placeholder="Ej: Juan Pérez"
-                        pattern="[A-Za-zÀ-ÿ\s]+" required>
+                    <label>¿Cuántos pasajeros viajaron? <span style="color: #999; font-size: 0.85em;">(cada uno tiene derecho a compensación)</span></label>
+                    <input type="number" name="passenger_count" id="passenger_count" min="1" max="10" value="1" required
+                           style="width: 100px; text-align: center; font-size: 1.2em; font-weight: bold;">
                     <span class="input-checkmark">✓</span>
-                    <div class="error-message" id="passenger_name_error">Por favor ingresa tu nombre completo</div>
+                    <small style="color: #006847; font-size: 0.85em; display: block; margin-top: 5px;">
+                        💡 Si viajaron 4 personas, ¡la compensación se multiplica por 4!
+                    </small>
+                    <div class="error-message" id="passenger_count_error">Por favor ingresa un número válido (1-10)</div>
+                </div>
+
+                <div class="form-group">
+                    <label id="passenger_names_label">Nombre(s) del/los pasajero(s):</label>
+                    <input type="text" name="passenger_name" id="passenger_name" placeholder="Ej: Juan Pérez, María Pérez, Pedro Pérez"
+                        required>
+                    <span class="input-checkmark">✓</span>
+                    <small style="color: #666; font-size: 0.85em; display: block; margin-top: 5px;">
+                        Si son varios, sepáralos con comas
+                    </small>
+                    <div class="error-message" id="passenger_name_error">Por favor ingresa el/los nombre(s)</div>
                 </div>
 
                 <div class="form-group">
@@ -676,9 +690,17 @@
             if (currentPage === 2 && calculatedCompensation > 0 && selectedAirline) {
                 const policyUrl = airlinePolicyUrls[selectedAirline] || '#';
                 const airlineEmoji = airlineEmojis[selectedAirline] || '✈️';
+                const passengerCount = parseInt(document.getElementById('passenger_count')?.value || 1);
+                const totalCompensation = calculatedCompensation * passengerCount;
 
                 emojiElement.textContent = "🎉";
-                titleElement.innerHTML = `¡Felicidades! Te toca una compensación de <span style="color: #e74c3c; font-weight: bold;">${formatter.format(calculatedCompensation)} MXN</span>`;
+
+                if (passengerCount > 1) {
+                    titleElement.innerHTML = `¡Felicidades! Te toca una compensación de <span style="color: #e74c3c; font-weight: bold;">${formatter.format(totalCompensation)} MXN</span><br><small style="color: #666; font-size: 0.7em;">(${formatter.format(calculatedCompensation)} × ${passengerCount} pasajeros)</small>`;
+                } else {
+                    titleElement.innerHTML = `¡Felicidades! Te toca una compensación de <span style="color: #e74c3c; font-weight: bold;">${formatter.format(totalCompensation)} MXN</span>`;
+                }
+
                 subtitleElement.textContent = "";
                 descriptionElement.innerHTML = "";
             } else if (currentPage === 1) {
@@ -1239,6 +1261,17 @@
                     }
                 });
             });
+
+            // Update compensation display when passenger count changes
+            const passengerCountInput = document.getElementById('passenger_count');
+            if (passengerCountInput) {
+                passengerCountInput.addEventListener('input', () => {
+                    updatePageTitles();
+                });
+                passengerCountInput.addEventListener('change', () => {
+                    updatePageTitles();
+                });
+            }
 
             // Check if coming back from preview page with pre-filled data
             {% if back_data %}
