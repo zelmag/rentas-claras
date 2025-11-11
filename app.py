@@ -25,6 +25,47 @@ except ImportError:
     RESEND_AVAILABLE = False
     print("⚠️ Resend not available - install with: pip3 install resend")
 
+# Airline Twitter handles for social pressure feature
+AIRLINE_TWITTER_HANDLES = {
+    'Volaris': '@viajaVolaris',
+    'VivaAerobus': '@VivaAerobus',
+    'Aeromexico': '@Aeromexico'
+}
+
+def generate_tweet_text(flight_data, compensation_amount):
+    """Generate pre-filled tweet for social pressure"""
+    airline = flight_data['airline']
+    airline_handle = AIRLINE_TWITTER_HANDLES.get(airline, f'@{airline}')
+    flight_number = flight_data['flight_number']
+    date = flight_data['date']
+    delay_hours = flight_data['delay_hours']
+
+    # Format delay text
+    if delay_hours == 1.5:
+        delay_text = "1-2 hrs"
+    elif delay_hours == 3.0:
+        delay_text = "2-4 hrs"
+    elif delay_hours == 5.0:
+        delay_text = "+4 hrs"
+    else:
+        delay_text = f"{delay_hours} hrs"
+
+    # Format compensation amount
+    comp_text = f"${compensation_amount:,.0f} MXN" if compensation_amount > 0 else "compensación"
+
+    # Build tweet (keeping under 280 chars)
+    tweet = f"""🛫 {airline_handle} mi vuelo {flight_number} tuvo {delay_text} de retraso el {date}
+
+💰 Me deben {comp_text} por ley (Art. 47 Bis LACM)
+
+📧 Reclamo enviado hoy - plazo: 10 días
+
+Si no responden: PROFECO
+
+#VueloDigno #PROFECO #DerechosDelPasajero"""
+
+    return tweet
+
 def convert_markdown_to_html(text):
     """Convert markdown formatting to HTML for the front-end preview."""
     # Bold: **text**
@@ -246,12 +287,16 @@ def send():
     print(f"FINAL RESULT: {'SUCCESS' if success else 'FAILED'}")
     print("="*50 + "\n")
 
+    # Generate tweet text for social pressure
+    tweet_text = generate_tweet_text(flight_data, compensation_amount)
+
     return render_template('success.html',
                            success=success,
                            flight_data=flight_data,
                            deadline_date=deadline_date_str,
                            reminder_date=reminder_date_str,
-                           profeco_deadline=profeco_deadline_str)
+                           profeco_deadline=profeco_deadline_str,
+                           tweet_text=tweet_text)
 
 if __name__ == '__main__':
     # Use PORT from environment variable (for production) or default to 8080 (for local dev)
