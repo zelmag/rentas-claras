@@ -532,6 +532,39 @@
                         👇 Responde estas 3 preguntas para calcular cuánto te deben
                     </p>
                 </div>
+
+                <!-- Flight Lookup Section (NEW) -->
+                <div style="background: linear-gradient(135deg, #e8f4f8 0%, #f0fdf4 100%); padding: 20px; border-radius: 12px; margin-bottom: 30px; border: 2px solid #10b981;">
+                    <h3 style="margin-top: 0; color: #2c3e50; font-size: 1.1em; text-align: center;">
+                        ⚡ Auto-llenar datos del vuelo
+                    </h3>
+                    <p style="margin: 10px 0; color: #7f8c8d; font-size: 0.9em; text-align: center;">
+                        Ingresa tu número de vuelo y fecha - encontraremos la aerolínea y el retraso automáticamente
+                    </p>
+
+                    <div style="display: grid; gap: 15px; margin-top: 15px;">
+                        <div>
+                            <label style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 0.9em;">Número de vuelo:</label>
+                            <input type="text" id="lookup_flight_number" placeholder="Ej: Y4408 o 408"
+                                style="width: 100%; padding: 12px; border: 2px solid #e1e8ed; border-radius: 8px; font-size: 15px;">
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 0.9em;">Fecha del vuelo:</label>
+                            <input type="date" id="lookup_flight_date" min="{{ min_date }}" max="{{ max_date }}"
+                                style="width: 100%; padding: 12px; border: 2px solid #e1e8ed; border-radius: 8px; font-size: 15px;">
+                        </div>
+                        <button type="button" id="lookup-flight-btn" onclick="lookupFlight()"
+                            style="padding: 14px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; border-radius: 8px; font-weight: 600; font-size: 16px; cursor: pointer; box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3); transition: all 0.3s ease;">
+                            🔍 Buscar Vuelo
+                        </button>
+                        <div id="lookup-result" style="display: none; padding: 12px; border-radius: 8px; font-size: 0.9em; margin-top: 5px;"></div>
+                    </div>
+                </div>
+
+                <div style="text-align: center; margin: 20px 0; color: #7f8c8d; font-size: 0.9em;">
+                    — o llena manualmente —
+                </div>
+
                 <label>¿De cuánto fue el retraso del vuelo?
                 </label>
                 <div class="delay-buttons">
@@ -1292,6 +1325,96 @@
                     radio.required = false;
                     radio.checked = false; // Uncheck when hidden
                 });
+            }
+        }
+
+        // FLIGHT LOOKUP FUNCTION
+        async function lookupFlight() {
+            const flightNumber = document.getElementById('lookup_flight_number').value.trim();
+            const flightDate = document.getElementById('lookup_flight_date').value.trim();
+            const resultDiv = document.getElementById('lookup-result');
+            const lookupBtn = document.getElementById('lookup-flight-btn');
+
+            // Validate inputs
+            if (!flightNumber || !flightDate) {
+                resultDiv.style.display = 'block';
+                resultDiv.style.background = '#fee2e2';
+                resultDiv.style.color = '#991b1b';
+                resultDiv.innerHTML = '❌ Por favor ingresa el número de vuelo y la fecha';
+                return;
+            }
+
+            // Show loading state
+            lookupBtn.disabled = true;
+            lookupBtn.innerHTML = '⏳ Buscando...';
+            resultDiv.style.display = 'block';
+            resultDiv.style.background = '#e0e7ff';
+            resultDiv.style.color = '#3730a3';
+            resultDiv.innerHTML = '🔍 Buscando información del vuelo...';
+
+            try {
+                const response = await fetch('/api/lookup_flight', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        flight_number: flightNumber,
+                        flight_date: flightDate
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // Auto-fill the form
+                    const data = result.data;
+
+                    // Set airline
+                    const airlineSelect = document.getElementById('airline');
+                    airlineSelect.value = data.airline;
+                    airlineSelect.dispatchEvent(new Event('change'));
+                    validateField('airline');
+
+                    // Set delay tier
+                    document.getElementById('delay_hours').value = data.delay_tier;
+
+                    // Select the appropriate delay button
+                    const delayDataValue = data.delay_tier === 1.5 ? '1' : (data.delay_tier === 3.0 ? '2' : '3');
+                    document.querySelectorAll('.delay-option').forEach(btn => {
+                        btn.classList.remove('selected');
+                        if (btn.dataset.value === delayDataValue) {
+                            btn.classList.add('selected');
+                        }
+                    });
+
+                    // Show success message
+                    resultDiv.style.background = '#d1fae5';
+                    resultDiv.style.color = '#065f46';
+                    resultDiv.innerHTML = `
+                        ✅ <strong>¡Vuelo encontrado!</strong><br>
+                        Aerolínea: ${data.airline}<br>
+                        Retraso: ${data.delay_hours} horas (${data.delay_minutes} minutos)<br>
+                        <em style="font-size: 0.85em;">Los campos se llenaron automáticamente abajo 👇</em>
+                    `;
+
+                    // Trigger compensation calculation
+                    calculateCompensationPreview();
+                } else {
+                    // Show error
+                    resultDiv.style.background = '#fee2e2';
+                    resultDiv.style.color = '#991b1b';
+                    resultDiv.innerHTML = `❌ ${result.error}`;
+                }
+            } catch (error) {
+                resultDiv.style.background = '#fee2e2';
+                resultDiv.style.color = '#991b1b';
+                resultDiv.innerHTML = '❌ Error al buscar el vuelo. Verifica tu conexión e intenta de nuevo.';
+                console.error('Error:', error);
+            } finally {
+                // Reset button
+                lookupBtn.disabled = false;
+                lookupBtn.innerHTML = '🔍 Buscar Vuelo';
             }
         }
 
