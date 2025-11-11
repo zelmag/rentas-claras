@@ -158,7 +158,7 @@ Estimado Departamento de Atención al Cliente de {flight_data['airline'].title()
 
 **DATOS DE LA RESERVACIÓN:**
 * Vuelo: **{flight_data['flight_number']}**
-* Código de Reservación: **{flight_data['reservation_code']}**
+* Clave de reserva: **{flight_data['reservation_code']}**
 * Fecha: **{flight_data['date']}**
 * Retraso: **{delay_text}**
 {passenger_text}
