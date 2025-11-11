@@ -465,36 +465,77 @@
             </div>
         </div>
 
-        <h2 id="page-title">
+        <!-- Hero Section -->
+        <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="font-size: 2em; margin-bottom: 10px; color: #2c3e50;">
+                ✈️ ¿Vuelo retrasado en México?
+            </h1>
+            <h2 style="font-size: 1.5em; color: #e74c3c; margin-bottom: 15px; font-weight: 700;">
+                Reclama tu compensación en 3 pasos
+            </h2>
+            <p style="font-size: 1.1em; color: #7f8c8d; line-height: 1.6;">
+                VueloDigno calcula cuánto te debe la aerolínea, genera tu email legal,<br>
+                y lo envía directo al departamento de atención al cliente.
+            </p>
+        </div>
+
+        <!-- How It Works -->
+        <div style="background: linear-gradient(135deg, #f0fdf4 0%, #e8f4f8 100%); padding: 25px; border-radius: 12px; margin-bottom: 30px; border: 2px solid #006847;">
+            <h3 style="text-align: center; color: #2c3e50; margin-bottom: 20px; font-size: 1.2em;">
+                📋 Cómo funciona
+            </h3>
+            <div style="display: grid; gap: 15px;">
+                <div style="display: flex; align-items: start; gap: 12px;">
+                    <div style="background: #006847; color: white; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0;">1</div>
+                    <div>
+                        <strong style="color: #2c3e50;">Calculamos tu compensación</strong><br>
+                        <span style="color: #7f8c8d; font-size: 0.95em;">Según la Ley de Aviación Civil Mexicana (hasta 125% del boleto)</span>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: start; gap: 12px;">
+                    <div style="background: #006847; color: white; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0;">2</div>
+                    <div>
+                        <strong style="color: #2c3e50;">Generamos tu email legal</strong><br>
+                        <span style="color: #7f8c8d; font-size: 0.95em;">Con todos los argumentos legales y plazos oficiales</span>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: start; gap: 12px;">
+                    <div style="background: #006847; color: white; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0;">3</div>
+                    <div>
+                        <strong style="color: #2c3e50;">Lo enviamos a la aerolínea</strong><br>
+                        <span style="color: #7f8c8d; font-size: 0.95em;">Directo a su departamento de atención al cliente + template para presionarlos en X</span>
+                    </div>
+                </div>
+            </div>
+            <div style="background: #ffffff; padding: 15px; border-radius: 8px; margin-top: 20px; text-align: center;">
+                <p style="margin: 0; font-weight: 600; color: #006847; font-size: 1.05em;">
+                    ⚡ 100% Gratis • 3 minutos • Garantizado por ley
+                </p>
+            </div>
+        </div>
+
+        <h2 id="page-title" style="display: none;">
             <span id="page-title-emoji" style="font-size: 1.5em; margin-right: 10px;">🇲🇽</span>
             <span id="page-title-text">¿Tu vuelo fue retrasado o cancelado en México?</span>
         </h2>
         <h1 id="page-subtitle"
-            style="text-align: center; color: #e74c3c; font-size: 1.3em; margin-bottom: 20px; line-height: 1.3;">
+            style="display: none; text-align: center; color: #e74c3c; font-size: 1.3em; margin-bottom: 20px; line-height: 1.3;">
             Te deben dinero.
         </h1>
-        <h3 id="page-description">
+        <h3 id="page-description" style="display: none;">
             <strong>Reclama tu compensación en 2 minutos</strong>. <br><br>
             Por ley, tu compensación es garantizada si la demora es mayor a 1 hora.
         </h3>
         <form action="/preview" method="POST" id="multi-page-form">
 
             <div class="page active" data-page="1">
-                <!-- Trust Banner -->
+                <!-- Start Here Banner -->
                 <div
-                    style="background: #f0fdf4; padding: 15px 20px; border-radius: 10px; margin: 20px 0; display: flex; align-items: center; gap: 12px; border-left: 4px solid #006847;">
-                    <div style="font-size: 2em;">⚡</div>
-                    <div style="flex: 1;">
-                        <p style="margin: 0; font-weight: 600; color: #2c3e50; font-size: 1em; line-height: 1.4;">
-                            <strong>3 minutos.</strong> Gratis.
-                        </p>
-                        <p style="margin: 5px 0 0 0; font-size: 0.9em; color: #065f46;">
-                            ✓ Garantizado por la Ley de Aviación Civil Mexicana
-                        </p>
-                    </div>
+                    style="background: #fff3cd; padding: 15px 20px; border-radius: 10px; margin: 20px 0 30px 0; border-left: 4px solid #ffc107; text-align: center;">
+                    <p style="margin: 0; font-weight: 600; color: #856404; font-size: 1.05em;">
+                        👇 Empieza aquí - responde 3 preguntas
+                    </p>
                 </div>
-
-                <hr>
                 <label>¿De cuánto fue el retraso del vuelo?
                 </label>
                 <div class="delay-buttons">
@@ -722,8 +763,14 @@
             const emojiElement = document.getElementById('page-title-emoji');
             const subtitleElement = document.getElementById('page-subtitle');
             const descriptionElement = document.getElementById('page-description');
+            const pageTitleContainer = document.getElementById('page-title');
 
             if (currentPage === 2 && calculatedCompensation > 0 && selectedAirline) {
+                // Show the title elements on page 2
+                pageTitleContainer.style.display = 'block';
+                subtitleElement.style.display = 'block';
+                descriptionElement.style.display = 'block';
+
                 const policyUrl = airlinePolicyUrls[selectedAirline] || '#';
                 const airlineEmoji = airlineEmojis[selectedAirline] || '✈️';
                 const passengerCount = parseInt(document.getElementById('passenger_count')?.value || 1);
@@ -740,22 +787,15 @@
                 subtitleElement.textContent = "";
                 descriptionElement.innerHTML = "";
             } else if (currentPage === 1) {
-                emojiElement.textContent = "🇲🇽";
-                titleElement.textContent = "¿Vuelo Retrasado o Cancelado en México?";
-
-                // Show airline name if selected
-                if (selectedAirline) {
-                    subtitleElement.textContent = `${selectedAirline} te debe dinero.`;
-                } else {
-                    subtitleElement.textContent = "Te deben dinero.";
-                }
-
-                descriptionElement.innerHTML = "Hasta el 125% del precio de tu boleto.<br><br>Generamos y enviamos tu email de reclamación legal.";
+                // Hide title elements on page 1 (we have the hero section instead)
+                pageTitleContainer.style.display = 'none';
+                subtitleElement.style.display = 'none';
+                descriptionElement.style.display = 'none';
             } else {
-                emojiElement.textContent = "🇲🇽";
-                titleElement.textContent = "¿Vuelo Retrasado o Cancelado en México?";
-                subtitleElement.textContent = "Te deben dinero.";
-                descriptionElement.innerHTML = "";
+                // Default state
+                pageTitleContainer.style.display = 'none';
+                subtitleElement.style.display = 'none';
+                descriptionElement.style.display = 'none';
             }
         }
 
