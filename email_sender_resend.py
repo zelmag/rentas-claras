@@ -95,9 +95,9 @@ def send_confirmation_to_user(flight_data, airline_email, compensation_amount, d
             </ol>
 
             <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ffc107;">
-                <p style="margin: 0;"><strong>📅 ¿Quieres un recordatorio?</strong></p>
-                <p style="margin: 10px 0 0 0;">Si la aerolínea no responde en 10 días, podemos recordarte que envíes un seguimiento.</p>
-                <p style="margin: 10px 0 0 0;"><strong>Responde este email con "SÍ"</strong> y te enviaremos un recordatorio automático.</p>
+                <p style="margin: 0;"><strong>📅 Recordatorio:</strong></p>
+                <p style="margin: 10px 0 0 0;">Marca tu calendario para el <strong>{deadline_date}</strong> - ese es el plazo legal para que la aerolínea responda.</p>
+                <p style="margin: 10px 0 0 0;">Si no responden, presenta tu queja en <a href="https://www.gob.mx/profeco/articulos/proceso-y-requisitos-de-quejas-y-denuncias" target="_blank" style="color: #006847; font-weight: bold;">PROFECO</a>.</p>
             </div>
 
             <div style="background: #f3f4f6; padding: 15px; border-radius: 8px; margin: 20px 0;">
