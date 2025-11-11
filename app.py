@@ -155,6 +155,13 @@ def send():
     deadline = today + timedelta(days=10)
     deadline_date_str = deadline.strftime('%d de %B de %Y')
 
+    # Calculate reminder date (10 days from now)
+    reminder_date = deadline
+    reminder_date_str = reminder_date.strftime('%d de %B de %Y')
+
+    # Calculate PROFECO deadline (same as airline deadline, 10 days)
+    profeco_deadline_str = deadline_date_str
+
     # Calculate compensation for confirmation email
     from email_generator_simple import compare_compensations
     comp_data = compare_compensations(flight_data)
@@ -195,7 +202,9 @@ def send():
     return render_template('success.html',
                            success=success,
                            flight_data=flight_data,
-                           deadline_date=deadline_date_str)
+                           deadline_date=deadline_date_str,
+                           reminder_date=reminder_date_str,
+                           profeco_deadline=profeco_deadline_str)
 
 if __name__ == '__main__':
     # Use PORT from environment variable (for production) or default to 8080 (for local dev)
