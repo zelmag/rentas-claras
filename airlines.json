@@ -7,7 +7,7 @@
   },
   "aeromexico": {
     "name": "Aeroméxico",
-    "email": "zelmagarza@utexas.edu",
+    "email": "amcomplaint@aeromexico.com",
     "has_policy": true,
     "policy_file": "aeromexico.txt"
   },
@@ -16,5 +16,11 @@
     "email": "support@volaris.zendesk.com",
     "has_policy": true,
     "policy_file": "volaris.txt"
+  },
+  "demo": {
+    "name": "Demo (Prueba)",
+    "email": "zelmagarza1099@gmail.com",
+    "has_policy": false,
+    "policy_file": ""
   }
 }

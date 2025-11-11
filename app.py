@@ -29,7 +29,8 @@ except ImportError:
 AIRLINE_TWITTER_HANDLES = {
     'Volaris': '@viajaVolaris',
     'VivaAerobus': '@VivaTeEscucha',
-    'Aeromexico': '@Aeromexico'
+    'Aeromexico': '@Aeromexico',
+    'Demo': '@VueloDigno'
 }
 
 def generate_tweet_text(flight_data, compensation_amount):
