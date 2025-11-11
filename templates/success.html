@@ -193,11 +193,11 @@
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-68JMDPRZY1"></script>
     <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
 
-      gtag('config', 'G-68JMDPRZY1');
+        gtag('config', 'G-68JMDPRZY1');
     </script>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
@@ -236,20 +236,29 @@
 
         <hr style="margin: 20px 0;">
 
-        <div style="background: #f0fdf4; border-left: 4px solid #006847; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: left;">
+        <div
+            style="background: #f0fdf4; border-left: 4px solid #006847; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: left;">
             <h3 style="margin-top: 0; color: #2c3e50;">📋 Próximos Pasos:</h3>
             <ol style="line-height: 2; color: #2c3e50;">
-                <li>Te enviaremos un recordatorio el <strong>{{ reminder_date }}</strong> para que verifiques si {{ flight_data.airline }} respondió.</li>
-                <li>Si {{ flight_data.airline }} no responde antes del <strong>{{ profeco_deadline }}</strong>, presenta tu queja en <a href="https://www.gob.mx/profeco/articulos/proceso-y-requisitos-de-quejas-y-denuncias" target="_blank" style="color: #006847; font-weight: bold;">PROFECO</a>.</li>
+                <li>Te enviaremos un recordatorio el <strong>{{ reminder_date }}</strong> para que verifiques si {{
+                    flight_data.airline }} respondió.</li>
+                <li>Si {{ flight_data.airline }} no responde antes del <strong>{{ profeco_deadline }}</strong>, presenta
+                    tu queja en <a
+                        href="https://www.gob.mx/profeco/articulos/proceso-y-requisitos-de-quejas-y-denuncias"
+                        target="_blank" style="color: #006847; font-weight: bold;">PROFECO</a>.</li>
             </ol>
         </div>
 
-        <div style="background: #ffffff; border-left: 4px solid #CE1126; padding: 20px; border-radius: 8px; margin: 20px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+        <div
+            style="background: #ffffff; border-left: 4px solid #CE1126; padding: 20px; border-radius: 8px; margin: 20px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
             <h3 style="margin-top: 0; color: #2c3e50;">💬 Ayúdanos a mejorar (1 minuto)</h3>
-            <p style="margin-bottom: 15px; color: #2c3e50;">Responde 3 preguntas rápidas para ayudarnos a hacer VueloDigno aún mejor:</p>
-            <iframe src="https://docs.google.com/forms/d/e/1FAIpQLSdcpq8h1YahgWGUivulhVnxDi8yGqrtClunlMu7SHYm48Ia4w/viewform?embedded=true" width="100%" height="1171" frameborder="0" marginheight="0" marginwidth="0" style="border-radius: 8px;">Loading…</iframe>
-
-            <div style="background-color: #f0fdf4; border-left: 4px solid #006847; padding: 15px 20px; border-radius: 8px; margin-top: 20px; text-align: center;">
+            <p style="margin-bottom: 15px; color: #2c3e50;">Responde 3 preguntas rápidas para ayudarnos a hacer
+                VueloDigno aún mejor:</p>
+            <iframe
+                src="https://docs.google.com/forms/d/e/1FAIpQLSdcpq8h1YahgWGUivulhVnxDi8yGqrtClunlMu7SHYm48Ia4w/viewform?embedded=true"
+                width="640" height="1374" frameborder="0" marginheight="0" marginwidth="0">Loading…</iframe>
+            <div
+                style="background-color: #f0fdf4; border-left: 4px solid #006847; padding: 15px 20px; border-radius: 8px; margin-top: 20px; text-align: center;">
                 <p style="margin: 0; font-size: 1em; color: #065f46;">
                     🙌 ¡Gracias por ayudarnos a mejorar VueloDigno!
                 </p>

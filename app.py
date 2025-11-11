@@ -106,7 +106,7 @@ def preview():
         flight_data = {
             'airline': request.form['airline'],
             'flight_number': request.form['flight_number'],
-            'reservation_code': request.form['reservation_code'],
+            'reservation_code': request.form.get('reservation_code', 'N/A'),  # Optional, defaults to N/A
             'date': request.form['date'],
             'delay_hours': float(request.form['delay_hours']), # Convert to float
             'ticket_price': float(request.form['ticket_price']), # Convert to float
