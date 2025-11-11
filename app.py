@@ -89,7 +89,8 @@ def index():
             'reservation_code': request.args.get('reservation_code', ''),
             'date': request.args.get('date', ''),
             'passenger_name': request.args.get('passenger_name', ''),
-            'passenger_email': request.args.get('passenger_email', '')
+            'passenger_email': request.args.get('passenger_email', ''),
+            'compensation_choice': request.args.get('compensation_choice', 'reembolso_indemnizacion')
         }
 
     return render_template('index.html',
@@ -124,7 +125,8 @@ def preview():
             'ticket_price': float(request.form['ticket_price']), # Convert to float
             'passenger_name': passenger_name,
             'passenger_email': request.form['passenger_email'],
-            'passenger_count': passenger_count
+            'passenger_count': passenger_count,
+            'compensation_choice': request.form.get('compensation_choice', 'reembolso_indemnizacion')  # Only relevant for 4+ hour delays
         }
     except ValueError:
         # Handle case where user inputs text for a number field (e.g., ticket_price)

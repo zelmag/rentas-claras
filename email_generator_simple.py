@@ -25,23 +25,32 @@ def compare_compensations(flight_data):
     delay = flight_data['delay_hours']
     price = flight_data['ticket_price']
     airline_key = flight_data['airline'].lower().replace(' ', '')
-    
+    compensation_choice = flight_data.get('compensation_choice', 'reembolso_indemnizacion')  # Default to refund if not specified
+
     # --- TIER 3: Retraso > 4 Horas (Value: 5.0) ---
     if delay == 5.0:
-        # Law requires 100% refund + 25% minimum indemnification = 125%
-        amount = price * 1.25
-        
-        # Demand cash/transfer, as the law grants the passenger the right to choose.
-        source = "Ley de Aviación Civil Mexicana - Artículo 47 Bis (Derecho a elegir Efectivo/Transferencia)"
-        payment_method = "Transferencia Bancaria / Efectivo - La Ley otorga al pasajero la libre elección de compensación."
-        
-        return {
-            'source': source,
-            'amount': amount,
-            'description': "100% reembolso + 25% indemnización (mínimo)",
-            'payment_method': payment_method
-        }
-    
+        source = "Ley de Aviación Civil Mexicana - Artículo 47 Bis"
+
+        if compensation_choice == 'transporte_sustituto':
+            # Passenger chose substitute transportation
+            return {
+                'source': source,
+                'amount': 0,  # No monetary amount for substitute transport
+                'description': "Transporte sustituto en el primer vuelo disponible + servicios sin cargo (llamadas, correos, alimentos, alojamiento y transporte terrestre si es necesaria pernocta)",
+                'payment_method': "Transporte sustituto (servicio, no pago en efectivo)",
+                'is_service': True  # Flag to indicate this is a service, not money
+            }
+        else:
+            # Default: reembolso_indemnizacion - 100% refund + 25% indemnification
+            amount = price * 1.25
+            return {
+                'source': source,
+                'amount': amount,
+                'description': "100% reembolso + 25% indemnización (mínimo)",
+                'payment_method': "Transferencia Bancaria / Efectivo - La Ley otorga al pasajero la libre elección de compensación.",
+                'is_service': False
+            }
+
     # --- TIER 1: Delays 1-2 hours (Value: 1.5) ---
     elif delay == 1.5:
         # For 1-2 hours, airlines offer FLAT amounts (not percentages)
@@ -142,14 +151,27 @@ def generate_mexico_claim_letter(flight_data):
     passenger_count = flight_data.get('passenger_count', 1)
     per_passenger_amount = comp_data['amount']
     total_amount = per_passenger_amount * passenger_count
+    is_service = comp_data.get('is_service', False)
 
     # Format passenger information
     if passenger_count > 1:
         passenger_text = f"* Pasajeros: **{flight_data['passenger_name']}** ({passenger_count} personas)"
-        compensation_text = f"${total_amount:,.2f} MXN (${per_passenger_amount:,.2f} MXN × {passenger_count} pasajeros)"
+        if is_service:
+            compensation_text = f"Transporte sustituto para {passenger_count} pasajeros en el primer vuelo disponible"
+        else:
+            compensation_text = f"${total_amount:,.2f} MXN (${per_passenger_amount:,.2f} MXN × {passenger_count} pasajeros)"
     else:
         passenger_text = f"* Pasajero: **{flight_data['passenger_name']}**"
-        compensation_text = f"${total_amount:,.2f} MXN"
+        if is_service:
+            compensation_text = f"Transporte sustituto en el primer vuelo disponible"
+        else:
+            compensation_text = f"${total_amount:,.2f} MXN"
+
+    # Adjust legal deadline text based on compensation type
+    if is_service:
+        plazo_legal_text = "La Ley de Aviación Civil establece que el transporte sustituto debe ser proporcionado de inmediato, y los servicios adicionales (llamadas, correos, alimentos, alojamiento) deben ser cubiertos sin cargo."
+    else:
+        plazo_legal_text = "La Ley de Aviación Civil establece que la indemnización debe ser cubierta en un plazo máximo de **diez días naturales** a partir de la recepción de esta reclamación."
 
 
     letter = f"""**Asunto:** Reclamación Formal - Vuelo {flight_data['flight_number']}
@@ -176,7 +198,7 @@ Solicito formalmente la compensación que me corresponde por el retraso de mi vu
 {comp_data['payment_method']}
 
 **PLAZO LEGAL:**
-La Ley de Aviación Civil establece que la indemnización debe ser cubierta en un plazo máximo de **diez días naturales** a partir de la recepción de esta reclamación.
+{plazo_legal_text}
 
 En caso de no recibir la compensación en el plazo establecido, presentaré la queja correspondiente ante la Procuraduría Federal del Consumidor (PROFECO).
 

@@ -619,6 +619,38 @@
                     <div class="error-message" id="passenger_email_error">Por favor ingresa un email válido</div>
                 </div>
 
+                <!-- Compensation Choice (Only for 4+ hour delays or cancellations) -->
+                <div class="form-group" id="compensation-choice-section" style="display: none;">
+                    <hr style="margin: 20px 0;">
+                    <label>¿Qué compensación prefieres solicitar?</label>
+                    <small style="color: #666; font-size: 0.85em; display: block; margin-bottom: 12px;">
+                        Por ley, tienes derecho a elegir entre estas dos opciones:
+                    </small>
+
+                    <div class="delay-buttons">
+                        <label class="delay-option" style="cursor: pointer; display: flex; align-items: flex-start; gap: 12px;">
+                            <input type="radio" name="compensation_choice" value="transporte_sustituto" id="comp_transporte" required style="margin-top: 4px; width: auto; padding: 0;">
+                            <div style="flex: 1;">
+                                <strong>Transporte sustituto en el primer vuelo disponible</strong><br>
+                                <span style="font-size: 0.85em; color: #7f8c8d; font-weight: normal;">
+                                    + Llamadas, correos, alimentos, alojamiento y transporte terrestre sin cargo (si es necesaria pernocta)
+                                </span>
+                            </div>
+                        </label>
+
+                        <label class="delay-option" style="cursor: pointer; display: flex; align-items: flex-start; gap: 12px;">
+                            <input type="radio" name="compensation_choice" value="reembolso_indemnizacion" id="comp_reembolso" required style="margin-top: 4px; width: auto; padding: 0;">
+                            <div style="flex: 1;">
+                                <strong>Reembolso completo (100%) + 25% de indemnización</strong><br>
+                                <span style="font-size: 0.85em; color: #7f8c8d; font-weight: normal;">
+                                    Solicitar el dinero en efectivo o transferencia bancaria
+                                </span>
+                            </div>
+                        </label>
+                    </div>
+                    <div class="error-message" id="compensation_choice_error">Por favor selecciona una opción de compensación</div>
+                </div>
+
                 <!-- Privacy Statement -->
                 <div style="background-color: #f0f9ff; border-left: 4px solid #3b82f6; padding: 12px 15px; border-radius: 5px; margin: 20px 0; font-size: 0.9em; display: flex; align-items: center; gap: 10px;">
                     <span style="font-size: 1.5em;">🔒</span>
@@ -824,6 +856,7 @@
                 if (currentPage === 2) {
                     calculateCompensation();
                     updatePageTitles(); // Update titles after calculating compensation
+                    updateCompensationChoiceVisibility(); // Show/hide compensation choice section
                 }
             }
         }
@@ -1187,6 +1220,28 @@
             }
         }
 
+        // Show/hide compensation choice section based on delay hours
+        function updateCompensationChoiceVisibility() {
+            const delayHours = parseFloat(document.getElementById('delay_hours').value);
+            const compensationSection = document.getElementById('compensation-choice-section');
+            const compensationRadios = document.querySelectorAll('input[name="compensation_choice"]');
+
+            if (delayHours === 5.0) {
+                // Show section for 4+ hour delays or cancellations
+                compensationSection.style.display = 'block';
+                compensationRadios.forEach(radio => {
+                    radio.required = true;
+                });
+            } else {
+                // Hide section for shorter delays
+                compensationSection.style.display = 'none';
+                compensationRadios.forEach(radio => {
+                    radio.required = false;
+                    radio.checked = false; // Uncheck when hidden
+                });
+            }
+        }
+
         // EVENT LISTENERS
         document.addEventListener('DOMContentLoaded', () => {
             const priceInput = document.getElementById('ticket_price');
@@ -1205,6 +1260,9 @@
                     if (currentPage === 1) {
                         calculateCompensationPreview();
                     }
+
+                    // Update compensation choice visibility
+                    updateCompensationChoiceVisibility();
                 });
             });
 
@@ -1368,6 +1426,17 @@
 
         // Calculate compensation preview
         calculateCompensationPreview();
+
+        // Restore compensation choice if present
+        if (backData.compensation_choice) {
+            const choiceRadio = document.querySelector(`input[name="compensation_choice"][value="${backData.compensation_choice}"]`);
+            if (choiceRadio) {
+                choiceRadio.checked = true;
+            }
+        }
+
+        // Update compensation choice visibility
+        updateCompensationChoiceVisibility();
 
         // Show page 2 instead of page 1
         showPage(2);
