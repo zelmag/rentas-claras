@@ -269,23 +269,20 @@
             </ol>
         </div>
 
-        <!-- Twitter Pressure Section -->
+        <!-- X Pressure Section -->
         <div
-            style="background: linear-gradient(135deg, #1DA1F2 0%, #0d8bd9 100%); border-radius: 12px; padding: 25px; margin: 20px 0; box-shadow: 0 4px 16px rgba(29, 161, 242, 0.3);">
-            <h3 style="margin-top: 0; color: #ffffff; font-size: 1.3em;">💥 ¿No te contestan? Presiónalos públicamente en Twitter</h3>
-            <p style="color: #ffffff; opacity: 0.95; margin-bottom: 20px;">
-                Las aerolíneas responden más rápido cuando hay presión pública en redes sociales.
-            </p>
+            style="background: linear-gradient(135deg, #000000 0%, #2d3748 100%); border-radius: 12px; padding: 25px; margin: 20px 0; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);">
+            <h3 style="margin-top: 0; color: #ffffff; font-size: 1.3em;">💥 ¿No te contestan? Presiónalos públicamente en X</h3>
 
             <!-- Tweet Template Box -->
             <div style="background: #ffffff; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
                 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #e1e8ed;">
-                    <div style="width: 40px; height: 40px; background: #1DA1F2; border-radius: 50%; display: flex; align-items: center; justify-content: center; overflow: hidden;">
-                        <img src="{{ url_for('static', filename='twitter.png') }}" alt="Twitter" style="width: 24px; height: 24px; object-fit: contain;">
+                    <div style="width: 40px; height: 40px; background: #000000; border-radius: 50%; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                        <img src="{{ url_for('static', filename='twitter.png') }}" alt="X" style="width: 24px; height: 24px; object-fit: contain;">
                     </div>
                     <div>
                         <div style="font-weight: bold; color: #14171a;">Tu reclamación pública</div>
-                        <div style="font-size: 0.85em; color: #657786;">Lista para compartir en Twitter/X</div>
+                        <div style="font-size: 0.85em; color: #657786;">Lista para compartir en X</div>
                     </div>
                 </div>
 
@@ -294,12 +291,12 @@
                 <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e1e8ed;">
                     <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                         <button onclick="copyTweet()" id="copy-btn"
-                            style="flex: 1; min-width: 140px; padding: 12px 20px; background: #ffffff; color: #1DA1F2; border: 2px solid #1DA1F2; border-radius: 9999px; font-size: 15px; font-weight: bold; cursor: pointer; transition: all 0.2s;">
+                            style="flex: 1; min-width: 140px; padding: 12px 20px; background: #ffffff; color: #000000; border: 2px solid #000000; border-radius: 9999px; font-size: 15px; font-weight: bold; cursor: pointer; transition: all 0.2s;">
                             📋 Copiar Texto
                         </button>
                         <button onclick="tweetNow()"
-                            style="flex: 1; min-width: 140px; padding: 12px 20px; background: #1DA1F2; color: white; border: none; border-radius: 9999px; font-size: 15px; font-weight: bold; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 8px rgba(29, 161, 242, 0.3);">
-                            🐦 Tweetear Ahora
+                            style="flex: 1; min-width: 140px; padding: 12px 20px; background: #000000; color: white; border: none; border-radius: 9999px; font-size: 15px; font-weight: bold; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);">
+                            ✕ Publicar en X
                         </button>
                     </div>
                 </div>
@@ -383,8 +380,8 @@
                 setTimeout(() => {
                     btn.innerHTML = originalText;
                     btn.style.background = '#ffffff';
-                    btn.style.color = '#1DA1F2';
-                    btn.style.borderColor = '#1DA1F2';
+                    btn.style.color = '#000000';
+                    btn.style.borderColor = '#000000';
                 }, 2000);
 
                 // Track analytics
