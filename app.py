@@ -225,14 +225,22 @@ def preview():
 def send():
     """Send the claim email"""
     # Rebuild flight_data from form
+    try:
+        passenger_count = int(request.form.get('passenger_count', 1))
+    except ValueError:
+        passenger_count = 1
+
     flight_data = {
         'airline': request.form['airline'],
         'flight_number': request.form['flight_number'],
+        'reservation_code': request.form.get('reservation_code', 'N/A'),
         'date': request.form['date'],
         'delay_hours': float(request.form['delay_hours']),
         'ticket_price': float(request.form['ticket_price']),
         'passenger_name': request.form['passenger_name'],
-        'passenger_email': request.form['passenger_email']
+        'passenger_email': request.form['passenger_email'],
+        'passenger_count': passenger_count,
+        'compensation_choice': request.form.get('compensation_choice', 'reembolso_indemnizacion')
     }
 
     airline_email = request.form['airline_email']
@@ -253,7 +261,8 @@ def send():
     # Calculate compensation for confirmation email
     from email_generator_simple import compare_compensations
     comp_data = compare_compensations(flight_data)
-    compensation_amount = comp_data['amount'] if comp_data else 0
+    per_passenger_amount = comp_data['amount'] if comp_data else 0
+    compensation_amount = per_passenger_amount * passenger_count
 
     success = False
 
