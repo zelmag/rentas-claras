@@ -1,7 +1,8 @@
 # app.py
-from flask import Flask, render_template, request, redirect, url_for, flash # ⬅️ ADDED 'flash'
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify # ⬅️ ADDED 'jsonify'
 from email_generator_simple import generate_mexico_claim_letter, get_airline_email
 from email_sender import send_claim_email
+from flight_api import lookup_flight, convert_delay_to_tier, map_airline_name # ⬅️ NEW
 from datetime import datetime, timedelta
 import re
 import os
@@ -139,6 +140,58 @@ def index():
                            min_date=min_date_limit, # Pass the minimum date
                            max_date=today,          # Pass today's date
                            back_data=back_data)     # Pass back navigation data
+
+@app.route('/api/lookup_flight', methods=['POST'])
+def api_lookup_flight():
+    """API endpoint to lookup flight information"""
+    try:
+        data = request.get_json()
+        flight_number = data.get('flight_number', '').strip()
+        flight_date = data.get('flight_date', '').strip()
+
+        if not flight_number or not flight_date:
+            return jsonify({'success': False, 'error': 'Faltan datos del vuelo'}), 400
+
+        # Lookup flight using AviationStack
+        flight_info = lookup_flight(flight_number, flight_date)
+
+        if not flight_info:
+            return jsonify({
+                'success': False,
+                'error': 'No se encontró el vuelo. Verifica el número de vuelo y la fecha.'
+            }), 404
+
+        # Convert delay to tier
+        delay_tier = convert_delay_to_tier(flight_info['delay_hours'])
+
+        if delay_tier is None:
+            return jsonify({
+                'success': False,
+                'error': f'El vuelo tuvo solo {flight_info["delay_hours"]} horas de retraso. La compensación requiere al menos 1 hora de retraso.'
+            }), 400
+
+        # Map airline name
+        airline_name = map_airline_name(flight_info['airline'])
+
+        # Return successful result
+        return jsonify({
+            'success': True,
+            'data': {
+                'airline': airline_name,
+                'flight_number': flight_info['flight_number'],
+                'delay_hours': flight_info['delay_hours'],
+                'delay_tier': delay_tier,
+                'status': flight_info['status'],
+                'delay_minutes': flight_info['delay_minutes']
+            }
+        }), 200
+
+    except Exception as e:
+        print(f"❌ Error in /api/lookup_flight: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': 'Error al buscar el vuelo. Intenta de nuevo.'
+        }), 500
 
 @app.route('/preview', methods=['POST'])
 def preview():
