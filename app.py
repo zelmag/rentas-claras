@@ -120,6 +120,8 @@ def index():
     back_data = None
     if request.args.get('back') == 'true':
         back_data = {
+            'origin': request.args.get('origin', ''),
+            'destination': request.args.get('destination', ''),
             'delay_hours': request.args.get('delay_hours', ''),
             'ticket_price': request.args.get('ticket_price', ''),
             'airline': request.args.get('airline', ''),
@@ -147,6 +149,8 @@ def preview():
             passenger_count = 1
 
         flight_data = {
+            'origin': request.form.get('origin', '').upper().strip(),
+            'destination': request.form.get('destination', '').upper().strip(),
             'airline': request.form['airline'],
             'flight_number': request.form['flight_number'],
             'reservation_code': request.form.get('reservation_code', 'N/A'),  # Optional, defaults to N/A
@@ -221,6 +225,8 @@ def send():
             passenger_count = 1
 
         flight_data = {
+            'origin': request.form.get('origin', '').upper().strip(),
+            'destination': request.form.get('destination', '').upper().strip(),
             'airline': request.form['airline'],
             'flight_number': request.form['flight_number'],
             'reservation_code': request.form.get('reservation_code', 'N/A'),

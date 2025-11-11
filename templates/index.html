@@ -554,11 +554,52 @@
                 <div
                     style="background: #fff3cd; padding: 15px 20px; border-radius: 10px; margin: 20px 0 30px 0; border-left: 4px solid #ffc107; text-align: center;">
                     <p style="margin: 0; font-weight: 600; color: #856404; font-size: 1.05em;">
-                        👇 Responde estas 3 preguntas para calcular cuánto te deben
+                        👇 Responde estas 5 preguntas para calcular cuánto te deben
                     </p>
                 </div>
 
-                <label>¿De cuánto fue el retraso del vuelo?
+                <!-- Jurisdiction validation message -->
+                <div id="jurisdiction-message" style="display: none; margin: 0 0 20px 0; padding: 15px; border-radius: 8px;"></div>
+
+                <!-- Origin and Destination -->
+                <div class="form-group">
+                    <label>Origen del vuelo (código aeropuerto):</label>
+                    <input type="text" name="origin" id="origin" placeholder="Ej: MEX, GDL, MAD, CDG"
+                           pattern="[A-Za-z]{3}" maxlength="3" required
+                           style="text-transform: uppercase;">
+                    <span class="input-checkmark">✓</span>
+                    <small style="color: #666; font-size: 0.85em; display: block; margin-top: 5px;">
+                        💡 Código IATA de 3 letras (ej: MEX para Ciudad de México, MAD para Madrid)
+                    </small>
+                    <div class="error-message" id="origin_error">Por favor ingresa un código de aeropuerto válido (3 letras)</div>
+                </div>
+
+                <div class="form-group">
+                    <label>Destino del vuelo (código aeropuerto):</label>
+                    <input type="text" name="destination" id="destination" placeholder="Ej: CUN, TIJ, LAX, JFK"
+                           pattern="[A-Za-z]{3}" maxlength="3" required
+                           style="text-transform: uppercase;">
+                    <span class="input-checkmark">✓</span>
+                    <small style="color: #666; font-size: 0.85em; display: block; margin-top: 5px;">
+                        💡 Código IATA de 3 letras (ej: CUN para Cancún, LAX para Los Angeles)
+                    </small>
+                    <div class="error-message" id="destination_error">Por favor ingresa un código de aeropuerto válido (3 letras)</div>
+                </div>
+
+                <div class="form-group">
+                    <label>Aerolínea:</label>
+                    <select name="airline" id="airline" required>
+                        <option value="">Selecciona...</option>
+                        <option value="Volaris">Volaris</option>
+                        <option value="VivaAerobus">VivaAerobus</option>
+                        <option value="Aeromexico">Aeroméxico</option>
+                        <option value="Demo">Demo (Prueba)</option>
+                    </select>
+                    <span class="input-checkmark">✓</span>
+                    <div class="error-message" id="airline_error">Por favor selecciona una aerolínea</div>
+                </div>
+
+                <label style="margin-top: 20px;">¿De cuánto fue el retraso del vuelo?
                 </label>
                 <div class="delay-buttons">
                     <button type="button" class="delay-option" data-value="1">
@@ -578,21 +619,8 @@
                     </button>
                 </div>
                 <input type="hidden" id="delay_hours" name="delay_hours">
-                <br>
-                <div class="form-group">
-                    <label>Aerolínea:</label>
-                    <select name="airline" id="airline" required>
-                        <option value="">Selecciona...</option>
-                        <option value="Volaris">Volaris</option>
-                        <option value="VivaAerobus">VivaAerobus</option>
-                        <option value="Aeromexico">Aeroméxico</option>
-                        <option value="Demo">Demo (Prueba)</option>
-                    </select>
-                    <span class="input-checkmark">✓</span>
-                    <div class="error-message" id="airline_error">Por favor selecciona una aerolínea</div>
-                </div>
-                <br>
-                <div class="form-group">
+
+                <div class="form-group" style="margin-top: 20px;">
                     <label>Precio por boleto (MXN):</label>
                     <input type="number" name="ticket_price" id="ticket_price" step="0.01" min="1"
                         placeholder="Ej: 2500.00" required>
@@ -871,6 +899,21 @@
 
         function validatePage(pageNumber) {
             if (pageNumber === 1) {
+                // Check jurisdiction first
+                const origin = document.getElementById('origin').value;
+                const dest = document.getElementById('destination').value;
+                const airline = document.getElementById('airline').value;
+
+                if (!origin || !dest || !airline) {
+                    alert('Por favor, completa origen, destino y aerolínea primero.');
+                    return false;
+                }
+
+                if (!jurisdictionValid) {
+                    alert('Lo sentimos - este vuelo no está cubierto por la ley mexicana. Por favor revisa el mensaje arriba.');
+                    return false;
+                }
+
                 const delayHours = document.getElementById('delay_hours').value;
                 if (!delayHours || delayHours === '' || parseInt(delayHours) === 0) {
                     alert('Por favor, selecciona cuánto fue el retraso del vuelo.');
@@ -879,8 +922,10 @@
 
                 const ticketPriceValid = validateField('ticket_price');
                 const airlineValid = validateField('airline');
+                const originValid = validateField('origin');
+                const destValid = validateField('destination');
 
-                return ticketPriceValid && airlineValid;
+                return ticketPriceValid && airlineValid && originValid && destValid;
             }
 
             const currentPageElement = document.querySelector(`.page[data-page="${pageNumber}"]`);
@@ -1295,6 +1340,90 @@
             }
         }
 
+        // JURISDICTION VALIDATION
+        const MEXICO_AIRPORTS = new Set(['AGU', 'BJX', 'CEN', 'CJS', 'CME', 'CPE', 'CTM', 'CUL', 'CUN', 'CUU', 'CVM', 'CZM', 'DGO', 'GDL', 'GYM', 'HMO', 'HUX', 'IZT', 'JAL', 'LAP', 'LMM', 'LTO', 'MAM', 'MEX', 'MID', 'MLM', 'MTY', 'MZT', 'NLD', 'NOG', 'OAX', 'PAZ', 'PBC', 'PPE', 'PVR', 'PXM', 'QRO', 'REX', 'SJD', 'SLP', 'TAM', 'TAP', 'TGZ', 'TIJ', 'TLC', 'TRC', 'TSL', 'VER', 'VSA', 'ZCL', 'ZIH', 'ZLO']);
+
+        const EU_AIRPORTS = new Set(['MAD', 'BCN', 'AGP', 'PMI', 'ALC', 'SVQ', 'VLC', 'BIO', 'IBZ', 'FUE', 'TFS', 'ACE', 'CDG', 'ORY', 'NCE', 'LYS', 'MRS', 'TLS', 'BOD', 'NTE', 'BSL', 'FRA', 'MUC', 'TXL', 'DUS', 'HAM', 'CGN', 'STR', 'BER', 'NUE', 'LHR', 'LGW', 'MAN', 'STN', 'EDI', 'BHX', 'GLA', 'LTN', 'BRS', 'FCO', 'MXP', 'LIN', 'VCE', 'NAP', 'BGY', 'BLQ', 'PSA', 'CAG', 'AMS', 'EIN', 'RTM', 'LIS', 'OPO', 'FAO', 'BRU', 'VIE', 'ZRH', 'GVA', 'ARN', 'CPH', 'OSL', 'HEL', 'DUB', 'ATH', 'PRG', 'WAW', 'BUD', 'OTP', 'SOF', 'RIX', 'TLL', 'VNO']);
+
+        const EUROPEAN_AIRLINES = new Set(['Lufthansa', 'Air France', 'KLM', 'British Airways', 'Iberia', 'Ryanair', 'EasyJet', 'Vueling', 'Wizz Air', 'Norwegian', 'TAP Portugal', 'Alitalia', 'ITA Airways', 'Swiss', 'Austrian Airlines', 'Brussels Airlines', 'Finnair', 'SAS', 'Aegean Airlines', 'Air Europa', 'Eurowings', 'Condor', 'Transavia', 'LOT Polish']);
+
+        let jurisdictionValid = false;
+
+        function validateJurisdiction() {
+            const origin = document.getElementById('origin').value.toUpperCase().trim();
+            const dest = document.getElementById('destination').value.toUpperCase().trim();
+            const airline = document.getElementById('airline').value;
+            const jurisdictionMsg = document.getElementById('jurisdiction-message');
+
+            // Only validate if all three fields are filled
+            if (!origin || !dest || !airline || origin.length !== 3 || dest.length !== 3) {
+                jurisdictionMsg.style.display = 'none';
+                jurisdictionValid = false;
+                return;
+            }
+
+            const originIsMexico = MEXICO_AIRPORTS.has(origin);
+            const destIsMexico = MEXICO_AIRPORTS.has(dest);
+            const originIsEU = EU_AIRPORTS.has(origin);
+            const airlineIsEU = EUROPEAN_AIRLINES.has(airline);
+
+            // Case 1: EU 261 applies (redirect to AirHelp)
+            if (originIsEU || (airlineIsEU && destIsMexico)) {
+                jurisdictionValid = false;
+                jurisdictionMsg.innerHTML = `
+                    <div style="border-left: 4px solid #e74c3c;">
+                        <strong style="font-size: 1.1em;">🇪🇺 Este vuelo está cubierto por la Regulación Europea EU 261/2004</strong><br><br>
+                        Las compensaciones europeas son más altas (€250-€600 fijos).<br><br>
+                        Te recomendamos usar servicios especializados en reclamos europeos como
+                        <a href="https://www.airhelp.com" target="_blank" style="color: #3498db; font-weight: 600;">AirHelp</a>.
+                    </div>
+                `;
+                jurisdictionMsg.style.backgroundColor = '#fee';
+                jurisdictionMsg.style.borderLeft = '4px solid #e74c3c';
+                jurisdictionMsg.style.display = 'block';
+                return;
+            }
+
+            // Case 2: Flight originates in Mexico
+            if (originIsMexico) {
+                jurisdictionValid = true;
+                jurisdictionMsg.innerHTML = `
+                    <strong style="font-size: 1.1em; color: #059669;">✅ Tu vuelo está cubierto por la ley mexicana</strong><br><br>
+                    El vuelo sale de México. Aplica la <strong>Ley de Aviación Civil Mexicana (Artículo 47 Bis)</strong>.
+                `;
+                jurisdictionMsg.style.backgroundColor = '#f0fdf4';
+                jurisdictionMsg.style.borderLeft = '4px solid #059669';
+                jurisdictionMsg.style.display = 'block';
+                return;
+            }
+
+            // Case 3: Flight lands in Mexico
+            if (destIsMexico) {
+                jurisdictionValid = true;
+                jurisdictionMsg.innerHTML = `
+                    <strong style="font-size: 1.1em; color: #059669;">✅ Tu vuelo está cubierto por la ley mexicana</strong><br><br>
+                    El vuelo aterriza en México. Bajo el <strong>Convenio de Montreal</strong>, puedes reclamar usando los estándares de la Ley de Aviación Civil Mexicana (Artículo 47 Bis).
+                `;
+                jurisdictionMsg.style.backgroundColor = '#f0fdf4';
+                jurisdictionMsg.style.borderLeft = '4px solid #059669';
+                jurisdictionMsg.style.display = 'block';
+                return;
+            }
+
+            // Case 4: No Mexican connection
+            jurisdictionValid = false;
+            jurisdictionMsg.innerHTML = `
+                <div style="border-left: 4px solid #e74c3c;">
+                    <strong style="font-size: 1.1em;">❌ Este vuelo no está cubierto</strong><br><br>
+                    El vuelo (${origin} → ${dest}) no tiene conexión con México.<br><br>
+                    VueloDigno solo procesa reclamos para vuelos que salen de o llegan a México.
+                </div>
+            `;
+            jurisdictionMsg.style.backgroundColor = '#fee';
+            jurisdictionMsg.style.borderLeft = '4px solid #e74c3c';
+            jurisdictionMsg.style.display = 'block';
+        }
+
         // EVENT LISTENERS
         document.addEventListener('DOMContentLoaded', () => {
             const priceInput = document.getElementById('ticket_price');
@@ -1360,6 +1489,7 @@
 
                 airlineSelect.addEventListener('input', () => {
                     updateAirlineLogo();
+                    validateJurisdiction(); // Check jurisdiction when airline changes
                     if (currentPage === 1) {
                         calculateCompensationPreview();
                     } else if (currentPage === 2) {
@@ -1369,12 +1499,37 @@
                 });
                 airlineSelect.addEventListener('change', () => {
                     updateAirlineLogo();
+                    validateJurisdiction(); // Check jurisdiction when airline changes
                     if (currentPage === 1) {
                         calculateCompensationPreview();
                     } else if (currentPage === 2) {
                         calculateCompensation();
                     }
                     validateField('airline');
+                });
+            }
+
+            // Add event listeners for origin and destination
+            const originInput = document.getElementById('origin');
+            const destInput = document.getElementById('destination');
+
+            if (originInput) {
+                originInput.addEventListener('input', () => {
+                    validateJurisdiction();
+                    validateField('origin');
+                });
+                originInput.addEventListener('blur', () => {
+                    validateField('origin');
+                });
+            }
+
+            if (destInput) {
+                destInput.addEventListener('input', () => {
+                    validateJurisdiction();
+                    validateField('destination');
+                });
+                destInput.addEventListener('blur', () => {
+                    validateField('destination');
                 });
             }
 
@@ -1439,6 +1594,8 @@
         }};
 
         // Pre-fill all form fields
+        document.getElementById('origin').value = backData.origin;
+        document.getElementById('destination').value = backData.destination;
         document.getElementById('delay_hours').value = backData.delay_hours;
         document.getElementById('ticket_price').value = backData.ticket_price;
         document.getElementById('airline').value = backData.airline;
@@ -1447,6 +1604,9 @@
         document.getElementById('date').value = backData.date;
         document.getElementById('passenger_name').value = backData.passenger_name;
         document.getElementById('passenger_email').value = backData.passenger_email;
+
+        // Trigger jurisdiction validation with back data
+        validateJurisdiction();
 
         // Mark the correct delay option as selected
         const delayHoursFloat = parseFloat(backData.delay_hours);
