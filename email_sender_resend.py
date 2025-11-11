@@ -29,7 +29,7 @@ def send_claim_email_resend(letter_html, flight_data, airline_email):
     try:
         # Build email parameters
         params = {
-            "from": "VueloDigno <noreply@vuelodigno.com>",  # Your verified domain
+            "from": "noreply@resend.dev",  # Resend's test domain (works immediately)
             "to": [airline_email],
             "cc": [flight_data['passenger_email']],  # User gets a copy
             "reply_to": flight_data['passenger_email'],  # Airline replies go to user
@@ -116,7 +116,7 @@ def send_confirmation_to_user(flight_data, airline_email, compensation_amount, d
         """
 
         params = {
-            "from": "VueloDigno <noreply@vuelodigno.com>",  # Your verified domain
+            "from": "noreply@resend.dev",  # Resend's test domain (works immediately)
             "to": [flight_data['passenger_email']],
             "subject": f"✅ Reclamación Enviada - Vuelo {flight_data['flight_number']}",
             "html": confirmation_html,
