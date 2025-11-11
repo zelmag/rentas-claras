@@ -42,48 +42,72 @@ def compare_compensations(flight_data):
             'payment_method': payment_method
         }
     
-    # --- TIERS 1 & 2: Delays 1-4 hours (Values: 1.5, 3.0) ---
-    elif delay == 3.0 or delay == 1.5:
-        
-        # 1. Baseline is the Mexican law minimum (7.5% for all 1-4 hour delays)
-        mexico_amount = price * 0.075
-        
-        # Initialize with Law minimum
-        best_amount = mexico_amount
+    # --- TIER 1: Delays 1-2 hours (Value: 1.5) ---
+    elif delay == 1.5:
+        # For 1-2 hours, airlines offer FLAT amounts (not percentages)
+
+        if airline_key == 'volaris':
+            amount = 50.00
+            source = 'Política de Volaris'
+            description = 'Voucher Electrónico de $50 MXN'
+            payment_method = 'Voucher Electrónico'
+
+        elif airline_key == 'vivaaerobus':
+            amount = 75.00
+            source = 'Política de VivaAerobus'
+            description = 'Cupón de descuento o Viva Cash de $75 MXN'
+            payment_method = 'Cupón de descuento o Viva Cash'
+
+        else:  # Aeromexico and others: 5% per law for 1-2 hours
+            amount = price * 0.05
+            source = 'Política de Aeroméxico / Ley de Aviación Civil'
+            description = '5% del precio del boleto'
+            payment_method = 'Cupón de descuento'
+
+        tier_prefix = "(1-2 horas) Servicios de asistencia (alimentos, bebidas, comunicación) y "
+
+        return {
+            'source': source,
+            'amount': amount,
+            'description': tier_prefix + description,
+            'payment_method': payment_method
+        }
+
+    # --- TIER 2: Delays 2-4 hours (Value: 3.0) ---
+    elif delay == 3.0:
+        # 1. Baseline is the Mexican law minimum (7.5% for 2-4 hour delays)
+        best_amount = price * 0.075
         source = 'Ley de Aviación Civil Mexicana - Artículo 47 Bis'
         payment_method = 'Cupón de Descuento o Servicios'
         description = '7.5% mínimo del precio del boleto'
 
-        # 2. Check for better Airline Policy
+        # 2. Check for better Airline Policies (take MAX of airline vs law)
         if airline_key == 'volaris':
-            # Volaris policy (original code): max(250, price * 0.075)
+            # Volaris policy: max(250, price * 0.075)
             volaris_offer = max(250.00, price * 0.075)
             if volaris_offer > best_amount:
                 best_amount = volaris_offer
                 source = 'Política de Volaris'
                 description = f'${best_amount:,.2f} MXN (mayor entre $250 o 7.5%)'
                 payment_method = 'Voucher Electrónico'
-        
+
         elif airline_key == 'vivaaerobus':
-            # VivaAerobus policy (original code): 8% of tariff base
+            # VivaAerobus policy: 8% (better than 7.5% law minimum)
             viva_offer = price * 0.08
             if viva_offer > best_amount:
                 best_amount = viva_offer
                 source = 'Política de VivaAerobus'
                 description = '8% de la tarifa base e impuestos'
                 payment_method = 'Cupón de descuento o Viva Cash'
-        
-        # 3. Adjust description based on the specific tier (1.5 or 3.0)
-        if delay == 3.0:
-            tier_prefix = "(2-4 horas) Servicios de asistencia y "
-        elif delay == 1.5:
-            tier_prefix = "(1-2 horas) Servicios de asistencia (alimentos, bebidas, comunicación) y "
-        
+
+        # Aeromexico: uses 7.5% for 2-4 hours (same as law minimum)
+
+        tier_prefix = "(2-4 horas) Servicios de asistencia y "
+
         return {
             'source': source,
             'amount': best_amount,
-            # Combine the tier-specific services with the best monetary offer
-            'description': tier_prefix + description, 
+            'description': tier_prefix + description,
             'payment_method': payment_method
         }
 

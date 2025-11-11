@@ -48,9 +48,10 @@
         }
 
         .airline-email {
-            background: #e8f4f8;
+            background: #f0fdf4;
+            border-left: 4px solid #006847;
             padding: 15px;
-            border-radius: 5px;
+            border-radius: 8px;
             margin: 20px 0;
         }
 
@@ -64,22 +65,24 @@
         }
 
         .info-box {
-            background: #fff3cd;
-            border-left: 4px solid #ffc107;
+            background: #ffffff;
+            border-left: 4px solid #CE1126;
             padding: 15px;
             margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
 
         button {
             padding: 15px 30px;
-            background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
             color: white;
             border: none;
-            border-radius: 5px;
+            border-radius: 8px;
             font-size: 16px;
             cursor: pointer;
             margin-right: 10px;
-            box-shadow: 0 4px 15px rgba(46, 204, 113, 0.4);
+            box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
             transition: all 0.3s ease;
             font-weight: 600;
         }
@@ -102,11 +105,11 @@
         }
 
         .success-message {
-            background: #d4edda;
-            border: 1px solid #c3e6cb;
-            color: #155724;
+            background: #f0fdf4;
+            border-left: 4px solid #006847;
+            color: #065f46;
             padding: 15px;
-            border-radius: 5px;
+            border-radius: 8px;
             margin: 20px 0;
             display: none;
         }
@@ -128,14 +131,14 @@
         }
 
         button:hover {
-            background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
-            box-shadow: 0 6px 20px rgba(46, 204, 113, 0.6);
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            box-shadow: 0 6px 24px rgba(16, 185, 129, 0.4);
             transform: translateY(-2px);
         }
 
         button:active {
             transform: translateY(0);
-            box-shadow: 0 2px 10px rgba(46, 204, 113, 0.4);
+            box-shadow: 0 2px 12px rgba(16, 185, 129, 0.3);
         }
 
         .back-btn {
@@ -254,7 +257,7 @@
                 </div>
                 <div class="milestone completed">
                     <div class="milestone-circle">✓</div>
-                    <div class="milestone-label">Calcular compensación</div>
+                    <div class="milestone-label">Cálculo rápido</div>
                 </div>
                 <div class="milestone completed">
                     <div class="milestone-circle">✓</div>
@@ -262,18 +265,18 @@
                 </div>
                 <div class="milestone active">
                     <div class="milestone-circle">3</div>
-                    <div class="milestone-label">Enviar ✓</div>
+                    <div class="milestone-label">¡Reclamo enviado!</div>
                 </div>
             </div>
         </div>
 
-        <h1>📄 Vista Previa de tu Reclamación</h1>
+        <h1>🚀 ¡Tu Reclamo Legal está Listo!</h1>
 
         <form action="/send" method="POST">
             <div class="airline-email">
                 <strong>📧 Para:</strong>
                 <small style="display: block; color: #7f8c8d; margin-bottom: 5px;">Departamento de Atención al Cliente de {{ flight_data.airline }}</small>
-                <input type="email" name="airline_email" value="{{ airline_email }}" required>
+                <input type="email" name="airline_email" value="{{ airline_email }}" required readonly style="background-color: #f5f5f5; cursor: not-allowed; color: #6b7280;">
             </div>
 
             <div class="airline-email" style="margin-top: 15px;">
@@ -282,11 +285,12 @@
                 <small style="color: #7f8c8d;">Tu email (verifica que sea correcto)</small>
             </div>
 
-            <h2 style="margin-top: 30px; color: #2c3e50;">🙌 Tu email de reclamación generado 🙌</h2>
-
-            <div class="info-box">
-                ℹ️ <strong>Puedes editar el email antes de enviar.</strong>
-            </div>
+            <h2 style="margin-top: 30px; color: #2c3e50;">
+                📝 Revisa y edita tu email de reclamación
+            </h2>
+            <p style="color: #7f8c8d; font-size: 0.95em; margin-top: -10px;">
+                Puedes personalizar el mensaje antes de enviarlo
+            </p>
 
             <div class="success-message" id="copy-success">
                 ✅ <strong>¡Email copiado!</strong><br>
@@ -435,44 +439,18 @@
             hiddenInput.value = editor.innerHTML;
         });
 
-        // Calculate and display compensation
-        const delayHours = parseFloat('{{ flight_data.delay_hours }}');
-        const ticketPrice = parseFloat('{{ flight_data.ticket_price }}');
-        const airline = '{{ flight_data.airline }}';
-
-        let calculatedCompensation = 0;
-
-        // Calculate compensation based on delay hours
-        if (delayHours === 1.5) {
-            const airlineKey = airline.toLowerCase().replace(/\s/g, '');
-            if (airlineKey === 'volaris') {
-                calculatedCompensation = 50;
-            } else if (airlineKey === 'vivaaerobus') {
-                calculatedCompensation = 75;
-            } else if (airlineKey === 'aeromexico') {
-                calculatedCompensation = ticketPrice * 0.05;
-            }
-        } else if (delayHours === 3.0) {
-            const airlineKey = airline.toLowerCase().replace(/\s/g, '');
-            if (airlineKey === 'volaris') {
-                calculatedCompensation = Math.max(250.00, ticketPrice * 0.075);
-            } else {
-                calculatedCompensation = ticketPrice * 0.075;
-            }
-        } else if (delayHours === 5.0) {
-            calculatedCompensation = ticketPrice * 1.25;
-        }
-
-        // Display the compensation
+        // Display the compensation from backend (single source of truth)
         const compensationDisplay = document.getElementById('compensation-display');
+        const compensationAmount = parseFloat('{{ compensation_amount }}');
+
         const formatter = new Intl.NumberFormat('es-MX', {
             style: 'currency',
             currency: 'MXN',
             minimumFractionDigits: 2
         });
 
-        if (calculatedCompensation > 0 && compensationDisplay) {
-            compensationDisplay.textContent = `💰 ${formatter.format(calculatedCompensation)}`;
+        if (compensationAmount > 0 && compensationDisplay) {
+            compensationDisplay.textContent = `💰 ${formatter.format(compensationAmount)}`;
         }
     </script>
 </body>

@@ -5,6 +5,17 @@ from email_sender import send_claim_email
 from datetime import datetime, timedelta
 import re
 import os
+import locale
+
+# Try to set Spanish locale for date formatting
+try:
+    locale.setlocale(locale.LC_TIME, 'es_ES.UTF-8')
+except:
+    try:
+        locale.setlocale(locale.LC_TIME, 'es_MX.UTF-8')
+    except:
+        # If locale setting fails, we'll use manual month translation
+        pass
 
 # Optional Resend integration - only import if available
 try:
@@ -18,16 +29,39 @@ def convert_markdown_to_html(text):
     """Convert markdown formatting to HTML for the front-end preview."""
     # Bold: **text**
     text = re.sub(r'\*\*([^\*]+?)\*\*', r'<strong>\1</strong>', text)
-    
+
     # Bullet points: * item
     text = re.sub(r'^\*\s+(.+)$', r'<li>\1</li>', text, flags=re.MULTILINE)
     # Wrap consecutive list items in <ul>
     text = re.sub(r'(<li>.+?</li>\n)+', lambda m: f'<ul>{m.group(0)}</ul>', text)
-    
+
     # Line breaks
     text = text.replace('\n', '<br>\n')
-    
+
     return text
+
+def format_date_spanish(date_obj):
+    """Format date in Spanish: DD de MONTH de YYYY"""
+    months_spanish = {
+        'January': 'enero', 'February': 'febrero', 'March': 'marzo',
+        'April': 'abril', 'May': 'mayo', 'June': 'junio',
+        'July': 'julio', 'August': 'agosto', 'September': 'septiembre',
+        'October': 'octubre', 'November': 'noviembre', 'December': 'diciembre'
+    }
+
+    # Try using locale first
+    try:
+        date_str = date_obj.strftime('%d de %B de %Y')
+        # If month is in English, translate it
+        for eng, esp in months_spanish.items():
+            date_str = date_str.replace(eng, esp)
+        return date_str
+    except:
+        # Fallback to manual formatting
+        day = date_obj.day
+        month = months_spanish.get(date_obj.strftime('%B'), date_obj.strftime('%B'))
+        year = date_obj.year
+        return f"{day} de {month} de {year}"
 
 app = Flask(__name__)
 app.secret_key = 'una_clave_secreta_fuerte_aqui' # ⬅️ REQUIRED for flash messages
@@ -47,10 +81,6 @@ def index():
     # Check if user is coming back from preview page
     back_data = None
     if request.args.get('back') == 'true':
-        passenger_name = request.args.get('passenger_name', '')
-        # Split the name for the form fields
-        name_parts = passenger_name.split(maxsplit=1) if passenger_name else ['', '']
-
         back_data = {
             'delay_hours': request.args.get('delay_hours', ''),
             'ticket_price': request.args.get('ticket_price', ''),
@@ -58,8 +88,7 @@ def index():
             'flight_number': request.args.get('flight_number', ''),
             'reservation_code': request.args.get('reservation_code', ''),
             'date': request.args.get('date', ''),
-            'passenger_first_name': name_parts[0] if len(name_parts) > 0 else '',
-            'passenger_last_name': name_parts[1] if len(name_parts) > 1 else '',
+            'passenger_name': request.args.get('passenger_name', ''),
             'passenger_email': request.args.get('passenger_email', '')
         }
 
@@ -74,11 +103,6 @@ def preview():
 
     # ⚠️ Input Validation and Data Gathering
     try:
-        # Combine first name and last name
-        passenger_first_name = request.form['passenger_first_name']
-        passenger_last_name = request.form['passenger_last_name']
-        passenger_full_name = f"{passenger_first_name} {passenger_last_name}"
-
         flight_data = {
             'airline': request.form['airline'],
             'flight_number': request.form['flight_number'],
@@ -86,7 +110,7 @@ def preview():
             'date': request.form['date'],
             'delay_hours': float(request.form['delay_hours']), # Convert to float
             'ticket_price': float(request.form['ticket_price']), # Convert to float
-            'passenger_name': passenger_full_name,
+            'passenger_name': request.form['passenger_name'],
             'passenger_email': request.form['passenger_email']
         }
     except ValueError:
@@ -96,17 +120,17 @@ def preview():
 
 
     # --- LEGAL VALIDATIONS ---
-    
+
     # 1. Date Validation: Max 1 Year Ago (As per your law requirement)
     one_year_ago = datetime.now() - timedelta(days=365)
-    
+
     try:
         # Assuming date input format is 'YYYY-MM-DD'
         flight_date = datetime.strptime(flight_data['date'], '%Y-%m-%d')
     except ValueError:
         flash('Error: El formato de la fecha es inválido. Utiliza YYYY-MM-DD.', 'error')
         return redirect(url_for('index'))
-        
+
     if flight_date < one_year_ago:
         flash('Error: La ley limita la compensación a vuelos que ocurrieron hace menos de un año.', 'error')
         return redirect(url_for('index'))
@@ -116,22 +140,28 @@ def preview():
     if flight_data['delay_hours'] < 1.0:
         flash('Error: El retraso debe ser de al menos 1.0 hora para que la reclamación sea válida.', 'error')
         return redirect(url_for('index'))
-        
+
     # --- END VALIDATIONS ---
-    
+
+    # Calculate compensation using backend logic (single source of truth)
+    from email_generator_simple import compare_compensations
+    comp_data = compare_compensations(flight_data)
+    compensation_amount = comp_data['amount'] if comp_data else 0
+
     # Generate letter
     letter = generate_mexico_claim_letter(flight_data)
     formatted_letter = convert_markdown_to_html(letter)
-    
+
     # Get airline email
     airline_email = get_airline_email(flight_data['airline'])
     if not airline_email:
         airline_email = "No encontrado - ingresa manualmente"
-    
-    return render_template('preview.html', 
-                         letter=formatted_letter, 
+
+    return render_template('preview.html',
+                         letter=formatted_letter,
                          flight_data=flight_data,
-                         airline_email=airline_email)
+                         airline_email=airline_email,
+                         compensation_amount=compensation_amount)
 
 @app.route('/send', methods=['POST'])
 def send():
@@ -153,11 +183,11 @@ def send():
 
     # Calculate deadline (10 days)
     deadline = today + timedelta(days=10)
-    deadline_date_str = deadline.strftime('%d de %B de %Y')
+    deadline_date_str = format_date_spanish(deadline)
 
     # Calculate reminder date (10 days from now)
     reminder_date = deadline
-    reminder_date_str = reminder_date.strftime('%d de %B de %Y')
+    reminder_date_str = format_date_spanish(reminder_date)
 
     # Calculate PROFECO deadline (same as airline deadline, 10 days)
     profeco_deadline_str = deadline_date_str

@@ -13,18 +13,51 @@
         body {
             font-family: 'Montserrat', sans-serif;
             max-width: 600px;
-            margin: 50px auto;
+            margin: 0 auto;
             padding: 20px;
             background: linear-gradient(135deg, #006847 0%, #ffffff 50%, #CE1126 100%);
             min-height: 100vh;
         }
 
+        /* Responsive width */
+        @media (min-width: 768px) {
+            body {
+                max-width: 700px;
+                padding: 30px;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            body {
+                max-width: 850px;
+                padding: 40px;
+            }
+        }
+
+        @media (min-width: 1440px) {
+            body {
+                max-width: 950px;
+            }
+        }
+
         .container {
             background: white;
             padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
             text-align: center;
+        }
+
+        @media (min-width: 768px) {
+            .container {
+                padding: 40px;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .container {
+                padding: 50px;
+            }
         }
 
         .success {
@@ -50,26 +83,31 @@
 
         .btn-primary {
             padding: 15px 30px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
             color: white;
             border: none;
-            border-radius: 5px;
+            border-radius: 8px;
             font-size: 16px;
             cursor: pointer;
             margin: 10px 5px;
-            /* Added margin for separation */
+            box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
+            transition: all 0.3s ease;
+            font-weight: 600;
         }
 
         .btn-primary:hover {
-            opacity: 0.9;
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            box-shadow: 0 6px 24px rgba(16, 185, 129, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 12px rgba(16, 185, 129, 0.3);
         }
 
         .btn-new-claim {
-            background-color: #3498db;
-        }
-
-        .btn-reminder {
-            background-color: #27ae60;
-            /* Green for reminder */
+            /* Inherits btn-primary styles */
         }
 
         .progress-container {
@@ -175,7 +213,7 @@
             </div>
             <div class="milestone completed">
                 <div class="milestone-circle">✓</div>
-                <div class="milestone-label">Calcular compensación</div>
+                <div class="milestone-label">Cálculo rápido</div>
             </div>
             <div class="milestone completed">
                 <div class="milestone-circle">✓</div>
@@ -183,33 +221,39 @@
             </div>
             <div class="milestone completed">
                 <div class="milestone-circle">✓</div>
-                <div class="milestone-label">Enviar ✓</div>
+                <div class="milestone-label">¡Reclamo enviado!</div>
             </div>
         </div>
 
         {% if success %}
         <div class="success">🤑</div>
-        <h1>¡Reclamación Enviada a <strong>{{ flight_data.airline }}</strong>!</h1>
-        <p style="font-size: 1.1em; color: #2c3e50; font-weight: bold;">
-            {{ flight_data.airline }} debe responder a más tardar el: {{ deadline_date }}
+        <h1>¡Lo lograste! Reclamación enviada a <strong>{{ flight_data.airline }}</strong>.</h1>
+        <p style="font-size: 1.1em; color: #2c3e50;">
+            {{ flight_data.airline }} debe responder a más tardar el: <strong>{{ deadline_date }}</strong>
         </p>
         <p>Esto se rige por el plazo de diez días naturales de la Ley de Aviación Civil Mexicana (LACM).</p>
-        <p>También recibirás una copia en tu email ({{ flight_data.passenger_email }}).</p>
+        <p>También recibirás una copia en tu email (<strong>{{ flight_data.passenger_email }}</strong>).</p>
 
         <hr style="margin: 20px 0;">
 
-        <div style="background: #e8f4f8; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: left;">
+        <div style="background: #f0fdf4; border-left: 4px solid #006847; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: left;">
             <h3 style="margin-top: 0; color: #2c3e50;">📋 Próximos Pasos:</h3>
             <ol style="line-height: 2; color: #2c3e50;">
-                <li><strong>Te enviaremos un recordatorio el {{ reminder_date }}</strong> para que verifiques si {{ flight_data.airline }} respondió.</li>
-                <li><strong>Si {{ flight_data.airline }} no responde antes del {{ profeco_deadline }}</strong>, presenta tu queja en <a href="https://www.gob.mx/profeco/articulos/proceso-y-requisitos-de-quejas-y-denuncias" target="_blank" style="color: #3498db; font-weight: bold;">PROFECO</a>.</li>
+                <li>Te enviaremos un recordatorio el <strong>{{ reminder_date }}</strong> para que verifiques si {{ flight_data.airline }} respondió.</li>
+                <li>Si {{ flight_data.airline }} no responde antes del <strong>{{ profeco_deadline }}</strong>, presenta tu queja en <a href="https://www.gob.mx/profeco/articulos/proceso-y-requisitos-de-quejas-y-denuncias" target="_blank" style="color: #006847; font-weight: bold;">PROFECO</a>.</li>
             </ol>
         </div>
 
-        <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <div style="background: #ffffff; border-left: 4px solid #CE1126; padding: 20px; border-radius: 8px; margin: 20px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
             <h3 style="margin-top: 0; color: #2c3e50;">💬 Ayúdanos a mejorar (1 minuto)</h3>
             <p style="margin-bottom: 15px; color: #2c3e50;">Responde 3 preguntas rápidas para ayudarnos a hacer VueloDigno aún mejor:</p>
-            <iframe src="https://docs.google.com/forms/d/e/1FAIpQLSdcpq8h1YahgWGUivulhVnxDi8yGqrtClunlMu7SHYm48Ia4w/viewform?embedded=true" width="100%" height="850" frameborder="0" marginheight="0" marginwidth="0" style="border-radius: 8px;">Cargando…</iframe>
+            <iframe src="https://docs.google.com/forms/d/e/1FAIpQLSdcpq8h1YahgWGUivulhVnxDi8yGqrtClunlMu7SHYm48Ia4w/viewform?embedded=true" width="100%" height="1171" frameborder="0" marginheight="0" marginwidth="0" style="border-radius: 8px;">Loading…</iframe>
+
+            <div style="background-color: #f0fdf4; border-left: 4px solid #006847; padding: 15px 20px; border-radius: 8px; margin-top: 20px; text-align: center;">
+                <p style="margin: 0; font-size: 1em; color: #065f46;">
+                    🙌 ¡Gracias por ayudarnos a mejorar VueloDigno!
+                </p>
+            </div>
         </div>
 
         <button class="btn-primary btn-new-claim" onclick="window.location.href='/'">
