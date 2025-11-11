@@ -392,7 +392,7 @@
         }
 
         select#airline option[value="Volaris"] {
-            background-image: url('{{ url_for('static', filename='volaris.webp') }}');
+            background-image: url('{{ url_for('static', filename='volaris.png') }}');
         }
 
         select#airline option[value="VivaAerobus"] {
@@ -400,12 +400,12 @@
         }
 
         select#airline option[value="Aeromexico"] {
-            background-image: url('{{ url_for('static', filename='aeromexico.jpg') }}');
+            background-image: url('{{ url_for('static', filename='aeromexico.png') }}');
         }
 
         /* Update select background based on selection */
         select#airline.volaris-selected {
-            background-image: url('{{ url_for('static', filename='volaris.webp') }}');
+            background-image: url('{{ url_for('static', filename='volaris.png') }}');
         }
 
         select#airline.vivaaerobus-selected {
@@ -413,7 +413,7 @@
         }
 
         select#airline.aeromexico-selected {
-            background-image: url('{{ url_for('static', filename='aeromexico.jpg') }}');
+            background-image: url('{{ url_for('static', filename='aeromexico.png') }}');
         }
 
         .error-message {
@@ -529,7 +529,7 @@
                 </div>
                 <br>
                 <div class="form-group">
-                    <label>Precio del boleto (MXN):</label>
+                    <label>Precio por boleto (MXN):</label>
                     <input type="number" name="ticket_price" id="ticket_price" step="0.01" min="1"
                         placeholder="Ej: 2500.00" required>
                     <span class="input-checkmark">✓</span>
