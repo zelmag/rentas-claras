@@ -91,13 +91,13 @@ def send_confirmation_to_user(flight_data, airline_email, compensation_amount, d
             <ol style="line-height: 1.8;">
                 <li><strong>{flight_data['airline']} debe responder antes del {deadline_date}</strong> según la Ley de Aviación Civil (10 días naturales).</li>
                 <li>Revisa tu email regularmente para ver su respuesta.</li>
-                <li>Si no responden, presenta tu queja en <a href="https://www.gob.mx/profeco/articulos/proceso-y-requisitos-de-quejas-y-denuncias" target="_blank">PROFECO</a>.</li>
+                <li>Si no responden, presenta tu queja en <a href="https://consumidoras.profeco.gob.mx/conciliaexpress/solicitud.php" target="_blank">PROFECO</a>.</li>
             </ol>
 
             <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ffc107;">
                 <p style="margin: 0;"><strong>📅 Recordatorio:</strong></p>
                 <p style="margin: 10px 0 0 0;">Marca tu calendario para el <strong>{deadline_date}</strong> - ese es el plazo legal para que la aerolínea responda.</p>
-                <p style="margin: 10px 0 0 0;">Si no responden, presenta tu queja en <a href="https://www.gob.mx/profeco/articulos/proceso-y-requisitos-de-quejas-y-denuncias" target="_blank" style="color: #006847; font-weight: bold;">PROFECO</a>.</p>
+                <p style="margin: 10px 0 0 0;">Si no responden, presenta tu queja en <a href="https://consumidoras.profeco.gob.mx/conciliaexpress/solicitud.php" target="_blank" style="color: #006847; font-weight: bold;">PROFECO</a>.</p>
             </div>
 
             <div style="background: #f3f4f6; padding: 15px; border-radius: 8px; margin: 20px 0;">
