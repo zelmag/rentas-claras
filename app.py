@@ -60,7 +60,7 @@ def generate_tweet_text(flight_data, compensation_amount):
 
 📧 Reclamo enviado hoy - plazo: 10 días
 
-Si no responden: PROFECO
+Si no responden, presentaré una queja con @Profeco
 
 #VueloDigno #PROFECO #DerechosDelPasajero"""
 
@@ -224,88 +224,103 @@ def preview():
 @app.route('/send', methods=['POST'])
 def send():
     """Send the claim email"""
-    # Rebuild flight_data from form
     try:
-        passenger_count = int(request.form.get('passenger_count', 1))
-    except ValueError:
-        passenger_count = 1
+        # Rebuild flight_data from form
+        try:
+            passenger_count = int(request.form.get('passenger_count', 1))
+        except ValueError:
+            passenger_count = 1
 
-    flight_data = {
-        'airline': request.form['airline'],
-        'flight_number': request.form['flight_number'],
-        'reservation_code': request.form.get('reservation_code', 'N/A'),
-        'date': request.form['date'],
-        'delay_hours': float(request.form['delay_hours']),
-        'ticket_price': float(request.form['ticket_price']),
-        'passenger_name': request.form['passenger_name'],
-        'passenger_email': request.form['passenger_email'],
-        'passenger_count': passenger_count,
-        'compensation_choice': request.form.get('compensation_choice', 'reembolso_indemnizacion')
-    }
+        flight_data = {
+            'airline': request.form['airline'],
+            'flight_number': request.form['flight_number'],
+            'reservation_code': request.form.get('reservation_code', 'N/A'),
+            'date': request.form['date'],
+            'delay_hours': float(request.form['delay_hours']),
+            'ticket_price': float(request.form['ticket_price']),
+            'passenger_name': request.form['passenger_name'],
+            'passenger_email': request.form['passenger_email'],
+            'passenger_count': passenger_count,
+            'compensation_choice': request.form.get('compensation_choice', 'reembolso_indemnizacion')
+        }
 
-    airline_email = request.form['airline_email']
-    letter = request.form['letter']  # The editable letter content
-    today = datetime.now()
+        airline_email = request.form['airline_email']
+        letter = request.form['letter']  # The editable letter content
+        today = datetime.now()
 
-    # Calculate deadline (10 days)
-    deadline = today + timedelta(days=10)
-    deadline_date_str = format_date_spanish(deadline)
+        # Calculate deadline (10 days)
+        deadline = today + timedelta(days=10)
+        deadline_date_str = format_date_spanish(deadline)
 
-    # Calculate reminder date (10 days from now)
-    reminder_date = deadline
-    reminder_date_str = format_date_spanish(reminder_date)
+        # Calculate reminder date (10 days from now)
+        reminder_date = deadline
+        reminder_date_str = format_date_spanish(reminder_date)
 
-    # Calculate PROFECO deadline (same as airline deadline, 10 days)
-    profeco_deadline_str = deadline_date_str
+        # Calculate PROFECO deadline (same as airline deadline, 10 days)
+        profeco_deadline_str = deadline_date_str
 
-    # Calculate compensation for confirmation email
-    from email_generator_simple import compare_compensations
-    comp_data = compare_compensations(flight_data)
-    per_passenger_amount = comp_data['amount'] if comp_data else 0
-    compensation_amount = per_passenger_amount * passenger_count
+        # Calculate compensation for confirmation email
+        from email_generator_simple import compare_compensations
+        comp_data = compare_compensations(flight_data)
+        per_passenger_amount = comp_data['amount'] if comp_data else 0
+        compensation_amount = per_passenger_amount * passenger_count
 
-    success = False
+        success = False
 
-    print("\n" + "="*50)
-    print("📧 ATTEMPTING TO SEND EMAIL")
-    print("="*50)
-    print(f"To: {airline_email}")
-    print(f"Passenger: {flight_data['passenger_email']}")
-    print(f"Flight: {flight_data['flight_number']}")
+        print("\n" + "="*50)
+        print("📧 ATTEMPTING TO SEND EMAIL")
+        print("="*50)
+        print(f"To: {airline_email}")
+        print(f"Passenger: {flight_data['passenger_email']}")
+        print(f"Flight: {flight_data['flight_number']}")
 
-    # Try Resend first if available
-    if RESEND_AVAILABLE:
-        print("\n🔄 Trying Resend.com...")
-        success = send_claim_email_resend(letter, flight_data, airline_email)
-        if success:
-            print("✅ Resend successful! Sending confirmation email...")
-            send_confirmation_to_user(flight_data, airline_email, compensation_amount, deadline_date_str)
-        else:
-            print("❌ Resend failed")
+        # Try Resend first if available
+        if RESEND_AVAILABLE:
+            print("\n🔄 Trying Resend.com...")
+            success = send_claim_email_resend(letter, flight_data, airline_email)
+            if success:
+                print("✅ Resend successful! Sending confirmation email...")
+                send_confirmation_to_user(flight_data, airline_email, compensation_amount, deadline_date_str)
+            else:
+                print("❌ Resend failed")
 
-    # Fallback to original SMTP if Resend not available or failed
-    if not success:
-        print("\n🔄 Using fallback SMTP method...")
-        success = send_claim_email(letter, flight_data, airline_email, use_user_email=False)
-        if success:
-            print("✅ SMTP successful!")
-        else:
-            print("❌ SMTP also failed")
+        # Fallback to original SMTP if Resend not available or failed
+        if not success:
+            print("\n🔄 Using fallback SMTP method...")
+            success = send_claim_email(letter, flight_data, airline_email, use_user_email=False)
+            if success:
+                print("✅ SMTP successful!")
+            else:
+                print("❌ SMTP also failed")
 
-    print("="*50)
-    print(f"FINAL RESULT: {'SUCCESS' if success else 'FAILED'}")
-    print("="*50 + "\n")
+        print("="*50)
+        print(f"FINAL RESULT: {'SUCCESS' if success else 'FAILED'}")
+        print("="*50 + "\n")
 
-    # Generate tweet text for social pressure
-    tweet_text = generate_tweet_text(flight_data, compensation_amount)
+        # Generate tweet text for social pressure
+        tweet_text = generate_tweet_text(flight_data, compensation_amount)
 
-    return render_template('success.html',
-                           success=success,
-                           flight_data=flight_data,
-                           deadline_date=deadline_date_str,
-                           reminder_date=reminder_date_str,
-                           profeco_deadline=profeco_deadline_str,
-                           tweet_text=tweet_text)
+        return render_template('success.html',
+                               success=success,
+                               flight_data=flight_data,
+                               deadline_date=deadline_date_str,
+                               reminder_date=reminder_date_str,
+                               profeco_deadline=profeco_deadline_str,
+                               tweet_text=tweet_text)
+
+    except Exception as e:
+        print(f"\n❌ ERROR IN /send ROUTE: {str(e)}")
+        import traceback
+        traceback.print_exc()
+
+        # Return error page
+        return render_template('success.html',
+                               success=False,
+                               flight_data={},
+                               deadline_date='',
+                               reminder_date='',
+                               profeco_deadline='',
+                               tweet_text='')
 
 if __name__ == '__main__':
     # Use PORT from environment variable (for production) or default to 8080 (for local dev)
