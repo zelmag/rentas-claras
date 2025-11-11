@@ -188,6 +188,27 @@
             pointer-events: none;
             z-index: 1000;
         }
+
+        /* Responsive iframe for Google Form */
+        .responsive-iframe {
+            width: 100%;
+            max-width: 100%;
+            border: none;
+            overflow: hidden;
+        }
+
+        /* Adjust iframe height for mobile */
+        @media (max-width: 767px) {
+            .responsive-iframe {
+                height: 1200px;
+            }
+        }
+
+        @media (min-width: 768px) {
+            .responsive-iframe {
+                height: 1374px;
+            }
+        }
     </style>
 
     <!-- Google tag (gtag.js) -->
@@ -256,7 +277,7 @@
                 VueloDigno aún mejor:</p>
             <iframe
                 src="https://docs.google.com/forms/d/e/1FAIpQLSdcpq8h1YahgWGUivulhVnxDi8yGqrtClunlMu7SHYm48Ia4w/viewform?embedded=true"
-                width="640" height="1374" frameborder="0" marginheight="0" marginwidth="0">Loading…</iframe>
+                class="responsive-iframe" frameborder="0" marginheight="0" marginwidth="0">Loading…</iframe>
             <div
                 style="background-color: #f0fdf4; border-left: 4px solid #006847; padding: 15px 20px; border-radius: 8px; margin-top: 20px; text-align: center;">
                 <p style="margin: 0; font-size: 1em; color: #065f46;">
