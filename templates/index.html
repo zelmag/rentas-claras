@@ -466,7 +466,7 @@
         </div>
 
         <!-- Hero Section -->
-        <div style="text-align: center; margin-bottom: 30px;">
+        <div id="hero-section" style="text-align: center; margin-bottom: 30px;">
             <h1 style="font-size: 2em; margin-bottom: 10px; color: #2c3e50;">
                 ✈️ ¿Vuelo retrasado o cancelado en México?
             </h1>
@@ -476,7 +476,7 @@
         </div>
 
         <!-- How It Works -->
-        <div style="background: linear-gradient(135deg, #f0fdf4 0%, #e8f4f8 100%); padding: 25px; border-radius: 12px; margin-bottom: 30px; border: 2px solid #006847;">
+        <div id="how-it-works-section" style="background: linear-gradient(135deg, #f0fdf4 0%, #e8f4f8 100%); padding: 25px; border-radius: 12px; margin-bottom: 30px; border: 2px solid #006847;">
             <h3 style="text-align: center; color: #2c3e50; margin-bottom: 20px; font-size: 1.2em;">
                 📋 Cómo funciona
             </h3>
@@ -760,8 +760,14 @@
             const subtitleElement = document.getElementById('page-subtitle');
             const descriptionElement = document.getElementById('page-description');
             const pageTitleContainer = document.getElementById('page-title');
+            const heroSection = document.getElementById('hero-section');
+            const howItWorksSection = document.getElementById('how-it-works-section');
 
             if (currentPage === 2 && calculatedCompensation > 0 && selectedAirline) {
+                // Hide hero and how-it-works on page 2
+                heroSection.style.display = 'none';
+                howItWorksSection.style.display = 'none';
+
                 // Show the title elements on page 2
                 pageTitleContainer.style.display = 'block';
                 subtitleElement.style.display = 'block';
@@ -783,12 +789,18 @@
                 subtitleElement.textContent = "";
                 descriptionElement.innerHTML = "";
             } else if (currentPage === 1) {
+                // Show hero and how-it-works on page 1
+                heroSection.style.display = 'block';
+                howItWorksSection.style.display = 'block';
+
                 // Hide title elements on page 1 (we have the hero section instead)
                 pageTitleContainer.style.display = 'none';
                 subtitleElement.style.display = 'none';
                 descriptionElement.style.display = 'none';
             } else {
                 // Default state
+                heroSection.style.display = 'none';
+                howItWorksSection.style.display = 'none';
                 pageTitleContainer.style.display = 'none';
                 subtitleElement.style.display = 'none';
                 descriptionElement.style.display = 'none';
