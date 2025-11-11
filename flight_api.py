@@ -41,6 +41,88 @@ def lookup_flight(flight_number, flight_date):
         # Clean up flight number (remove spaces, convert to uppercase)
         flight_number = flight_number.strip().upper().replace(" ", "")
 
+        # ⚡ TEST MODE - Return mock data for test flight numbers
+        test_flights = {
+            'TEST1': {
+                'airline': 'Volaris',
+                'airline_iata': 'Y4',
+                'flight_number': 'TEST1',
+                'flight_date': flight_date,
+                'delay_minutes': 90,
+                'delay_hours': 1.5,
+                'status': 'landed',
+                'departure_scheduled': f'{flight_date}T10:00:00',
+                'departure_actual': f'{flight_date}T11:30:00',
+                'arrival_delay_minutes': 90
+            },
+            'TEST2': {
+                'airline': 'VivaAerobus',
+                'airline_iata': 'VB',
+                'flight_number': 'TEST2',
+                'flight_date': flight_date,
+                'delay_minutes': 180,
+                'delay_hours': 3.0,
+                'status': 'landed',
+                'departure_scheduled': f'{flight_date}T14:00:00',
+                'departure_actual': f'{flight_date}T17:00:00',
+                'arrival_delay_minutes': 180
+            },
+            'TEST3': {
+                'airline': 'Aeromexico',
+                'airline_iata': 'AM',
+                'flight_number': 'TEST3',
+                'flight_date': flight_date,
+                'delay_minutes': 300,
+                'delay_hours': 5.0,
+                'status': 'landed',
+                'departure_scheduled': f'{flight_date}T08:00:00',
+                'departure_actual': f'{flight_date}T13:00:00',
+                'arrival_delay_minutes': 300
+            },
+            'DEMO1': {
+                'airline': 'Volaris',
+                'airline_iata': 'Y4',
+                'flight_number': 'DEMO1',
+                'flight_date': flight_date,
+                'delay_minutes': 90,
+                'delay_hours': 1.5,
+                'status': 'landed',
+                'departure_scheduled': f'{flight_date}T10:00:00',
+                'departure_actual': f'{flight_date}T11:30:00',
+                'arrival_delay_minutes': 90
+            },
+            'DEMO2': {
+                'airline': 'VivaAerobus',
+                'airline_iata': 'VB',
+                'flight_number': 'DEMO2',
+                'flight_date': flight_date,
+                'delay_minutes': 180,
+                'delay_hours': 3.0,
+                'status': 'landed',
+                'departure_scheduled': f'{flight_date}T14:00:00',
+                'departure_actual': f'{flight_date}T17:00:00',
+                'arrival_delay_minutes': 180
+            },
+            'DEMO3': {
+                'airline': 'Aeromexico',
+                'airline_iata': 'AM',
+                'flight_number': 'DEMO3',
+                'flight_date': flight_date,
+                'delay_minutes': 300,
+                'delay_hours': 5.0,
+                'status': 'landed',
+                'departure_scheduled': f'{flight_date}T08:00:00',
+                'departure_actual': f'{flight_date}T13:00:00',
+                'arrival_delay_minutes': 300
+            }
+        }
+
+        if flight_number in test_flights:
+            result = test_flights[flight_number]
+            print(f"🧪 TEST MODE: Using mock data for {flight_number}")
+            print(f"✅ Flight found: {result['airline']} - Delay: {result['delay_hours']}h ({result['delay_minutes']}min) - Status: {result['status']}")
+            return result
+
         # AviationStack API endpoint
         url = f"{AVIATIONSTACK_BASE_URL}/flights"
 
