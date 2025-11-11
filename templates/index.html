@@ -200,6 +200,10 @@
             font-weight: bold;
         }
 
+        label.optional::after {
+            content: none;
+        }
+
         .trust-indicators {
             background-color: #e8f4f8;
             padding: 15px;
@@ -482,7 +486,7 @@
                     <div style="font-size: 2em;">⚡</div>
                     <div style="flex: 1;">
                         <p style="margin: 0; font-weight: 600; color: #2c3e50; font-size: 1em; line-height: 1.4;">
-                            <strong>5 minutos.</strong> Gratis. Sin abogados.
+                            <strong>3 minutos.</strong> Gratis.
                         </p>
                         <p style="margin: 5px 0 0 0; font-size: 0.9em; color: #065f46;">
                             ✓ Garantizado por la Ley de Aviación Civil Mexicana
@@ -568,7 +572,7 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="reservation_code">Código de reservación <span style="color: #999; font-size: 0.85em;">(opcional)</span></label>
+                    <label for="reservation_code" class="optional">Código de reservación <span style="color: #999; font-size: 0.85em;">(opcional)</span></label>
                     <input type="text" id="reservation_code" name="reservation_code" pattern="[A-Za-z0-9]+">
                     <span class="input-checkmark">✓</span>
                     <small style="color: #666; font-size: 0.85em; display: block; margin-top: 5px;">
@@ -714,7 +718,7 @@
                     subtitleElement.textContent = "Te deben dinero.";
                 }
 
-                descriptionElement.innerHTML = "Hasta el 125% del precio de tu boleto.<br><br>Generamos y enviamos tu email de reclamación legal.<br><br>Gratis.";
+                descriptionElement.innerHTML = "Hasta el 125% del precio de tu boleto.<br><br>Generamos y enviamos tu email de reclamación legal.";
             } else {
                 emojiElement.textContent = "🇲🇽";
                 titleElement.textContent = "¿Vuelo Retrasado o Cancelado en México?";
