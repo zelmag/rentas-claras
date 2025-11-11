@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vista Previa - VueloDigno</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #006847 0%, #ffffff 50%, #CE1126 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #2c3e50;
+        }
+
+        .letter-editor {
+            /* Keep the same styling for the editable div */
+            width: 100%;
+            min-height: 400px;
+            padding: 20px;
+            border: 2px solid #3498db;
+            border-radius: 5px;
+            /* Use Montserrat for consistency */
+            font-family: 'Montserrat', sans-serif;
+            font-size: 14px;
+            margin: 20px 0;
+            box-sizing: border-box;
+            /* Remove resize: vertical as contenteditable divs are typically fixed height */
+            /* resize: vertical; */
+        }
+
+        .airline-email {
+            background: #e8f4f8;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+
+        .airline-email input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-top: 10px;
+            box-sizing: border-box;
+        }
+
+        .info-box {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+        }
+
+        button {
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-right: 10px;
+            box-shadow: 0 4px 15px rgba(46, 204, 113, 0.4);
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .button-group {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .btn-copy {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.4);
+        }
+
+        .btn-copy:hover {
+            background: linear-gradient(135deg, #2980b9 0%, #1f6fa8 100%);
+            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.6);
+        }
+
+        .success-message {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            display: none;
+        }
+
+        .success-message.show {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        button:hover {
+            background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+            box-shadow: 0 6px 20px rgba(46, 204, 113, 0.6);
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 10px rgba(46, 204, 113, 0.4);
+        }
+
+        .back-btn {
+            background: #ecf0f1;
+            color: #34495e;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .back-btn:hover {
+            background: #bdc3c7;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .progress-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 10px 0 20px 0;
+            position: relative;
+        }
+
+        .progress-line {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background-color: #e5e7eb;
+            z-index: 1;
+            transform: translateY(-50%);
+        }
+
+        .progress-line-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #006847 0%, #CE1126 100%);
+            width: 100%;
+        }
+
+        .milestone {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 2;
+            position: relative;
+        }
+
+        .milestone-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #e5e7eb;
+            border: 4px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            color: #9ca3af;
+        }
+
+        .milestone.completed .milestone-circle {
+            background: linear-gradient(135deg, #006847 0%, #059669 100%);
+            border-color: #006847;
+            color: white;
+        }
+
+        .milestone.active .milestone-circle {
+            background: linear-gradient(135deg, #CE1126 0%, #ef4444 100%);
+            border-color: #CE1126;
+            color: white;
+            box-shadow: 0 0 0 4px rgba(206, 17, 38, 0.2);
+        }
+
+        .milestone-label {
+            margin-top: 8px;
+            font-size: 0.75em;
+            color: #6b7280;
+            font-weight: 500;
+            text-align: center;
+            max-width: 80px;
+        }
+
+        .milestone.completed .milestone-label,
+        .milestone.active .milestone-label {
+            color: #2c3e50;
+            font-weight: 600;
+        }
+
+        .progress-steps {
+            font-size: 0.85em;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+    </style>
+
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-68JMDPRZY1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-68JMDPRZY1');
+    </script>
+</head>
+<body>
+    <div class="container">
+        <div class="progress-bar-section">
+            <div style="display: flex; justify-content: flex-end; align-items: center; margin-bottom: 10px;">
+                <span style="font-size: 1.5em;" id="compensation-display"></span>
+            </div>
+            <div class="progress-container">
+                <div class="progress-line">
+                    <div class="progress-line-fill"></div>
+                </div>
+                <div class="milestone completed">
+                    <div class="milestone-circle">✓</div>
+                    <div class="milestone-label">Calcular compensación</div>
+                </div>
+                <div class="milestone completed">
+                    <div class="milestone-circle">✓</div>
+                    <div class="milestone-label">Generar reclamo</div>
+                </div>
+                <div class="milestone active">
+                    <div class="milestone-circle">3</div>
+                    <div class="milestone-label">Enviar ✓</div>
+                </div>
+            </div>
+        </div>
+
+        <h1>📄 Vista Previa de tu Reclamación</h1>
+
+        <form action="/send" method="POST">
+            <div class="airline-email">
+                <strong>📧 Para:</strong>
+                <small style="display: block; color: #7f8c8d; margin-bottom: 5px;">Departamento de Atención al Cliente de {{ flight_data.airline }}</small>
+                <input type="email" name="airline_email" value="{{ airline_email }}" required>
+            </div>
+
+            <div class="airline-email" style="margin-top: 15px;">
+                <strong>📤 Con copia a:</strong>
+                <input type="email" name="passenger_email" value="{{ flight_data.passenger_email }}" required>
+                <small style="color: #7f8c8d;">Tu email (verifica que sea correcto)</small>
+            </div>
+
+            <h2 style="margin-top: 30px; color: #2c3e50;">🙌 Tu email de reclamación generado 🙌</h2>
+
+            <div class="info-box">
+                ℹ️ <strong>Puedes editar el email antes de enviar.</strong>
+            </div>
+
+            <div class="success-message" id="copy-success">
+                ✅ <strong>¡Email copiado!</strong><br>
+                <small>1. Abre tu cliente de email (Gmail, Outlook, etc.)<br>
+                2. Pega el email (Ctrl+V o Cmd+V)<br>
+                3. Envíalo a: <strong>{{ airline_email }}</strong></small>
+            </div>
+
+            <div
+                id="single_editor"
+                contenteditable="true"
+                class="letter-editor"
+                style="border: 2px solid #3498db; font-family: 'Montserrat', sans-serif; font-size: 14px;"
+            >{{ letter | safe }}</div> <input type="hidden" name="letter" id="final_letter_content">
+            <input type="hidden" name="airline" value="{{ flight_data.airline }}">
+            <input type="hidden" name="flight_number" value="{{ flight_data.flight_number }}">
+            <input type="hidden" name="date" value="{{ flight_data.date }}">
+            <input type="hidden" name="delay_hours" value="{{ flight_data.delay_hours }}">
+            <input type="hidden" name="ticket_price" value="{{ flight_data.ticket_price }}">
+            <input type="hidden" name="passenger_name" value="{{ flight_data.passenger_name }}">
+            <input type="hidden" name="reservation_code" value="{{ flight_data.reservation_code }}">
+
+            <div class="button-group">
+                <button type="button" class="back-btn" onclick="goBackToForm()">← Volver</button>
+                <div style="display: flex; gap: 12px;">
+                    <button type="button" class="btn-copy" onclick="copyToClipboard()">📋 Copiar Email</button>
+                    <button type="submit">✉️ Enviar Ahora!</button>
+                </div>
+            </div>
+        </form>
+
+        <!-- Hidden form for going back to page 2 -->
+        <form id="backForm" action="/" method="GET" style="display: none;">
+            <input type="hidden" name="back" value="true">
+            <input type="hidden" name="delay_hours" value="{{ flight_data.delay_hours }}">
+            <input type="hidden" name="ticket_price" value="{{ flight_data.ticket_price }}">
+            <input type="hidden" name="airline" value="{{ flight_data.airline }}">
+            <input type="hidden" name="flight_number" value="{{ flight_data.flight_number }}">
+            <input type="hidden" name="reservation_code" value="{{ flight_data.reservation_code }}">
+            <input type="hidden" name="date" value="{{ flight_data.date }}">
+            <input type="hidden" name="passenger_name" value="{{ flight_data.passenger_name }}">
+            <input type="hidden" name="passenger_email" value="{{ flight_data.passenger_email }}">
+        </form>
+    </div>
+
+    <script>
+        function goBackToForm() {
+            document.getElementById('backForm').submit();
+        }
+
+        async function copyToClipboard() {
+            const editor = document.getElementById('single_editor');
+            const emailContent = editor.innerHTML;
+
+            // Get email addresses
+            const airlineEmail = document.querySelector('input[name="airline_email"]').value;
+            const passengerEmail = document.querySelector('input[name="passenger_email"]').value;
+
+            // Convert HTML to clean plain text
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = emailContent;
+
+            // Convert <br> to newlines
+            tempDiv.innerHTML = tempDiv.innerHTML.replace(/<br\s*\/?>/gi, '\n');
+
+            // Convert list items to bullets
+            const listItems = tempDiv.querySelectorAll('li');
+            listItems.forEach(li => {
+                li.textContent = '• ' + li.textContent;
+            });
+
+            // Get text content
+            let plainText = tempDiv.textContent || tempDiv.innerText || '';
+
+            // Clean up extra whitespace
+            plainText = plainText
+                .replace(/\n{3,}/g, '\n\n')  // Max 2 consecutive newlines
+                .replace(/[ \t]+/g, ' ')      // Multiple spaces to single space
+                .trim();
+
+            // Create full email content with headers
+            const fullEmail = `Para: ${airlineEmail}\nDe: ${passengerEmail}\n\n${plainText}`;
+
+            try {
+                // Copy both HTML and plain text
+                const htmlBlob = new Blob([emailContent], { type: 'text/html' });
+                const textBlob = new Blob([fullEmail], { type: 'text/plain' });
+
+                const data = [new ClipboardItem({
+                    'text/html': htmlBlob,
+                    'text/plain': textBlob
+                })];
+
+                await navigator.clipboard.write(data);
+                showSuccessMessage();
+            } catch (err) {
+                // Fallback to plain text copy
+                try {
+                    await navigator.clipboard.writeText(fullEmail);
+                    showSuccessMessage();
+                } catch (e) {
+                    alert('No se pudo copiar. Por favor, selecciona y copia manualmente el texto del email.');
+                }
+            }
+        }
+
+        function showSuccessMessage() {
+            const successMsg = document.getElementById('copy-success');
+            successMsg.classList.add('show');
+
+            // Scroll to message
+            successMsg.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+            // Shoot confetti!
+            shootConfetti();
+
+            // Hide after 10 seconds
+            setTimeout(() => {
+                successMsg.classList.remove('show');
+            }, 10000);
+        }
+
+        function shootConfetti() {
+            // Check if confetti library is loaded
+            if (typeof confetti === 'undefined') {
+                console.error('Confetti library not loaded');
+                return;
+            }
+
+            // Use the default confetti function (simpler approach)
+            confetti({
+                particleCount: 100,
+                spread: 70,
+                origin: { y: 0.6 },
+                colors: ['#10b981', '#3498db', '#f39c12']
+            });
+        }
+
+        const form = document.querySelector('form');
+        const editor = document.getElementById('single_editor');
+        const hiddenInput = document.getElementById('final_letter_content');
+
+        // Prevent form from navigating away on submit
+        form.addEventListener('submit', function(event) {
+            // Copy the final HTML content from the editor DIV into the hidden input
+            hiddenInput.value = editor.innerHTML;
+        });
+
+        // Calculate and display compensation
+        const delayHours = parseFloat('{{ flight_data.delay_hours }}');
+        const ticketPrice = parseFloat('{{ flight_data.ticket_price }}');
+        const airline = '{{ flight_data.airline }}';
+
+        let calculatedCompensation = 0;
+
+        // Calculate compensation based on delay hours
+        if (delayHours === 1.5) {
+            const airlineKey = airline.toLowerCase().replace(/\s/g, '');
+            if (airlineKey === 'volaris') {
+                calculatedCompensation = 50;
+            } else if (airlineKey === 'vivaaerobus') {
+                calculatedCompensation = 75;
+            } else if (airlineKey === 'aeromexico') {
+                calculatedCompensation = ticketPrice * 0.05;
+            }
+        } else if (delayHours === 3.0) {
+            const airlineKey = airline.toLowerCase().replace(/\s/g, '');
+            if (airlineKey === 'volaris') {
+                calculatedCompensation = Math.max(250.00, ticketPrice * 0.075);
+            } else {
+                calculatedCompensation = ticketPrice * 0.075;
+            }
+        } else if (delayHours === 5.0) {
+            calculatedCompensation = ticketPrice * 1.25;
+        }
+
+        // Display the compensation
+        const compensationDisplay = document.getElementById('compensation-display');
+        const formatter = new Intl.NumberFormat('es-MX', {
+            style: 'currency',
+            currency: 'MXN',
+            minimumFractionDigits: 2
+        });
+
+        if (calculatedCompensation > 0 && compensationDisplay) {
+            compensationDisplay.textContent = `💰 ${formatter.format(calculatedCompensation)}`;
+        }
+    </script>
+</body>
+
+</html>

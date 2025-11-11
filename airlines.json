@@ -1,0 +1,20 @@
+{
+  "vivaaerobus": {
+    "name": "VivaAerobus",
+    "email": "atencion.clientes@vivaaerobus.com",
+    "has_policy": true,
+    "policy_file": "vivaaerobus.txt"
+  },
+  "aeromexico": {
+    "name": "Aeroméxico",
+    "email": "atencion.clientes@aeromexico.com",
+    "has_policy": true,
+    "policy_file": "aeromexico.txt"
+  },
+  "volaris": {
+    "name": "Volaris",
+    "email": "support@volaris.zendesk.com",
+    "has_policy": true,
+    "policy_file": "volaris.txt"
+  }
+}

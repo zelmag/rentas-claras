@@ -1,0 +1,26 @@
+{
+  "vivaaerobus": {
+    "1-2_hours": 75,
+    "2-4_hours_percent": 0.08,
+    "4_plus_hours_percent": 0.25,
+    "4_plus_hours_refund": 1.0
+  },
+  "aeromexico": {
+    "1-2_hours_percent": 0.05,
+    "2-4_hours_percent": 0.075,
+    "4_plus_hours_percent": 0.25,
+    "4_plus_hours_refund": 1.0
+  },
+  "volaris": {
+    "1-2_hours": 50,
+    "2-4_hours_fixed": 250,
+    "2-4_hours_percent": 0.075,
+    "4_plus_hours_percent": 0.25,
+    "4_plus_hours_refund": 1.0
+  },
+  "mexican_law": {
+    "2-4_hours_percent": 0.075,
+    "4_plus_hours_percent": 0.25,
+    "4_plus_hours_refund": 1.0
+  }
+}

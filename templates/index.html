@@ -1,0 +1,1310 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VueloDigno - Reclamación de Vuelos</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #006847 0%, #ffffff 50%, #CE1126 100%);
+            min-height: 100vh;
+        }
+
+        /* Responsive width */
+        @media (min-width: 768px) {
+            body {
+                max-width: 700px;
+                padding: 30px;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            body {
+                max-width: 850px;
+                padding: 40px;
+            }
+        }
+
+        @media (min-width: 1440px) {
+            body {
+                max-width: 950px;
+            }
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        @media (min-width: 768px) {
+            .container {
+                padding: 40px;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .container {
+                padding: 50px;
+            }
+        }
+
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+
+        h2 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 12px;
+            line-height: 1.4;
+        }
+
+        h3 {
+            color: #2c3e50;
+            margin-bottom: 12px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 0.95em;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 14px 16px;
+            padding-right: 45px;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+            font-size: 15px;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        }
+
+        input.valid,
+        select.valid {
+            border-color: #10b981;
+            background-color: #f0fdf4;
+        }
+
+        input.invalid,
+        select.invalid {
+            border-color: #ef4444;
+        }
+
+        .input-checkmark {
+            position: absolute;
+            right: 16px;
+            top: 42px;
+            color: #10b981;
+            font-size: 1.3em;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+
+        .input-checkmark.show {
+            opacity: 1;
+        }
+
+        .btn-group {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            margin-top: 30px;
+        }
+
+        .btn-group button {
+            width: auto;
+            flex-grow: 1;
+            padding: 16px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            box-shadow: 0 6px 24px rgba(16, 185, 129, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-secondary {
+            background-color: #f3f4f6;
+            color: #6b7280;
+            border: 2px solid #e5e7eb;
+        }
+
+        .btn-secondary:hover {
+            background-color: #e5e7eb;
+            border-color: #d1d5db;
+        }
+
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        label::after {
+            content: " *";
+            color: red;
+            margin-left: 4px;
+            font-weight: bold;
+        }
+
+        .trust-indicators {
+            background-color: #e8f4f8;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 0.9em;
+            line-height: 1.8;
+        }
+
+        .trust-indicators div {
+            margin-bottom: 5px;
+        }
+
+        .value-prop {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        .value-prop strong {
+            color: #856404;
+        }
+
+        .progress-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 10px 0 24px 0;
+            position: relative;
+        }
+
+        .progress-line {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background-color: #e5e7eb;
+            z-index: 1;
+            transform: translateY(-50%);
+        }
+
+        .progress-line-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #006847 0%, #CE1126 100%);
+            transition: width 0.4s ease;
+            width: 0%;
+        }
+
+        .milestone {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 2;
+            position: relative;
+        }
+
+        .milestone-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #e5e7eb;
+            border: 4px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            color: #9ca3af;
+        }
+
+        .milestone.completed .milestone-circle {
+            background: linear-gradient(135deg, #006847 0%, #059669 100%);
+            border-color: #006847;
+            color: white;
+        }
+
+        .milestone.active .milestone-circle {
+            background: linear-gradient(135deg, #CE1126 0%, #ef4444 100%);
+            border-color: #CE1126;
+            color: white;
+            box-shadow: 0 0 0 4px rgba(206, 17, 38, 0.2);
+        }
+
+        .milestone-label {
+            margin-top: 8px;
+            font-size: 0.75em;
+            color: #6b7280;
+            font-weight: 500;
+            text-align: center;
+            max-width: 80px;
+        }
+
+        .milestone.completed .milestone-label,
+        .milestone.active .milestone-label {
+            color: #2c3e50;
+            font-weight: 600;
+        }
+
+        .progress-steps {
+            font-size: 0.85em;
+            color: #6b7280;
+            margin-top: 8px;
+        }
+
+        .trust-badges {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: nowrap;
+            margin: 30px 0;
+            overflow-x: auto;
+        }
+
+        .badge {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            padding: 18px 20px;
+            background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+            border: 1px solid #e5e7eb;
+            flex: 1;
+            min-width: 120px;
+            transition: all 0.3s ease;
+        }
+
+        .badge:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            border-color: #667eea;
+        }
+
+        .badge-icon {
+            font-size: 2.2em;
+            margin-bottom: 10px;
+        }
+
+        .badge-title {
+            font-weight: 600;
+            font-size: 0.9em;
+            color: #1f2937;
+            margin-bottom: 4px;
+        }
+
+        .badge-subtitle {
+            font-size: 0.75em;
+            color: #6b7280;
+            line-height: 1.4;
+        }
+
+        .delay-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            margin-top: 12px;
+        }
+
+        .delay-option {
+            padding: 18px 20px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            background-color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        .delay-option:hover {
+            border-color: #667eea;
+            background-color: #f9fafb;
+            transform: translateX(4px);
+        }
+
+        .delay-option.selected {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+            font-weight: bold;
+            color: #4338ca;
+            position: relative;
+        }
+
+        .delay-option.selected::after {
+            content: '✓';
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #10b981;
+            font-size: 1.6em;
+            font-weight: bold;
+        }
+
+        .page-subtitle {
+            color: #7f8c8d;
+            font-size: 0.9em;
+            margin-top: 5px;
+            font-weight: normal;
+        }
+
+        .airline-option {
+            background-repeat: no-repeat;
+            background-position: 10px center;
+            background-size: 24px;
+            padding-left: 45px !important;
+            min-height: 40px;
+            display: flex;
+            align-items: center;
+        }
+
+        select#airline {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="gray"><path d="M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z"/></svg>');
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            padding-right: 30px;
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            font-size: 15px;
+        }
+
+        select#airline option {
+            padding: 12px;
+            font-size: 15px;
+        }
+
+        /* Airline-specific colors */
+        select#airline option[value="Volaris"] {
+            color: #86358B;
+            /* Volaris purple */
+            font-weight: 500;
+        }
+
+        select#airline option[value="VivaAerobus"] {
+            color: #00A0DF;
+            /* VivaAerobus blue */
+            font-weight: 500;
+        }
+
+        select#airline option[value="Aeromexico"] {
+            color: #C40C1E;
+            /* Aeromexico red */
+            font-weight: 500;
+        }
+
+        .error-message {
+            color: #ef4444;
+            font-size: 0.85em;
+            margin-top: 6px;
+            display: none;
+            font-weight: 500;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+    </style>
+
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-68JMDPRZY1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-68JMDPRZY1');
+    </script>
+</head>
+
+<body>
+    <div class="container">
+        <div class="progress-bar-section">
+            <div style="display: flex; justify-content: flex-end; align-items: center; margin-bottom: 10px;">
+                <span style="font-size: 1.5em;" id="compensation-display"></span>
+            </div>
+            <div class="progress-container">
+                <div class="progress-line">
+                    <div class="progress-line-fill" id="progress-line-fill"></div>
+                </div>
+                <div class="milestone" id="milestone-1">
+                    <div class="milestone-circle">1</div>
+                    <div class="milestone-label">Calcular compensación</div>
+                </div>
+                <div class="milestone" id="milestone-2">
+                    <div class="milestone-circle">2</div>
+                    <div class="milestone-label">Generar reclamo</div>
+                </div>
+                <div class="milestone" id="milestone-3">
+                    <div class="milestone-circle">3</div>
+                    <div class="milestone-label">Enviar ✓</div>
+                </div>
+            </div>
+        </div>
+
+        <h2 id="page-title">
+            <span id="page-title-emoji" style="font-size: 1.5em; margin-right: 10px;">🇲🇽</span>
+            <span id="page-title-text">¿Tu vuelo fue retrasado o cancelado en México?</span>
+        </h2>
+        <h1 id="page-subtitle"
+            style="text-align: center; color: #e74c3c; font-size: 1.3em; margin-bottom: 20px; line-height: 1.3;">
+            Te deben dinero.
+        </h1>
+        <h3 id="page-description">
+            <strong>Reclama tu compensación en 2 minutos</strong>. <br><br>
+            Por ley, tu compensación es garantizada si la demora es mayor a 1 hora.
+        </h3>
+        <form action="/preview" method="POST" id="multi-page-form">
+
+            <div class="page active" data-page="1">
+                <!-- Trust Badges -->
+                <div class="trust-badges">
+                    <div class="badge">
+                        <div class="badge-icon">⚖️</div>
+                        <div class="badge-title">Basado en Ley</div>
+                        <div class="badge-subtitle">Aviación Civil Mexicana</div>
+                    </div>
+                    <div class="badge">
+                        <div class="badge-icon">💯</div>
+                        <div class="badge-title">100% Gratis</div>
+                        <div class="badge-subtitle">Sin comisiones</div>
+                    </div>
+                    <div class="badge">
+                        <div class="badge-icon">⚡</div>
+                        <div class="badge-title">2 Minutos</div>
+                        <div class="badge-subtitle">Rápido y fácil</div>
+                    </div>
+                    <div class="badge">
+                        <div class="badge-icon">🔒</div>
+                        <div class="badge-title">Tu Email</div>
+                        <div class="badge-subtitle">Privado y seguro</div>
+                    </div>
+                </div>
+
+                <hr>
+                <label>¿De cuánto fue el retraso del vuelo?
+                </label>
+                <div class="delay-buttons">
+                    <button type="button" class="delay-option" data-value="1">
+                        <strong>1-2 horas</strong><br>
+                        <span style="font-size: 0.85em; color: #7f8c8d; font-weight: normal;">$50-75 MXN o 5% del boleto
+                            según aerolínea</span>
+                    </button>
+                    <button type="button" class="delay-option" data-value="2">
+                        <strong>2-4 horas</strong><br>
+                        <span style="font-size: 0.85em; color: #7f8c8d; font-weight: normal;">Mínimo 7.5% del boleto por
+                            ley</span>
+                    </button>
+                    <button type="button" class="delay-option" data-value="3">
+                        <strong>Más de 4 horas o Cancelación</strong><br>
+                        <span style="font-size: 0.85em; color: #7f8c8d; font-weight: normal;">125% del boleto por
+                            ley</span>
+                    </button>
+                </div>
+                <input type="hidden" id="delay_hours" name="delay_hours">
+                <br>
+                <div class="form-group">
+                    <label>Precio del boleto (MXN):</label>
+                    <input type="number" name="ticket_price" id="ticket_price" step="0.01" min="1"
+                        placeholder="Ej: 2500.00" required>
+                    <span class="input-checkmark">✓</span>
+                    <div class="error-message" id="ticket_price_error">Por favor ingresa un precio válido mayor a 0
+                    </div>
+                </div>
+                <br>
+                <div class="form-group">
+                    <label>Aerolínea:</label>
+                    <select name="airline" id="airline" required>
+                        <option value="">Selecciona...</option>
+                        <option value="Volaris">🟣 Volaris</option>
+                        <option value="VivaAerobus">🟢 VivaAerobus</option>
+                        <option value="Aeromexico">🔵 Aeroméxico</option>
+                    </select>
+                    <span class="input-checkmark">✓</span>
+                    <div class="error-message" id="airline_error">Por favor selecciona una aerolínea</div>
+                </div>
+
+                <div class="btn-group" style="justify-content: center;">
+                    <button type="button" class="btn-secondary" id="back-1" onclick="showPage(1)" disabled
+                        style="visibility: hidden; display: none;">← Atrás</button>
+                    <button type="button" class="btn-primary" id="next-1" onclick="nextPage()" style="flex-grow: 0;">¿Cuánto Me Deben?</button>
+                </div>
+
+                <div
+                    style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 12px 15px; border-radius: 5px; margin-top: 15px; font-size: 0.9em; line-height: 1.5;">
+                    <strong>⏰ Importante:</strong> La Ley de Aviación Civil en México te permite reclamar tu
+                    compensación hasta un año después del vuelo. ¡No lo dejes pasar!
+                </div>
+            </div>
+
+            <div class="page" data-page="2">
+                <div id="eligibility-message-box"
+                    style="display:none; margin: 20px 0; padding: 15px; border-radius: 5px; background-color: #e8f4f8; border-left: 5px solid #3498db;">
+                    <p style="font-weight: bold; color: #34495e; margin-bottom: 10px;">Estado de tu Reclamación:</p>
+                    <div id="claim-result" style="margin-bottom: 10px;"></div>
+                    <div id="compensation-amount" style="margin-top: 10px;"></div>
+                </div>
+                <h2 id="page2-subtitle" style="text-align: center; color: #27ae60; font-size: 1.2em; margin: 15px 0 20px 0; display: none;">
+                    ¡Vamos a generar tu email de reclamo automaticamente!
+                </h2>
+                <h3>Datos de Vuelo
+                    <div class="page-subtitle">Necesitamos esta información para generar tu email de reclamación</div>
+                </h3>
+                <hr>
+
+                <div class="form-group">
+                    <label>Número de vuelo:</label>
+                    <input type="text" name="flight_number" id="flight_number" placeholder="Ej: 1099"
+                        pattern="[A-Za-z0-9]+" required>
+                    <span class="input-checkmark">✓</span>
+                    <div class="error-message" id="flight_number_error">Por favor ingresa un número de vuelo válido
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="reservation_code">Código de reservación:</label>
+                    <input type="text" id="reservation_code" name="reservation_code" pattern="[A-Za-z0-9]+" required>
+                    <span class="input-checkmark">✓</span>
+                    <div class="error-message" id="reservation_code_error">Por favor ingresa un código de reservación
+                        válido</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="date">Fecha del Vuelo:</label>
+                    <input type="date" id="date" name="date" required min="{{ min_date }}" max="{{ max_date }}">
+                    <span class="input-checkmark">✓</span>
+                    <div class="error-message" id="date_error">Por favor selecciona la fecha del vuelo</div>
+                </div>
+
+                <h3 style="margin-top: 30px;">Datos de Contacto</h3>
+                <hr>
+
+                <div class="form-group">
+                    <label>Tu nombre:</label>
+                    <input type="text" name="passenger_first_name" id="passenger_first_name" placeholder="Ej: Juan"
+                        pattern="[A-Za-zÀ-ÿ\s]+" required>
+                    <span class="input-checkmark">✓</span>
+                    <div class="error-message" id="passenger_first_name_error">Por favor ingresa tu nombre</div>
+                </div>
+
+                <div class="form-group">
+                    <label>Tu apellido:</label>
+                    <input type="text" name="passenger_last_name" id="passenger_last_name" placeholder="Ej: Pérez"
+                        pattern="[A-Za-zÀ-ÿ\s]+" required>
+                    <span class="input-checkmark">✓</span>
+                    <div class="error-message" id="passenger_last_name_error">Por favor ingresa tu apellido</div>
+                </div>
+
+                <div class="form-group">
+                    <label>Tu email:</label>
+                    <input type="email" name="passenger_email" id="passenger_email" placeholder="tu@email.com" required>
+                    <span class="input-checkmark">✓</span>
+                    <div class="error-message" id="passenger_email_error">Por favor ingresa un email válido</div>
+                </div>
+
+                <div class="btn-group">
+                    <button type="button" class="btn-secondary" id="back-2" onclick="prevPage()">← Atrás</button>
+                    <button type="submit" class="btn-primary">Ver y Editar Mi Email de Reclamo →</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        const max = (a, b) => (a > b ? a : b);
+        const LACM_URL = "https://www.profeco.gob.mx/politicasaviacion/pdf/DERECHOS%20Y%20OBLIGACIONES%20VIAJAR%20EN%20AVI%C3%93N%20QR%20(vf).pdf";
+        const airlinePolicyUrls = {
+            'Volaris': 'https://cms.volaris.com/globalassets/pdfs/esp/politicas-de-compensacion.pdf',
+            'VivaAerobus': 'https://www.vivaaerobus.com/es-mx/legal/politica-de-compensacion',
+            'Aeromexico': 'https://www.profeco.gob.mx/politicasaviacion/pdf/Aerom%C3%A9xico.pdf'
+        };
+        const airlineEmojis = {
+            'Volaris': '🟣',
+            'VivaAerobus': '🟢',
+            'Aeromexico': '🔵'
+        };
+        const delayMap = {
+            '1': { value: 1.5, text: '1-2 horas' },
+            '2': { value: 3.0, text: '2-4 horas' },
+            '3': { value: 5.0, text: 'Más de 4 horas o Cancelación' }
+        };
+
+        let currentPage = 1;
+        const totalPages = 2;
+        let calculatedCompensation = 0;
+        let selectedAirline = '';
+
+        // Define progress steps (3 conceptual steps for 2 pages)
+        const progressSteps = [
+            'Calcular compensación',
+            'Datos para generar reclamo',
+            'Revisar reclamo y enviar'
+        ];
+
+        const formatter = new Intl.NumberFormat('es-MX', {
+            style: 'currency',
+            currency: 'MXN',
+            minimumFractionDigits: 2
+        });
+
+        // MULTIPAGE LOGIC
+        function showPage(pageNumber) {
+            const pages = document.querySelectorAll('.page');
+            pages.forEach(page => {
+                page.classList.remove('active');
+            });
+            document.querySelector(`.page[data-page="${pageNumber}"]`).classList.add('active');
+            currentPage = pageNumber;
+            updateProgress();
+            updatePageTitles();
+        }
+
+        function updatePageTitles() {
+            const titleElement = document.getElementById('page-title-text');
+            const emojiElement = document.getElementById('page-title-emoji');
+            const subtitleElement = document.getElementById('page-subtitle');
+            const descriptionElement = document.getElementById('page-description');
+
+            if (currentPage === 2 && calculatedCompensation > 0 && selectedAirline) {
+                const policyUrl = airlinePolicyUrls[selectedAirline] || '#';
+                const airlineEmoji = airlineEmojis[selectedAirline] || '✈️';
+
+                emojiElement.textContent = airlineEmoji;
+                titleElement.innerHTML = `<a href="${policyUrl}" target="_blank" style="color: #2c3e50; text-decoration: none; border-bottom: 2px solid #3498db;">${selectedAirline}</a> te debe <span style="color: #e74c3c; font-weight: bold;">${formatter.format(calculatedCompensation)} MXN</span>`;
+                subtitleElement.textContent = "";
+                descriptionElement.innerHTML = "";
+            } else if (currentPage === 1) {
+                emojiElement.textContent = "🇲🇽";
+                titleElement.textContent = "¿Vuelo Retrasado o Cancelado en México?";
+
+                // Show airline name if selected
+                if (selectedAirline) {
+                    subtitleElement.textContent = `${selectedAirline} te debe dinero.`;
+                } else {
+                    subtitleElement.textContent = "Te deben dinero.";
+                }
+
+                descriptionElement.innerHTML = "Hasta el 125% del precio de tu boleto.<br><br>Generamos y enviamos tu email de reclamación legal.<br><br>Gratis.";
+            } else {
+                emojiElement.textContent = "🇲🇽";
+                titleElement.textContent = "¿Vuelo Retrasado o Cancelado en México?";
+                subtitleElement.textContent = "Te deben dinero.";
+                descriptionElement.innerHTML = "";
+            }
+        }
+
+        function validateField(fieldId) {
+            const field = document.getElementById(fieldId);
+            const errorElement = document.getElementById(fieldId + '_error');
+            const checkmark = field?.parentElement.querySelector('.input-checkmark');
+
+            if (!field) return true;
+
+            let isValid = true;
+
+            if (field.type === 'email') {
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                isValid = emailRegex.test(field.value);
+            } else if (field.type === 'number') {
+                isValid = field.value && parseFloat(field.value) > 0;
+            } else if (field.hasAttribute('pattern')) {
+                const pattern = new RegExp(field.getAttribute('pattern'));
+                isValid = pattern.test(field.value);
+            } else {
+                isValid = field.value && field.value.trim() !== '';
+            }
+
+            // Update visual states
+            if (errorElement) {
+                if (!isValid) {
+                    errorElement.classList.add('show');
+                    field.classList.remove('valid');
+                    field.classList.add('invalid');
+                    if (checkmark) checkmark.classList.remove('show');
+                } else {
+                    errorElement.classList.remove('show');
+                    field.classList.remove('invalid');
+                    field.classList.add('valid');
+                    if (checkmark) checkmark.classList.add('show');
+                }
+            }
+
+            return isValid;
+        }
+
+        function validatePage(pageNumber) {
+            if (pageNumber === 1) {
+                const delayHours = document.getElementById('delay_hours').value;
+                if (!delayHours || delayHours === '' || parseInt(delayHours) === 0) {
+                    alert('Por favor, selecciona cuánto fue el retraso del vuelo.');
+                    return false;
+                }
+
+                const ticketPriceValid = validateField('ticket_price');
+                const airlineValid = validateField('airline');
+
+                return ticketPriceValid && airlineValid;
+            }
+
+            const currentPageElement = document.querySelector(`.page[data-page="${pageNumber}"]`);
+            const requiredFields = currentPageElement.querySelectorAll('[required]');
+            let isValid = true;
+
+            requiredFields.forEach(field => {
+                if (field.type === 'hidden') {
+                    return;
+                }
+                if (!validateField(field.id)) {
+                    isValid = false;
+                }
+            });
+
+            if (!isValid) {
+                alert('Por favor, completa todos los campos correctamente antes de continuar.');
+            }
+            return isValid;
+        }
+
+        function nextPage() {
+            if (validatePage(currentPage) && currentPage < totalPages) {
+                showPage(currentPage + 1);
+                // Calculate compensation when moving from page 1 to page 2
+                if (currentPage === 2) {
+                    calculateCompensation();
+                    updatePageTitles(); // Update titles after calculating compensation
+                }
+            }
+        }
+
+        function prevPage() {
+            if (currentPage > 1) {
+                showPage(currentPage - 1);
+            }
+        }
+
+        // PROGRESS & VISUALS
+        function updateProgress() {
+            const progressLineFill = document.getElementById('progress-line-fill');
+            const compensationDisplay = document.getElementById('compensation-display');
+            const page2Subtitle = document.getElementById('page2-subtitle');
+
+            // Calculate percentage based on 3 conceptual steps (not just 2 pages)
+            // Page 1 = 33%, Page 2 = 66%, Letter generated = 100%
+            const percentage = currentPage === 1 ? 50 : 100;
+
+            // Update milestone states
+            const milestone1 = document.getElementById('milestone-1');
+            const milestone2 = document.getElementById('milestone-2');
+            const milestone3 = document.getElementById('milestone-3');
+
+            // Reset all milestones
+            [milestone1, milestone2, milestone3].forEach(m => {
+                m.classList.remove('active', 'completed');
+            });
+
+            // Set states based on current page
+            if (currentPage === 1) {
+                milestone1.classList.add('active');
+            } else if (currentPage === 2) {
+                milestone1.classList.add('completed');
+                milestone2.classList.add('active');
+            }
+
+            // Update progress line
+            if (progressLineFill) {
+                progressLineFill.style.width = percentage + '%';
+            }
+
+            // Display compensation amount - always visible once calculated
+            if (calculatedCompensation > 0 && compensationDisplay) {
+                compensationDisplay.textContent = `💰 ${formatter.format(calculatedCompensation)}`;
+                compensationDisplay.style.display = 'inline';
+            } else if (compensationDisplay) {
+                compensationDisplay.style.display = 'none';
+            }
+
+            // Show page 2 subtitle when on page 2 with valid compensation
+            if (page2Subtitle) {
+                if (currentPage === 2 && calculatedCompensation > 0 && selectedAirline) {
+                    page2Subtitle.style.display = 'block';
+                } else {
+                    page2Subtitle.style.display = 'none';
+                }
+            }
+
+            // Show/hide back button
+            const backButton = document.getElementById(`back-${currentPage}`);
+            if (backButton) {
+                backButton.style.visibility = currentPage === 1 ? 'hidden' : 'visible';
+            }
+
+            // Update page titles to reflect airline selection
+            updatePageTitles();
+        }
+
+        // COMPENSATION CALCULATION
+        function formatCurrency(input) {
+            // Remove all non-numeric characters except decimal point
+            let value = input.value.replace(/[^\d.]/g, '');
+
+            // Ensure only one decimal point
+            const parts = value.split('.');
+            if (parts.length > 2) {
+                value = parts[0] + '.' + parts.slice(1).join('');
+            }
+
+            // Limit to 2 decimal places
+            if (parts[1] && parts[1].length > 2) {
+                value = parseFloat(value).toFixed(2);
+            }
+
+            // Format with commas
+            if (value) {
+                const [integer, decimal] = value.split('.');
+                const formattedInteger = integer.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                input.value = decimal !== undefined ? `${formattedInteger}.${decimal}` : formattedInteger;
+            }
+        }
+
+        function getNumericValue(formattedValue) {
+            // Remove commas and parse as float
+            return parseFloat(formattedValue.replace(/,/g, '')) || 0;
+        }
+
+        function calculateCompensationPreview() {
+            // Calculate compensation on page 1 just to show running man and money bag
+            const delayValue = document.getElementById('delay_hours').value;
+            const delayHours = parseFloat(delayValue);
+            const ticketPriceInput = document.getElementById('ticket_price').value;
+            const ticketPrice = parseFloat(ticketPriceInput) || 0;
+            const airline = document.getElementById('airline').value;
+
+            if (!delayValue || isNaN(delayHours) || !airline || ticketPrice <= 0) {
+                calculatedCompensation = 0;
+                selectedAirline = '';
+                updateProgress();
+                return;
+            }
+
+            selectedAirline = airline;
+            const airlineKey = airline.toLowerCase().replace(/\s/g, '');
+
+            // Calculate based on delay tier
+            if (delayHours === 1.5) {
+                if (airlineKey === 'volaris') {
+                    calculatedCompensation = 50;
+                } else if (airlineKey === 'vivaaerobus') {
+                    calculatedCompensation = 75;
+                } else if (airlineKey === 'aeromexico') {
+                    calculatedCompensation = ticketPrice * 0.05;
+                }
+            } else if (delayHours === 3.0) {
+                if (airlineKey === 'volaris') {
+                    calculatedCompensation = Math.max(250.00, ticketPrice * 0.075);
+                } else {
+                    calculatedCompensation = ticketPrice * 0.075;
+                }
+            } else if (delayHours === 5.0) {
+                calculatedCompensation = ticketPrice * 1.25;
+            }
+
+            updateProgress();
+        }
+
+        function calculateCompensation() {
+            const delayValue = document.getElementById('delay_hours').value;
+            const delayHours = parseFloat(delayValue);
+
+            if (!delayValue || isNaN(delayHours)) {
+                document.getElementById('eligibility-message-box').style.display = 'none';
+                return;
+            }
+
+            const ticketPriceInput = document.getElementById('ticket_price').value;
+            const ticketPrice = parseFloat(ticketPriceInput) || 0;
+            const airline = document.getElementById('airline').value;
+            selectedAirline = airline;
+
+            const amountElement = document.getElementById('compensation-amount');
+            const resultElement = document.getElementById('claim-result');
+            const msgBox = document.getElementById('eligibility-message-box');
+
+            msgBox.style.display = 'block';
+
+            // TIER 1: 1-2 HOURS
+            if (delayHours === 1.5) {
+                if (!airline) {
+                    resultElement.innerHTML = `
+                        ✅ <strong>COMPENSACIÓN GARANTIZADA POR LEY</strong>
+                        <br><br>
+                        Por un retraso de 1-2 horas, tienes derecho a compensación según la aerolínea:
+                        <br>• Volaris: Voucher de $50 MXN
+                        <br>• VivaAerobus: Cupón o Viva Cash de $75 MXN
+                        <br>• Aeroméxico: Cupón del 5% del precio del boleto
+                        <br><br>
+                        Selecciona tu aerolínea abajo para ver tu compensación exacta.
+                        <br><br>
+                        <span style="font-size: 0.85em; color: #7f8c8d;">Fuente: <a href="${LACM_URL}" target="_blank">Ley de Aviación Civil (Art. 47 Bis)</a></span>
+                    `;
+                    amountElement.innerHTML = '';
+                    calculatedCompensation = 0;
+                    return;
+                }
+
+                const airlineKey = airline.toLowerCase().replace(/\s/g, '');
+                let compensationText = '';
+                let compensationAmount = 0;
+
+                if (airlineKey === 'volaris') {
+                    compensationText = 'Voucher Electrónico de <strong>$50 MXN</strong>';
+                    compensationAmount = 50;
+                } else if (airlineKey === 'vivaaerobus') {
+                    compensationText = 'Cupón de descuento o Viva Cash de <strong>$75 MXN</strong>';
+                    compensationAmount = 75;
+                } else if (airlineKey === 'aeromexico') {
+                    if (ticketPrice > 0) {
+                        compensationAmount = ticketPrice * 0.05;
+                        compensationText = `Cupón del <strong>5% del precio del boleto</strong>`;
+                    } else {
+                        compensationText = 'Cupón del <strong>5% del precio del boleto</strong>';
+                        compensationAmount = 0;
+                    }
+                }
+
+                calculatedCompensation = compensationAmount;
+
+                const policyUrl = airlinePolicyUrls[airline] || '#';
+                resultElement.innerHTML = `
+                    ✅ <strong>COMPENSACIÓN GARANTIZADA</strong>
+                    <br><br>
+                    ${airline} debe darte: ${compensationText}
+                    <br><br>
+                    <span style="font-size: 0.85em; color: #7f8c8d;">Fuente: <a href="${policyUrl}" target="_blank">Política de ${airline}</a></span>
+                `;
+                amountElement.innerHTML = `
+                    <span style="font-size: 2.5em; color: #e67e22; font-weight: bold;">
+                        ${compensationAmount > 0 ? formatter.format(compensationAmount) : 'Ingresa el precio para calcular'}
+                    </span>
+                `;
+                updateProgress();
+                return;
+            }
+
+            // TIER 2: 2-4 HOURS
+            if (delayHours === 3.0) {
+                if (!ticketPriceInput && !airline) {
+                    resultElement.innerHTML = `
+                        ✅ <strong>COMPENSACIÓN GARANTIZADA POR LEY</strong>
+                        <br><br>
+                        Por un retraso de 2-4 horas, la ley mexicana garantiza:
+                        <br>• <strong>Mínimo 7.5% del precio del boleto</strong>
+                        <br><br>
+                        Ingresa el precio del boleto y aerolínea abajo para calcular tu compensación exacta.
+                        <br><br>
+                        <span style="font-size: 0.85em; color: #7f8c8d;">Fuente: <a href="${LACM_URL}" target="_blank">Ley de Aviación Civil (Art. 47 Bis)</a></span>
+                    `;
+                    amountElement.innerHTML = '';
+                    calculatedCompensation = 0;
+                    return;
+                }
+
+                if (ticketPrice > 0 && !airline) {
+                    const minCompensation = ticketPrice * 0.075;
+                    calculatedCompensation = minCompensation;
+                    resultElement.innerHTML = `
+                        ✅ <strong>COMPENSACIÓN GARANTIZADA POR LEY</strong>
+                        <br><br>
+                        Por ley, te deben <strong>mínimo:</strong>
+                        <br><br>
+                        La compensación exacta depende de la aerolínea. Selecciónala abajo:
+                        <br>• Volaris paga mínimo 7.5% o $250 (lo que sea mayor)
+                        <br>• VivaAerobus paga 7.5% mínimo
+                        <br>• Aeroméxico paga 7.5% mínimo
+                        <br><br>
+                        <span style="font-size: 0.85em; color: #7f8c8d;">Fuente: <a href="${LACM_URL}" target="_blank">Ley de Aviación Civil (Art. 47 Bis)</a></span>
+                    `;
+                    amountElement.innerHTML = `
+                        <span style="font-size: 2.5em; color: #e67e22; font-weight: bold;">
+                            ${formatter.format(minCompensation)} (7.5% de tu boleto)
+                        </span>
+                    `;
+                    updateProgress();
+                    return;
+                }
+
+                if (ticketPrice > 0 && airline) {
+                    let bestAmount = ticketPrice * 0.075;
+                    let policyText = '7.5% del precio del boleto';
+                    let source = `<a href="${LACM_URL}" target="_blank">Ley de Aviación Civil (Art. 47 Bis)</a>`;
+
+                    const airlineKey = airline.toLowerCase().replace(/\s/g, '');
+                    const policyUrl = airlinePolicyUrls[airline] || '#';
+
+                    if (airlineKey === 'volaris') {
+                        bestAmount = Math.max(250.00, ticketPrice * 0.075);
+                        policyText = 'mínimo 7.5% o $250 (lo que sea mayor)';
+                        source = `<a href="${policyUrl}" target="_blank">Política de Volaris</a>`;
+                    } else if (airlineKey === 'vivaaerobus') {
+                        bestAmount = ticketPrice * 0.075;
+                        policyText = '7.5% del precio del boleto';
+                        source = `<a href="${policyUrl}" target="_blank">Política de VivaAerobus</a>`;
+                    } else if (airlineKey === 'aeromexico') {
+                        bestAmount = ticketPrice * 0.075;
+                        policyText = '7.5% del precio del boleto';
+                        source = `<a href="${policyUrl}" target="_blank">Política de Aeroméxico</a>`;
+                    }
+
+                    calculatedCompensation = bestAmount;
+
+                    resultElement.innerHTML = `
+                        ✅ <strong>¡COMPENSACIÓN GARANTIZADA!</strong>
+                        <br><br>
+                        ${airline} debe pagarte el <strong>${policyText}</strong>.
+                        <br><br>
+                        <span style="font-size: 0.85em; color: #7f8c8d;">Fuente: ${source}</span>
+                    `;
+                    amountElement.innerHTML = `
+                        <span style="font-size: 2.5em; color: #27ae60; font-weight: bold;">
+                            ${formatter.format(bestAmount)}
+                        </span>
+                    `;
+                    updateProgress();
+                    return;
+                }
+            }
+
+            // TIER 3: +4 HOURS OR CANCELLATION
+            if (delayHours === 5.0) {
+                if (!ticketPriceInput && !airline) {
+                    resultElement.innerHTML = `
+                        ✅ <strong>¡COMPENSACIÓN MÁXIMA GARANTIZADA!</strong>
+                        <br><br>
+                        Por un retraso de +4 horas o cancelación, la ley garantiza:
+                        <br>• <strong>125% del precio del boleto</strong>
+                        <br><br>
+                        Ingresa el precio del boleto abajo para calcular tu compensación exacta.
+                        <br><br>
+                        <span style="font-size: 0.85em; color: #7f8c8d;">Fuente: <a href="${LACM_URL}" target="_blank">Ley de Aviación Civil (Art. 47 Bis)</a></span>
+                    `;
+                    amountElement.innerHTML = '';
+                    calculatedCompensation = 0;
+                    return;
+                }
+
+                if (ticketPrice > 0 && !airline) {
+                    const compensation = ticketPrice * 1.25;
+                    calculatedCompensation = compensation;
+                    resultElement.innerHTML = `
+                        ✅ <strong>¡COMPENSACIÓN MÁXIMA GARANTIZADA!</strong>
+                        <br><br>
+                        Por ley, te deben:
+                        <br><br>
+                        Selecciona tu aerolínea abajo para generar tu email de reclamación.
+                        <br><br>
+                        <span style="font-size: 0.85em; color: #7f8c8d;">Fuente: <a href="${LACM_URL}" target="_blank">Ley de Aviación Civil (Art. 47 Bis)</a></span>
+                    `;
+                    amountElement.innerHTML = `
+                        <span style="font-size: 2.5em; color: #27ae60; font-weight: bold;">
+                            ${formatter.format(compensation)} (125% de tu boleto)
+                        </span>
+                    `;
+                    updateProgress();
+                    return;
+                }
+
+                if (ticketPrice > 0 && airline) {
+                    const bestAmount = ticketPrice * 1.25;
+                    calculatedCompensation = bestAmount;
+                    const source = `<a href="${LACM_URL}" target="_blank">Ley de Aviación Civil (Art. 47 Bis)</a>`;
+
+                    resultElement.innerHTML = `
+                        ✅ <strong>¡COMPENSACIÓN MÁXIMA GARANTIZADA!</strong>
+                        <br><br>
+                        ${airline} debe pagarte el <strong>125% del precio del boleto</strong> por ley.
+                        <br><br>
+                        <span style="font-size: 0.85em; color: #7f8c8d;">Fuente: ${source}</span>
+                    `;
+                    amountElement.innerHTML = `
+                        <span style="font-size: 2.5em; color: #27ae60; font-weight: bold;">
+                            ${formatter.format(bestAmount)}
+                        </span>
+                    `;
+                    updateProgress();
+                    return;
+                }
+            }
+        }
+
+        // EVENT LISTENERS
+        document.addEventListener('DOMContentLoaded', () => {
+            const priceInput = document.getElementById('ticket_price');
+            const airlineSelect = document.getElementById('airline');
+
+            document.querySelectorAll('.delay-option').forEach(button => {
+                button.addEventListener('click', function () {
+                    document.querySelectorAll('.delay-option').forEach(btn => {
+                        btn.classList.remove('selected');
+                    });
+
+                    this.classList.add('selected');
+                    document.getElementById('delay_hours').value = delayMap[this.dataset.value].value;
+
+                    // Calculate compensation on page 1 to show running man and money bag
+                    if (currentPage === 1) {
+                        calculateCompensationPreview();
+                    }
+                });
+            });
+
+            if (priceInput) {
+                priceInput.addEventListener('input', (e) => {
+                    // Only allow numbers and decimal point
+                    let value = e.target.value;
+                    // Remove any character that's not a digit or decimal point
+                    value = value.replace(/[^\d.]/g, '');
+                    // Ensure only one decimal point
+                    const parts = value.split('.');
+                    if (parts.length > 2) {
+                        value = parts[0] + '.' + parts.slice(1).join('');
+                    }
+                    e.target.value = value;
+
+                    if (currentPage === 1) {
+                        calculateCompensationPreview();
+                    } else if (currentPage === 2) {
+                        calculateCompensation();
+                    }
+                });
+                priceInput.addEventListener('blur', () => {
+                    validateField('ticket_price');
+                });
+            }
+            if (airlineSelect) {
+                airlineSelect.addEventListener('change', () => {
+                    if (currentPage === 1) {
+                        calculateCompensationPreview();
+                    } else if (currentPage === 2) {
+                        calculateCompensation();
+                    }
+                    validateField('airline');
+                });
+            }
+
+            // Add validation on blur for all inputs
+            document.querySelectorAll('input[required], select[required]').forEach(field => {
+                // Validate on blur
+                field.addEventListener('blur', () => {
+                    if (field.id) {
+                        validateField(field.id);
+                    }
+                });
+
+                // Real-time validation as user types
+                field.addEventListener('input', () => {
+                    if (field.id && field.value) {
+                        validateField(field.id);
+                    }
+                });
+            });
+
+            // Check if coming back from preview page with pre-filled data
+            {% if back_data %}
+            const backData = {{ back_data | tojson }};
+
+            // Pre-fill all form fields
+            document.getElementById('delay_hours').value = backData.delay_hours;
+            document.getElementById('ticket_price').value = backData.ticket_price;
+            document.getElementById('airline').value = backData.airline;
+            document.getElementById('flight_number').value = backData.flight_number;
+            document.getElementById('reservation_code').value = backData.reservation_code;
+            document.getElementById('date').value = backData.date;
+            document.getElementById('passenger_first_name').value = backData.passenger_first_name;
+            document.getElementById('passenger_last_name').value = backData.passenger_last_name;
+            document.getElementById('passenger_email').value = backData.passenger_email;
+
+            // Mark the correct delay option as selected
+            const delayHoursFloat = parseFloat(backData.delay_hours);
+            let delayDataValue = '1';
+            if (delayHoursFloat === 1.5) delayDataValue = '1';
+            else if (delayHoursFloat === 3.0) delayDataValue = '2';
+            else if (delayHoursFloat === 5.0) delayDataValue = '3';
+
+            document.querySelectorAll('.delay-option').forEach(btn => {
+                if (btn.dataset.value === delayDataValue) {
+                    btn.classList.add('selected');
+                }
+            });
+
+            // Set airline and trigger validation
+            selectedAirline = backData.airline;
+
+            // Calculate compensation preview
+            calculateCompensationPreview();
+
+            // Show page 2 instead of page 1
+            showPage(2);
+            {% else %}
+            showPage(1);
+            {% endif %}
+        });
+    </script>
+</body>
+
+</html>
