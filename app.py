@@ -28,7 +28,7 @@ except ImportError:
 # Airline Twitter handles for social pressure feature
 AIRLINE_TWITTER_HANDLES = {
     'Volaris': '@viajaVolaris',
-    'VivaAerobus': '@VivaAerobus',
+    'VivaAerobus': '@VivaTeEscucha',
     'Aeromexico': '@Aeromexico'
 }
 
