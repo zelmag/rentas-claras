@@ -107,6 +107,14 @@ def preview():
         if passenger_count < 1 or passenger_count > 10:
             passenger_count = 1
 
+        passenger_name = request.form['passenger_name'].strip()
+
+        # Validate that the number of names matches passenger_count
+        name_list = [n.strip() for n in passenger_name.split(',') if n.strip()]
+        if len(name_list) != passenger_count:
+            flash(f'Error: Ingresaste {len(name_list)} nombre(s), pero indicaste {passenger_count} pasajero(s). Deben coincidir.', 'error')
+            return redirect(url_for('index'))
+
         flight_data = {
             'airline': request.form['airline'],
             'flight_number': request.form['flight_number'],
@@ -114,7 +122,7 @@ def preview():
             'date': request.form['date'],
             'delay_hours': float(request.form['delay_hours']), # Convert to float
             'ticket_price': float(request.form['ticket_price']), # Convert to float
-            'passenger_name': request.form['passenger_name'],
+            'passenger_name': passenger_name,
             'passenger_email': request.form['passenger_email'],
             'passenger_count': passenger_count
         }

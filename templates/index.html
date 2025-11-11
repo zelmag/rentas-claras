@@ -604,11 +604,11 @@
 
                 <div class="form-group">
                     <label id="passenger_names_label">Nombre(s) del/los pasajero(s):</label>
-                    <input type="text" name="passenger_name" id="passenger_name" placeholder="Ej: Juan Pérez, María Pérez, Pedro Pérez"
+                    <input type="text" name="passenger_name" id="passenger_name" placeholder="Ej: Juan Pérez, María Pérez"
                         required>
                     <span class="input-checkmark">✓</span>
-                    <small style="color: #666; font-size: 0.85em; display: block; margin-top: 5px;">
-                        Si son varios, sepáralos con comas
+                    <small id="passenger_name_hint" style="color: #666; font-size: 0.85em; display: block; margin-top: 5px;">
+                        Separa múltiples nombres con comas
                     </small>
                     <div class="error-message" id="passenger_name_error">Por favor ingresa el/los nombre(s)</div>
                 </div>
@@ -736,7 +736,26 @@
 
             let isValid = true;
 
-            if (field.type === 'email') {
+            // Special validation for passenger names - must match passenger count
+            if (fieldId === 'passenger_name') {
+                const passengerCount = parseInt(document.getElementById('passenger_count')?.value || 1);
+                const names = field.value.trim();
+
+                if (!names) {
+                    isValid = false;
+                } else {
+                    // Count names by splitting on commas
+                    const nameList = names.split(',').map(n => n.trim()).filter(n => n.length > 0);
+                    const nameCount = nameList.length;
+
+                    if (nameCount !== passengerCount) {
+                        isValid = false;
+                        if (errorElement) {
+                            errorElement.textContent = `Por favor ingresa ${passengerCount} nombre(s). Tienes ${nameCount}.`;
+                        }
+                    }
+                }
+            } else if (field.type === 'email') {
                 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                 isValid = emailRegex.test(field.value);
             } else if (field.type === 'number') {
@@ -1268,13 +1287,40 @@
 
             // Update compensation display when passenger count changes
             const passengerCountInput = document.getElementById('passenger_count');
+            const passengerNameHint = document.getElementById('passenger_name_hint');
             if (passengerCountInput) {
+                function updatePassengerNameHint() {
+                    const count = parseInt(passengerCountInput.value || 1);
+                    if (count > 1 && passengerNameHint) {
+                        passengerNameHint.innerHTML = `💡 Debes ingresar <strong>${count} nombres</strong> separados por comas`;
+                        passengerNameHint.style.color = '#006847';
+                    } else if (passengerNameHint) {
+                        passengerNameHint.innerHTML = 'Ingresa el nombre completo del pasajero';
+                        passengerNameHint.style.color = '#666';
+                    }
+                }
+
                 passengerCountInput.addEventListener('input', () => {
                     updatePageTitles();
+                    updatePassengerNameHint();
+                    // Re-validate passenger names when count changes
+                    const passengerNameField = document.getElementById('passenger_name');
+                    if (passengerNameField && passengerNameField.value) {
+                        validateField('passenger_name');
+                    }
                 });
                 passengerCountInput.addEventListener('change', () => {
                     updatePageTitles();
+                    updatePassengerNameHint();
+                    // Re-validate passenger names when count changes
+                    const passengerNameField = document.getElementById('passenger_name');
+                    if (passengerNameField && passengerNameField.value) {
+                        validateField('passenger_name');
+                    }
                 });
+
+                // Initialize hint on page load
+                updatePassengerNameHint();
             }
 
             // Check if coming back from preview page with pre-filled data
