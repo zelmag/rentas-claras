@@ -249,21 +249,15 @@
         {% if success %}
         <div class="success">✅</div>
         <h1>¡Lo lograste! Reclamación enviada a <strong>{{ flight_data.airline }}</strong>.</h1>
-        <p style="font-size: 1.1em; color: #2c3e50;">
-            {{ flight_data.airline }} debe responder a más tardar el: <strong>{{ deadline_date }}</strong>
-        </p>
-        <p>Esto se rige por el plazo de diez días naturales de la Ley de Aviación Civil Mexicana (LACM).</p>
-        <p>También recibirás una copia en tu email (<strong>{{ flight_data.passenger_email }}</strong>).</p>
-
-        <hr style="margin: 20px 0;">
 
         <div
             style="background: #f0fdf4; border-left: 4px solid #006847; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: left;">
             <h3 style="margin-top: 0; color: #2c3e50;">📋 Próximos Pasos:</h3>
             <ol style="line-height: 2; color: #2c3e50;">
-                <li>Marca tu calendario para el <strong>{{ profeco_deadline }}</strong> - {{ flight_data.airline }} tiene hasta esa fecha para responder.</li>
+                <li>Recibirás una copia del reclamo en tu email (<strong>{{ flight_data.passenger_email }}</strong>).</li>
+                <li>{{ flight_data.airline }} debe responder a más tardar el <strong>{{ profeco_deadline }}</strong> (10 días naturales según la Ley de Aviación Civil).</li>
                 <li>Si {{ flight_data.airline }} no responde antes del <strong>{{ profeco_deadline }}</strong>, presenta
-                    tu queja en <a
+                    tu queja ante <a
                         href="https://consumidoras.profeco.gob.mx/conciliaexpress/solicitud.php"
                         target="_blank" style="color: #006847; font-weight: bold;">PROFECO</a>.</li>
             </ol>
