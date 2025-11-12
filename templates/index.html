@@ -286,6 +286,12 @@
             align-items: center;
             z-index: 2;
             position: relative;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .milestone:hover {
+            transform: scale(1.05);
         }
 
         .milestone-circle {
@@ -475,11 +481,11 @@
                 <div class="progress-line">
                     <div class="progress-line-fill" id="progress-line-fill"></div>
                 </div>
-                <div class="milestone" id="milestone-1">
+                <div class="milestone" id="milestone-1" onclick="showPage(1)">
                     <div class="milestone-circle">1</div>
                     <div class="milestone-label">Cálculo rápido</div>
                 </div>
-                <div class="milestone" id="milestone-2">
+                <div class="milestone" id="milestone-2" onclick="showPage(2)">
                     <div class="milestone-circle">2</div>
                     <div class="milestone-label">Generar reclamo</div>
                 </div>
