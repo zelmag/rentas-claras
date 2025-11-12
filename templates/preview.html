@@ -96,6 +96,25 @@
             /* resize: vertical; */
         }
 
+        .progress-bar-section {
+            padding: 10px 0 15px 0;
+            margin-bottom: 20px;
+            /* Sticky only on mobile */
+            position: sticky;
+            top: 0;
+            background: white;
+            z-index: 100;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        @media (min-width: 768px) {
+            .progress-bar-section {
+                /* Remove sticky on tablet and above */
+                position: relative;
+                top: auto;
+            }
+        }
+
         .airline-email {
             background: #f0fdf4;
             border-left: 4px solid #006847;
