@@ -36,20 +36,20 @@
 
         .container {
             background: white;
-            padding: 32px 24px;
+            padding: 4px 24px 32px 24px;
             border-radius: 20px;
             box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04);
         }
 
         @media (min-width: 768px) {
             .container {
-                padding: 48px 40px;
+                padding: 8px 40px 48px 40px;
             }
         }
 
         @media (min-width: 1024px) {
             .container {
-                padding: 56px 48px;
+                padding: 12px 48px 56px 48px;
             }
         }
 
@@ -92,27 +92,25 @@
             font-size: 14px;
             margin: 20px 0;
             box-sizing: border-box;
-            /* Remove resize: vertical as contenteditable divs are typically fixed height */
-            /* resize: vertical; */
+            cursor: text;
+            transition: all 0.3s ease;
+            background-color: #ffffff;
+        }
+
+        .letter-editor:hover {
+            border-color: #2980b9;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+
+        .letter-editor:focus {
+            outline: none;
+            border-color: #2980b9;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
         }
 
         .progress-bar-section {
-            padding: 10px 0 15px 0;
+            padding: 0 0 20px 0;
             margin-bottom: 20px;
-            /* Sticky only on mobile */
-            position: sticky;
-            top: 0;
-            background: white;
-            z-index: 100;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        }
-
-        @media (min-width: 768px) {
-            .progress-bar-section {
-                /* Remove sticky on tablet and above */
-                position: relative;
-                top: auto;
-            }
         }
 
         .airline-email {
@@ -400,7 +398,7 @@
                     <span style="font-size: 1.8em;">🔒</span>
                     <div>
                         <strong style="color: #1e40af; font-size: 1.1em;">Tus Datos de Contacto</strong>
-                        <p style="margin: 5px 0 0 0; color: #1e40af; font-size: 0.9em;">100% protegidos. Solo para enviar el reclamo y darte seguimiento.</p>
+                        <p style="margin: 5px 0 0 0; color: #1e40af; font-size: 0.9em;">100% protegidos. Solo para enviar el reclamo.</p>
                     </div>
                 </div>
 
@@ -434,6 +432,12 @@
             <h2 style="margin-top: 30px; color: #2c3e50;">
                 📝 Revisa y edita tu email de reclamación
             </h2>
+
+            <div style="background: #fff3cd; padding: 12px 16px; border-radius: 8px; margin: 12px 0; border-left: 4px solid #ffc107;">
+                <p style="margin: 0; font-weight: 600; color: #856404; font-size: 0.9em;">
+                    💡 Haz clic en el texto abajo para editarlo
+                </p>
+            </div>
 
             <div class="success-message" id="copy-success">
                 ✅ <strong>¡Email copiado!</strong><br>
@@ -607,18 +611,25 @@
         // Replace [TU NOMBRE] and [TU EMAIL] placeholders as user types
         const nameInput = document.querySelector('input[name="passenger_name"]');
         const emailInput = document.querySelector('input[name="passenger_email"]');
-        const editor = document.getElementById('single_editor');
+
+        // Store the original HTML template
+        const originalHTML = editor.innerHTML;
 
         function replacePlaceholders() {
-            const name = nameInput.value.trim();
-            const email = emailInput.value.trim();
+            const name = nameInput ? nameInput.value.trim() : '';
+            const email = emailInput ? emailInput.value.trim() : '';
+
+            // Start with the original HTML and replace all placeholders
+            let updatedHTML = originalHTML;
 
             if (name) {
-                editor.innerHTML = editor.innerHTML.replace(/\[TU NOMBRE\]/g, name);
+                updatedHTML = updatedHTML.replace(/\[TU NOMBRE\]/g, name);
             }
             if (email) {
-                editor.innerHTML = editor.innerHTML.replace(/\[TU EMAIL\]/g, email);
+                updatedHTML = updatedHTML.replace(/\[TU EMAIL\]/g, email);
             }
+
+            editor.innerHTML = updatedHTML;
         }
 
         if (nameInput) {

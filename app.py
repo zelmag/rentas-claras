@@ -29,8 +29,7 @@ except ImportError:
 AIRLINE_TWITTER_HANDLES = {
     'Volaris': '@viajaVolaris',
     'VivaAerobus': '@VivaTeEscucha',
-    'Aeromexico': '@Aeromexico',
-    'Demo': '@VueloDigno'
+    'Aeromexico': '@Aeromexico'
 }
 
 def generate_tweet_text(flight_data, compensation_amount):
@@ -53,7 +52,7 @@ def generate_tweet_text(flight_data, compensation_amount):
         delay_text = f"{delay_hours} horas"
 
     # Build angry tweet (no emojis)
-    tweet = f"""#VueloDigno me ayudó a darme cuenta que {airline_handle} me debe {comp_text} porque se retrasó el vuelo {delay_text}.
+    tweet = f"""{airline_handle} me debe {comp_text} por retraso de {delay_text} en el vuelo {flight_data['flight_number']}.
 
 Reclamo enviado. Plazo legal: 10 días.
 

@@ -182,7 +182,7 @@ def generate_mexico_claim_letter(flight_data):
 Estimado Departamento de Atención al Cliente de {flight_data['airline'].title()},
 
 **DATOS DE LA RESERVACIÓN:**
-* Vuelo: **{flight_data['flight_number']}**
+* Vuelo: **{flight_data['flight_number']}** ({flight_data['origin']} → {flight_data['destination']})
 * Clave de reserva: **{flight_data['reservation_code']}**
 * Fecha: **{flight_data['date']}**
 * Retraso: **{delay_text}**

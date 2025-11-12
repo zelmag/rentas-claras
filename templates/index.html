@@ -11,31 +11,21 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         .progress-bar-section {
-            padding: 10px 0;
-            margin: -30px -30px 20px -30px;
-            padding: 15px 30px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            /* Sticky only on mobile */
-            position: sticky;
-            top: 0;
-            background: white;
-            z-index: 100;
+            padding: 0 0 12px 0;
+            margin-bottom: 12px;
         }
 
         @media (min-width: 768px) {
             .progress-bar-section {
-                margin: -40px -40px 20px -40px;
-                padding: 20px 40px;
-                /* Remove sticky on tablet and above */
-                position: relative;
-                top: auto;
+                padding: 0 0 16px 0;
+                margin-bottom: 16px;
             }
         }
 
         @media (min-width: 1024px) {
             .progress-bar-section {
-                margin: -50px -50px 20px -50px;
-                padding: 25px 50px;
+                padding: 0 0 20px 0;
+                margin-bottom: 20px;
             }
         }
 
@@ -71,20 +61,20 @@
 
         .container {
             background: white;
-            padding: 32px 24px;
+            padding: 4px 24px 32px 24px;
             border-radius: 20px;
             box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04);
         }
 
         @media (min-width: 768px) {
             .container {
-                padding: 48px 40px;
+                padding: 8px 40px 48px 40px;
             }
         }
 
         @media (min-width: 1024px) {
             .container {
-                padding: 56px 48px;
+                padding: 12px 48px 56px 48px;
             }
         }
 
@@ -627,46 +617,34 @@
         </div>
 
         <!-- Hero Section -->
-        <div id="hero-section" style="text-align: center; margin-bottom: 30px;">
-            <h1 style="font-size: 2em; margin-bottom: 10px; color: #2c3e50;">
-                ✈️ ¿Vuelo retrasado o cancelado en México?
+        <div id="hero-section" style="text-align: center; margin-bottom: 16px;">
+            <h1 style="font-size: 1.75em; margin-bottom: 8px; color: #2c3e50; line-height: 1.2;">
+                ✈️ ¿Vuelo retrasado en México?
             </h1>
-            <h2 style="font-size: 1.5em; color: #e74c3c; margin-bottom: 15px; font-weight: 700;">
-                Reclama tu compensación en 3 pasos
+            <h2 style="font-size: 1.3em; color: #e74c3c; margin-bottom: 12px; font-weight: 700;">
+                Reclama tu compensación
             </h2>
         </div>
 
         <!-- How It Works -->
-        <div id="how-it-works-section" style="background: linear-gradient(135deg, #f0fdf4 0%, #e8f4f8 100%); padding: 25px; border-radius: 12px; margin-bottom: 30px; border: 2px solid #006847;">
-            <h3 style="text-align: center; color: #2c3e50; margin-bottom: 20px; font-size: 1.2em;">
-                📋 Cómo funciona
-            </h3>
-            <div style="display: grid; gap: 15px;">
-                <div style="display: flex; align-items: start; gap: 12px;">
-                    <div style="background: #006847; color: white; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0;">1</div>
-                    <div>
-                        <strong style="color: #2c3e50;">Calculamos tu compensación</strong><br>
-                        <span style="color: #7f8c8d; font-size: 0.95em;">Según la Ley de Aviación Civil Mexicana (hasta 125% del boleto)</span>
-                    </div>
+        <div id="how-it-works-section" style="background: linear-gradient(135deg, #f0fdf4 0%, #e8f4f8 100%); padding: 20px; border-radius: 12px; margin-bottom: 24px; border: 2px solid #006847;">
+            <div style="display: grid; gap: 12px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="background: #006847; color: white; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; font-size: 0.9em;">1</div>
+                    <strong style="color: #2c3e50; font-size: 0.95em;">Calculamos tu compensación</strong>
                 </div>
-                <div style="display: flex; align-items: start; gap: 12px;">
-                    <div style="background: #006847; color: white; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0;">2</div>
-                    <div>
-                        <strong style="color: #2c3e50;">Generamos tu email legal</strong><br>
-                        <span style="color: #7f8c8d; font-size: 0.95em;">Con todos los argumentos legales y plazos oficiales</span>
-                    </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="background: #006847; color: white; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; font-size: 0.9em;">2</div>
+                    <strong style="color: #2c3e50; font-size: 0.95em;">Generamos tu email legal</strong>
                 </div>
-                <div style="display: flex; align-items: start; gap: 12px;">
-                    <div style="background: #006847; color: white; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0;">3</div>
-                    <div>
-                        <strong style="color: #2c3e50;">Lo enviamos a la aerolínea</strong><br>
-                        <span style="color: #7f8c8d; font-size: 0.95em;">Directo a su departamento de atención al cliente + template para presionarlos en X</span>
-                    </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="background: #006847; color: white; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; font-size: 0.9em;">3</div>
+                    <strong style="color: #2c3e50; font-size: 0.95em;">Lo enviamos a la aerolínea</strong>
                 </div>
             </div>
-            <div style="background: #ffffff; padding: 15px; border-radius: 8px; margin-top: 20px; text-align: center;">
-                <p style="margin: 0; font-weight: 600; color: #006847; font-size: 1.05em;">
-                    ⚡ <span style="font-size: 1.15em; font-weight: 700;">100% GRATIS</span> • 3 minutos • Garantizado por ley
+            <div style="background: #ffffff; padding: 12px; border-radius: 8px; margin-top: 16px; text-align: center;">
+                <p style="margin: 0; font-weight: 700; color: #006847; font-size: 1em;">
+                    ⚡ GRATIS • 3 min • Garantizado por ley
                 </p>
             </div>
         </div>
@@ -688,9 +666,9 @@
             <div class="page active" data-page="1">
                 <!-- Start Here Banner -->
                 <div
-                    style="background: #fff3cd; padding: 15px 20px; border-radius: 10px; margin: 20px 0 30px 0; border-left: 4px solid #ffc107; text-align: center;">
-                    <p style="margin: 0; font-weight: 600; color: #856404; font-size: 1.05em;">
-                        👇 Responde estas 5 preguntas para calcular cuánto te deben
+                    style="background: #fff3cd; padding: 12px 16px; border-radius: 10px; margin: 20px 0 24px 0; border-left: 4px solid #ffc107; text-align: center;">
+                    <p style="margin: 0; font-weight: 600; color: #856404; font-size: 0.95em;">
+                        👇 5 preguntas rápidas para calcular cuánto te deben
                     </p>
                 </div>
 
@@ -889,8 +867,8 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="reservation_code" class="optional">Clave de reserva <span style="color: #999; font-size: 0.85em;">(opcional)</span></label>
-                    <input type="text" id="reservation_code" name="reservation_code" pattern="[A-Za-z0-9]+">
+                    <label for="reservation_code">Clave de reserva:</label>
+                    <input type="text" id="reservation_code" name="reservation_code" pattern="[A-Za-z0-9]+" required>
                     <span class="input-checkmark">✓</span>
                     <small style="color: #666; font-size: 0.85em; display: block; margin-top: 5px;">
                         💡 Lo encuentras en tu email de confirmación
@@ -921,32 +899,27 @@
                 <!-- Compensation Choice (Only for 4+ hour delays or cancellations) -->
                 <div class="form-group" id="compensation-choice-section" style="display: none;">
                     <hr style="margin: 20px 0;">
-                    <label>¿Qué compensación prefieres solicitar?</label>
+                    <label>¿Qué compensación prefieres solicitar? <span style="color: red;">*</span></label>
                     <small style="color: #666; font-size: 0.85em; display: block; margin-bottom: 12px;">
                         Por ley, tienes derecho a elegir entre estas dos opciones:
                     </small>
 
                     <div class="delay-buttons">
-                        <label class="delay-option" style="cursor: pointer; display: flex; align-items: flex-start; gap: 12px;">
-                            <input type="radio" name="compensation_choice" value="transporte_sustituto" id="comp_transporte" required style="margin-top: 4px; width: auto; padding: 0;">
-                            <div style="flex: 1;">
-                                <strong>Transporte sustituto en el primer vuelo disponible</strong><br>
-                                <span style="font-size: 0.85em; color: #7f8c8d; font-weight: normal;">
-                                    + Llamadas, correos, alimentos, alojamiento y transporte terrestre sin cargo (si es necesaria pernocta)
-                                </span>
-                            </div>
-                        </label>
+                        <button type="button" class="delay-option compensation-option" data-value="transporte_sustituto">
+                            <strong>Transporte sustituto en el primer vuelo disponible</strong><br>
+                            <span style="font-size: 0.85em; color: #7f8c8d; font-weight: normal;">
+                                + Llamadas, correos, alimentos, alojamiento y transporte terrestre sin cargo (si es necesaria pernocta)
+                            </span>
+                        </button>
 
-                        <label class="delay-option" style="cursor: pointer; display: flex; align-items: flex-start; gap: 12px;">
-                            <input type="radio" name="compensation_choice" value="reembolso_indemnizacion" id="comp_reembolso" required style="margin-top: 4px; width: auto; padding: 0;">
-                            <div style="flex: 1;">
-                                <strong>Reembolso completo (100%) + 25% de indemnización</strong><br>
-                                <span style="font-size: 0.85em; color: #7f8c8d; font-weight: normal;">
-                                    Solicitar el dinero en efectivo o transferencia bancaria
-                                </span>
-                            </div>
-                        </label>
+                        <button type="button" class="delay-option compensation-option" data-value="reembolso_indemnizacion">
+                            <strong>Reembolso completo (100%) + 25% de indemnización</strong><br>
+                            <span style="font-size: 0.85em; color: #7f8c8d; font-weight: normal;">
+                                Solicitar el dinero en efectivo o transferencia bancaria
+                            </span>
+                        </button>
                     </div>
+                    <input type="hidden" id="compensation_choice" name="compensation_choice" required>
                     <div class="error-message" id="compensation_choice_error">Por favor selecciona una opción de compensación</div>
                 </div>
 
@@ -1535,20 +1508,20 @@
         function updateCompensationChoiceVisibility() {
             const delayHours = parseFloat(document.getElementById('delay_hours').value);
             const compensationSection = document.getElementById('compensation-choice-section');
-            const compensationRadios = document.querySelectorAll('input[name="compensation_choice"]');
+            const compensationHiddenInput = document.getElementById('compensation_choice');
 
             if (delayHours === 5.0) {
                 // Show section for 4+ hour delays or cancellations
                 compensationSection.style.display = 'block';
-                compensationRadios.forEach(radio => {
-                    radio.required = true;
-                });
+                compensationHiddenInput.required = true;
             } else {
                 // Hide section for shorter delays
                 compensationSection.style.display = 'none';
-                compensationRadios.forEach(radio => {
-                    radio.required = false;
-                    radio.checked = false; // Uncheck when hidden
+                compensationHiddenInput.required = false;
+                compensationHiddenInput.value = ''; // Clear when hidden
+                // Remove selected state from buttons
+                document.querySelectorAll('.compensation-option').forEach(btn => {
+                    btn.classList.remove('selected');
                 });
             }
         }
@@ -1565,9 +1538,9 @@
             const priceInput = document.getElementById('ticket_price');
             const airlineSelect = document.getElementById('airline');
 
-            document.querySelectorAll('.delay-option').forEach(button => {
+            document.querySelectorAll('.delay-option:not(.compensation-option)').forEach(button => {
                 button.addEventListener('click', function () {
-                    document.querySelectorAll('.delay-option').forEach(btn => {
+                    document.querySelectorAll('.delay-option:not(.compensation-option)').forEach(btn => {
                         btn.classList.remove('selected');
                     });
 
@@ -1581,6 +1554,18 @@
 
                     // Update compensation choice visibility
                     updateCompensationChoiceVisibility();
+                });
+            });
+
+            // Compensation choice buttons
+            document.querySelectorAll('.compensation-option').forEach(button => {
+                button.addEventListener('click', function () {
+                    document.querySelectorAll('.compensation-option').forEach(btn => {
+                        btn.classList.remove('selected');
+                    });
+
+                    this.classList.add('selected');
+                    document.getElementById('compensation_choice').value = this.dataset.value;
                 });
             });
 
@@ -1771,9 +1756,10 @@
 
         // Restore compensation choice if present
         if (backData.compensation_choice) {
-            const choiceRadio = document.querySelector(`input[name="compensation_choice"][value="${backData.compensation_choice}"]`);
-            if (choiceRadio) {
-                choiceRadio.checked = true;
+            const choiceButton = document.querySelector(`.compensation-option[data-value="${backData.compensation_choice}"]`);
+            if (choiceButton) {
+                choiceButton.classList.add('selected');
+                document.getElementById('compensation_choice').value = backData.compensation_choice;
             }
         }
 
