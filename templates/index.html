@@ -617,13 +617,25 @@
         </div>
 
         <!-- Hero Section -->
-        <div id="hero-section" style="text-align: center; margin-bottom: 6px;">
+        <div id="hero-section" style="text-align: center; margin-bottom: 8px;">
             <h1 style="font-size: 1.5em; margin-bottom: 2px; color: #2c3e50; line-height: 1.1;">
                 ✈️ ¿Vuelo retrasado en México?
             </h1>
             <h2 style="font-size: 1.15em; color: #e74c3c; margin-bottom: 4px; font-weight: 700;">
                 Reclama tu compensación
             </h2>
+        </div>
+
+        <!-- Why I Built This -->
+        <div id="why-section" style="background: #ffffff; border: 2px solid #e5e7eb; border-radius: 10px; padding: 12px 14px; margin-bottom: 10px;">
+            <p style="margin: 0 0 8px 0; color: #2c3e50; font-size: 0.9em; line-height: 1.5;">
+                <strong style="color: #006847;">Hola, soy Zelma</strong> — ingeniera de software de México.
+                Cuando cancelaron el vuelo de mis papás 24 horas antes de verme correr un maratón en Islandia, investigué la ley de derechos del pasajero.
+                Los llamé (líneas colapsadas), les mandé emails, tweets, y DMs en Instagram exigiendo lo que nos debían: un vuelo sustituto.
+            </p>
+            <p style="margin: 0; color: #2c3e50; font-size: 0.9em; line-height: 1.5;">
+                Luché hasta que los acomodaron — ahorrándoles $2,500 USD. Creé VueloDigno para que viajeros en México puedan hacer lo mismo sin gastar horas investigando leyes ni peleando solos con aerolíneas.
+            </p>
         </div>
 
         <!-- How It Works -->
@@ -997,11 +1009,13 @@
             const descriptionElement = document.getElementById('page-description');
             const pageTitleContainer = document.getElementById('page-title');
             const heroSection = document.getElementById('hero-section');
+            const whySection = document.getElementById('why-section');
             const howItWorksSection = document.getElementById('how-it-works-section');
 
             if (currentPage === 2 && calculatedCompensation > 0 && selectedAirline) {
-                // Hide hero and how-it-works on page 2
+                // Hide hero, why, and how-it-works on page 2
                 heroSection.style.display = 'none';
+                whySection.style.display = 'none';
                 howItWorksSection.style.display = 'none';
 
                 // Show the title elements on page 2
@@ -1025,8 +1039,9 @@
                 subtitleElement.textContent = "";
                 descriptionElement.innerHTML = "";
             } else if (currentPage === 1) {
-                // Show hero and how-it-works on page 1
+                // Show hero, why, and how-it-works on page 1
                 heroSection.style.display = 'block';
+                whySection.style.display = 'block';
                 howItWorksSection.style.display = 'block';
 
                 // Hide title elements on page 1 (we have the hero section instead)
@@ -1036,6 +1051,7 @@
             } else {
                 // Default state
                 heroSection.style.display = 'none';
+                whySection.style.display = 'none';
                 howItWorksSection.style.display = 'none';
                 pageTitleContainer.style.display = 'none';
                 subtitleElement.style.display = 'none';
