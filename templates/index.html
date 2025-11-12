@@ -628,19 +628,6 @@
             </h2>
         </div>
 
-        <!-- Why I Built This -->
-        <div id="why-section"
-            style="background: #ffffff; border: 2px solid #e5e7eb; border-radius: 10px; padding: 12px 14px; margin-bottom: 10px;">
-            <img src="{{ url_for('static', filename='zelma_pfp.png') }}?v=2" alt="Zelma"
-                style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; float: left; margin-right: 12px;">
-            <p style="margin: 0; color: #2c3e50; font-size: 0.9em; line-height: 1.4;">
-                <strong style="color: #006847;">Hola, soy Zelma</strong>, ingeniera de software mexicana. Hice
-                VueloDigno después de pelear para que mis papás pudieran venir a verme correr un maraton en Islandia
-                despues de que les cancelaron su vuelo a ultimo minuto.
-                Ahora tú puedes reclamar en 3 minutos.
-            </p>
-        </div>
-
         <!-- Trust Badge -->
         <div id="trust-badge-section"
             style="background: #f0fdf4; padding: 8px 12px; border-radius: 8px; margin-bottom: 12px; text-align: center; border: 1px solid #10b981;">
@@ -664,134 +651,12 @@
         <form action="/preview" method="POST" id="multi-page-form">
 
             <div class="page active" data-page="1">
-                <!-- Start Here Banner with Origin/Destination -->
+                <!-- Start Here Banner -->
                 <div
-                    style="background: #fff3cd; padding: 12px 14px; border-radius: 8px; margin: 10px 0 14px 0; border-left: 4px solid #ffc107;">
-                    <p style="margin: 0 0 12px 0; font-weight: 600; color: #856404; font-size: 0.85em; text-align: center;">
-                        👇 5 preguntas rápidas para calcular cuánto te deben
+                    style="background: #fff3cd; padding: 12px 14px; border-radius: 8px; margin: 10px 0 14px 0; border-left: 4px solid #ffc107; text-align: center;">
+                    <p style="margin: 0; font-weight: 600; color: #856404; font-size: 0.95em;">
+                        👇 3 preguntas para calcular cuánto te deben
                     </p>
-
-                    <!-- Origin and Destination (Side by Side) -->
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 8px;">
-                        <div class="form-group" style="margin-bottom: 0;">
-                            <label>Origen del vuelo:</label>
-                            <input type="text" name="origin" id="origin" list="origin-list" placeholder="Ej: MEX, GDL"
-                                pattern="[A-Za-z]{3}" maxlength="3" required style="text-transform: uppercase;"
-                                autocomplete="off">
-                            <datalist id="origin-list">
-                                <!-- ONLY Mexican airports (must depart from Mexico) -->
-                                <option value="MEX">🇲🇽 MEX - Ciudad de México</option>
-                                <option value="GDL">🇲🇽 GDL - Guadalajara</option>
-                                <option value="MTY">🇲🇽 MTY - Monterrey</option>
-                                <option value="CUN">🇲🇽 CUN - Cancún</option>
-                                <option value="TIJ">🇲🇽 TIJ - Tijuana</option>
-                                <option value="BJX">🇲🇽 BJX - León/Guanajuato</option>
-                                <option value="PVR">🇲🇽 PVR - Puerto Vallarta</option>
-                                <option value="SJD">🇲🇽 SJD - Los Cabos</option>
-                                <option value="MZT">🇲🇽 MZT - Mazatlán</option>
-                                <option value="QRO">🇲🇽 QRO - Querétaro</option>
-                                <option value="AGU">🇲🇽 AGU - Aguascalientes</option>
-                                <option value="CUL">🇲🇽 CUL - Culiacán</option>
-                                <option value="HMO">🇲🇽 HMO - Hermosillo</option>
-                                <option value="MID">🇲🇽 MID - Mérida</option>
-                                <option value="OAX">🇲🇽 OAX - Oaxaca</option>
-                                <option value="TAM">🇲🇽 TAM - Tampico</option>
-                                <option value="VER">🇲🇽 VER - Veracruz</option>
-                                <option value="ZCL">🇲🇽 ZCL - Zacatecas</option>
-                                <option value="CJS">🇲🇽 CJS - Ciudad Juárez</option>
-                                <option value="CUU">🇲🇽 CUU - Chihuahua</option>
-                                <option value="CTM">🇲🇽 CTM - Chetumal</option>
-                                <option value="CZM">🇲🇽 CZM - Cozumel</option>
-                                <option value="HUX">🇲🇽 HUX - Huatulco</option>
-                                <option value="LAP">🇲🇽 LAP - La Paz</option>
-                                <option value="MLM">🇲🇽 MLM - Morelia</option>
-                                <option value="PBC">🇲🇽 PBC - Puebla</option>
-                                <option value="REX">🇲🇽 REX - Reynosa</option>
-                                <option value="SLP">🇲🇽 SLP - San Luis Potosí</option>
-                                <option value="TAP">🇲🇽 TAP - Tapachula</option>
-                                <option value="TGZ">🇲🇽 TGZ - Tuxtla Gutiérrez</option>
-                                <option value="TLC">🇲🇽 TLC - Toluca</option>
-                                <option value="TRC">🇲🇽 TRC - Torreón</option>
-                                <option value="VSA">🇲🇽 VSA - Villahermosa</option>
-                                <option value="ZIH">🇲🇽 ZIH - Zihuatanejo</option>
-                            </datalist>
-                            <span class="input-checkmark">✓</span>
-                            <div class="error-message" id="origin_error">Debe ser un aeropuerto mexicano</div>
-                        </div>
-
-                        <div class="form-group" style="margin-bottom: 0;">
-                            <label>Destino del vuelo:</label>
-                            <input type="text" name="destination" id="destination" list="destination-list"
-                                placeholder="Ej: CUN, LAX" pattern="[A-Za-z]{3}" maxlength="3" required
-                                style="text-transform: uppercase;" autocomplete="off">
-                            <datalist id="destination-list">
-                                <!-- Mexican airports -->
-                                <option value="MEX">🇲🇽 MEX - Ciudad de México</option>
-                                <option value="GDL">🇲🇽 GDL - Guadalajara</option>
-                                <option value="MTY">🇲🇽 MTY - Monterrey</option>
-                                <option value="CUN">🇲🇽 CUN - Cancún</option>
-                                <option value="TIJ">🇲🇽 TIJ - Tijuana</option>
-                                <option value="BJX">🇲🇽 BJX - León/Guanajuato</option>
-                                <option value="PVR">🇲🇽 PVR - Puerto Vallarta</option>
-                                <option value="SJD">🇲🇽 SJD - Los Cabos</option>
-                                <option value="MZT">🇲🇽 MZT - Mazatlán</option>
-                                <option value="QRO">🇲🇽 QRO - Querétaro</option>
-                                <option value="AGU">🇲🇽 AGU - Aguascalientes</option>
-                                <option value="CUL">🇲🇽 CUL - Culiacán</option>
-                                <option value="HMO">🇲🇽 HMO - Hermosillo</option>
-                                <option value="MID">🇲🇽 MID - Mérida</option>
-                                <option value="OAX">🇲🇽 OAX - Oaxaca</option>
-                                <option value="TAM">🇲🇽 TAM - Tampico</option>
-                                <option value="VER">🇲🇽 VER - Veracruz</option>
-                                <option value="ZCL">🇲🇽 ZCL - Zacatecas</option>
-                                <option value="CJS">🇲🇽 CJS - Ciudad Juárez</option>
-                                <option value="CUU">🇲🇽 CUU - Chihuahua</option>
-                                <option value="CTM">🇲🇽 CTM - Chetumal</option>
-                                <option value="CZM">🇲🇽 CZM - Cozumel</option>
-                                <option value="HUX">🇲🇽 HUX - Huatulco</option>
-                                <option value="LAP">🇲🇽 LAP - La Paz</option>
-                                <option value="MLM">🇲🇽 MLM - Morelia</option>
-                                <option value="PBC">🇲🇽 PBC - Puebla</option>
-                                <option value="REX">🇲🇽 REX - Reynosa</option>
-                                <option value="SLP">🇲🇽 SLP - San Luis Potosí</option>
-                                <option value="TAP">🇲🇽 TAP - Tapachula</option>
-                                <option value="TGZ">🇲🇽 TGZ - Tuxtla Gutiérrez</option>
-                                <option value="TLC">🇲🇽 TLC - Toluca</option>
-                                <option value="TRC">🇲🇽 TRC - Torreón</option>
-                                <option value="VSA">🇲🇽 VSA - Villahermosa</option>
-                                <option value="ZIH">🇲🇽 ZIH - Zihuatanejo</option>
-                                <!-- Common international destinations -->
-                                <option value="LAX">🇺🇸 LAX - Los Angeles</option>
-                                <option value="JFK">🇺🇸 JFK - New York</option>
-                                <option value="MIA">🇺🇸 MIA - Miami</option>
-                                <option value="IAH">🇺🇸 IAH - Houston</option>
-                                <option value="DFW">🇺🇸 DFW - Dallas</option>
-                                <option value="ORD">🇺🇸 ORD - Chicago</option>
-                                <option value="MAD">🇪🇸 MAD - Madrid</option>
-                                <option value="BCN">🇪🇸 BCN - Barcelona</option>
-                                <option value="CDG">🇫🇷 CDG - Paris</option>
-                                <option value="LHR">🇬🇧 LHR - London</option>
-                            </datalist>
-                            <span class="input-checkmark">✓</span>
-                            <div class="error-message" id="destination_error">Código inválido</div>
-                        </div>
-                    </div>
-                    <small style="color: #856404; font-size: 0.8em; display: block; margin: 0;">
-                        💡 Escribe para filtrar resultados (ej: "can" muestra Cancún)
-                    </small>
-                </div>
-
-                <div class="form-group">
-                    <label>Aerolínea:</label>
-                    <select name="airline" id="airline" required>
-                        <option value="">Selecciona...</option>
-                        <option value="Volaris">Volaris</option>
-                        <option value="VivaAerobus">VivaAerobus</option>
-                        <option value="Aeromexico">Aeroméxico</option>
-                        <option value="Demo">Demo (Prueba)</option>
-                    </select>
-                    <span class="input-checkmark">✓</span>
-                    <div class="error-message" id="airline_error">Por favor selecciona una aerolínea</div>
                 </div>
 
                 <label style="margin-top: 20px;">¿De cuánto fue el retraso del vuelo?
@@ -824,6 +689,23 @@
                     </div>
                 </div>
 
+                <div class="form-group">
+                    <label>Aerolínea:</label>
+                    <select name="airline" id="airline" required>
+                        <option value="">Selecciona...</option>
+                        <option value="Volaris">Volaris</option>
+                        <option value="VivaAerobus">VivaAerobus</option>
+                        <option value="Aeromexico">Aeroméxico</option>
+                        <option value="Demo">Demo (Prueba)</option>
+                    </select>
+                    <span class="input-checkmark">✓</span>
+                    <div class="error-message" id="airline_error">Por favor selecciona una aerolínea</div>
+                </div>
+
+                <!-- Hidden fields for origin/destination - will be filled on page 2 -->
+                <input type="hidden" name="origin" id="origin" value="MEX">
+                <input type="hidden" name="destination" id="destination" value="CUN">
+
                 <div class="btn-group" style="justify-content: center;">
                     <button type="button" class="btn-secondary" id="back-1" onclick="showPage(1)" disabled
                         style="visibility: hidden; display: none;">← Atrás</button>
@@ -835,6 +717,20 @@
                     style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 12px 15px; border-radius: 5px; margin-top: 15px; font-size: 0.9em; line-height: 1.5;">
                     <strong>⏰ Importante:</strong> La Ley de Aviación Civil en México te permite reclamar tu
                     compensación hasta un año después del vuelo
+                </div>
+
+                <!-- About Us Section -->
+                <div id="about-section"
+                    style="background: #ffffff; border: 2px solid #e5e7eb; border-radius: 10px; padding: 12px 14px; margin-top: 24px;">
+                    <img src="{{ url_for('static', filename='zelma_pfp.png') }}?v=2" alt="Zelma"
+                        style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; float: left; margin-right: 12px;">
+                    <p style="margin: 0; color: #2c3e50; font-size: 0.9em; line-height: 1.4;">
+                        <strong style="color: #006847;">Hola, soy Zelma</strong>, ingeniera de software mexicana. Hice
+                        VueloDigno después de pelear para que mis papás pudieran venir a verme correr un maraton en Islandia
+                        despues de que les cancelaron su vuelo a ultimo minuto.
+                        <br><br>
+                        Es gratis porque creo que todos merecen conocer sus derechos.
+                    </p>
                 </div>
             </div>
 
@@ -852,6 +748,115 @@
                         📧 Responde estas preguntas para generar tu email de reclamo
                     </p>
                 </div>
+
+                <!-- Origin and Destination (Side by Side) -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>Origen del vuelo:</label>
+                        <input type="text" name="origin_page2" id="origin_page2" list="origin-list" placeholder="Ej: MEX, GDL"
+                            pattern="[A-Za-z]{3}" maxlength="3" required style="text-transform: uppercase;"
+                            autocomplete="off">
+                        <datalist id="origin-list">
+                            <!-- ONLY Mexican airports (must depart from Mexico) -->
+                            <option value="MEX">🇲🇽 MEX - Ciudad de México</option>
+                            <option value="GDL">🇲🇽 GDL - Guadalajara</option>
+                            <option value="MTY">🇲🇽 MTY - Monterrey</option>
+                            <option value="CUN">🇲🇽 CUN - Cancún</option>
+                            <option value="TIJ">🇲🇽 TIJ - Tijuana</option>
+                            <option value="BJX">🇲🇽 BJX - León/Guanajuato</option>
+                            <option value="PVR">🇲🇽 PVR - Puerto Vallarta</option>
+                            <option value="SJD">🇲🇽 SJD - Los Cabos</option>
+                            <option value="MZT">🇲🇽 MZT - Mazatlán</option>
+                            <option value="QRO">🇲🇽 QRO - Querétaro</option>
+                            <option value="AGU">🇲🇽 AGU - Aguascalientes</option>
+                            <option value="CUL">🇲🇽 CUL - Culiacán</option>
+                            <option value="HMO">🇲🇽 HMO - Hermosillo</option>
+                            <option value="MID">🇲🇽 MID - Mérida</option>
+                            <option value="OAX">🇲🇽 OAX - Oaxaca</option>
+                            <option value="TAM">🇲🇽 TAM - Tampico</option>
+                            <option value="VER">🇲🇽 VER - Veracruz</option>
+                            <option value="ZCL">🇲🇽 ZCL - Zacatecas</option>
+                            <option value="CJS">🇲🇽 CJS - Ciudad Juárez</option>
+                            <option value="CUU">🇲🇽 CUU - Chihuahua</option>
+                            <option value="CTM">🇲🇽 CTM - Chetumal</option>
+                            <option value="CZM">🇲🇽 CZM - Cozumel</option>
+                            <option value="HUX">🇲🇽 HUX - Huatulco</option>
+                            <option value="LAP">🇲🇽 LAP - La Paz</option>
+                            <option value="MLM">🇲🇽 MLM - Morelia</option>
+                            <option value="PBC">🇲🇽 PBC - Puebla</option>
+                            <option value="REX">🇲🇽 REX - Reynosa</option>
+                            <option value="SLP">🇲🇽 SLP - San Luis Potosí</option>
+                            <option value="TAP">🇲🇽 TAP - Tapachula</option>
+                            <option value="TGZ">🇲🇽 TGZ - Tuxtla Gutiérrez</option>
+                            <option value="TLC">🇲🇽 TLC - Toluca</option>
+                            <option value="TRC">🇲🇽 TRC - Torreón</option>
+                            <option value="VSA">🇲🇽 VSA - Villahermosa</option>
+                            <option value="ZIH">🇲🇽 ZIH - Zihuatanejo</option>
+                        </datalist>
+                        <span class="input-checkmark">✓</span>
+                        <div class="error-message" id="origin_page2_error">Debe ser un aeropuerto mexicano</div>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>Destino del vuelo:</label>
+                        <input type="text" name="destination_page2" id="destination_page2" list="destination-list"
+                            placeholder="Ej: CUN, LAX" pattern="[A-Za-z]{3}" maxlength="3" required
+                            style="text-transform: uppercase;" autocomplete="off">
+                        <datalist id="destination-list">
+                            <!-- Mexican airports -->
+                            <option value="MEX">🇲🇽 MEX - Ciudad de México</option>
+                            <option value="GDL">🇲🇽 GDL - Guadalajara</option>
+                            <option value="MTY">🇲🇽 MTY - Monterrey</option>
+                            <option value="CUN">🇲🇽 CUN - Cancún</option>
+                            <option value="TIJ">🇲🇽 TIJ - Tijuana</option>
+                            <option value="BJX">🇲🇽 BJX - León/Guanajuato</option>
+                            <option value="PVR">🇲🇽 PVR - Puerto Vallarta</option>
+                            <option value="SJD">🇲🇽 SJD - Los Cabos</option>
+                            <option value="MZT">🇲🇽 MZT - Mazatlán</option>
+                            <option value="QRO">🇲🇽 QRO - Querétaro</option>
+                            <option value="AGU">🇲🇽 AGU - Aguascalientes</option>
+                            <option value="CUL">🇲🇽 CUL - Culiacán</option>
+                            <option value="HMO">🇲🇽 HMO - Hermosillo</option>
+                            <option value="MID">🇲🇽 MID - Mérida</option>
+                            <option value="OAX">🇲🇽 OAX - Oaxaca</option>
+                            <option value="TAM">🇲🇽 TAM - Tampico</option>
+                            <option value="VER">🇲🇽 VER - Veracruz</option>
+                            <option value="ZCL">🇲🇽 ZCL - Zacatecas</option>
+                            <option value="CJS">🇲🇽 CJS - Ciudad Juárez</option>
+                            <option value="CUU">🇲🇽 CUU - Chihuahua</option>
+                            <option value="CTM">🇲🇽 CTM - Chetumal</option>
+                            <option value="CZM">🇲🇽 CZM - Cozumel</option>
+                            <option value="HUX">🇲🇽 HUX - Huatulco</option>
+                            <option value="LAP">🇲🇽 LAP - La Paz</option>
+                            <option value="MLM">🇲🇽 MLM - Morelia</option>
+                            <option value="PBC">🇲🇽 PBC - Puebla</option>
+                            <option value="REX">🇲🇽 REX - Reynosa</option>
+                            <option value="SLP">🇲🇽 SLP - San Luis Potosí</option>
+                            <option value="TAP">🇲🇽 TAP - Tapachula</option>
+                            <option value="TGZ">🇲🇽 TGZ - Tuxtla Gutiérrez</option>
+                            <option value="TLC">🇲🇽 TLC - Toluca</option>
+                            <option value="TRC">🇲🇽 TRC - Torreón</option>
+                            <option value="VSA">🇲🇽 VSA - Villahermosa</option>
+                            <option value="ZIH">🇲🇽 ZIH - Zihuatanejo</option>
+                            <!-- Common international destinations -->
+                            <option value="LAX">🇺🇸 LAX - Los Angeles</option>
+                            <option value="JFK">🇺🇸 JFK - New York</option>
+                            <option value="MIA">🇺🇸 MIA - Miami</option>
+                            <option value="IAH">🇺🇸 IAH - Houston</option>
+                            <option value="DFW">🇺🇸 DFW - Dallas</option>
+                            <option value="ORD">🇺🇸 ORD - Chicago</option>
+                            <option value="MAD">🇪🇸 MAD - Madrid</option>
+                            <option value="BCN">🇪🇸 BCN - Barcelona</option>
+                            <option value="CDG">🇫🇷 CDG - Paris</option>
+                            <option value="LHR">🇬🇧 LHR - London</option>
+                        </datalist>
+                        <span class="input-checkmark">✓</span>
+                        <div class="error-message" id="destination_page2_error">Código inválido</div>
+                    </div>
+                </div>
+                <small style="color: #666; font-size: 0.8em; display: block; margin: 0 0 20px 0;">
+                    💡 Escribe para filtrar resultados (ej: "can" muestra Cancún)
+                </small>
 
                 <div class="form-group">
                     <label>Número de vuelo:</label>
@@ -1002,13 +1007,13 @@
             const descriptionElement = document.getElementById('page-description');
             const pageTitleContainer = document.getElementById('page-title');
             const heroSection = document.getElementById('hero-section');
-            const whySection = document.getElementById('why-section');
+            const aboutSection = document.getElementById('about-section');
             const trustBadgeSection = document.getElementById('trust-badge-section');
 
             if (currentPage === 2 && calculatedCompensation > 0 && selectedAirline) {
-                // Hide hero, why, and trust-badge on page 2
+                // Hide hero, about, and trust-badge on page 2
                 heroSection.style.display = 'none';
-                whySection.style.display = 'none';
+                aboutSection.style.display = 'none';
                 trustBadgeSection.style.display = 'none';
 
                 // Show the title elements on page 2
@@ -1032,9 +1037,9 @@
                 subtitleElement.textContent = "";
                 descriptionElement.innerHTML = "";
             } else if (currentPage === 1) {
-                // Show hero, why, and trust-badge on page 1
+                // Show hero, about, and trust-badge on page 1
                 heroSection.style.display = 'block';
-                whySection.style.display = 'block';
+                aboutSection.style.display = 'block';
                 trustBadgeSection.style.display = 'block';
 
                 // Hide title elements on page 1 (we have the hero section instead)
@@ -1120,10 +1125,9 @@
 
                 const ticketPriceValid = validateField('ticket_price');
                 const airlineValid = validateField('airline');
-                const originValid = validateField('origin');
-                const destValid = validateField('destination');
+                // Origin and destination are now on page 2, so don't validate them on page 1
 
-                return ticketPriceValid && airlineValid && originValid && destValid;
+                return ticketPriceValid && airlineValid;
             }
 
             const currentPageElement = document.querySelector(`.page[data-page="${pageNumber}"]`);
@@ -1640,25 +1644,25 @@
                 });
             }
 
-            // Add event listeners for origin and destination
-            const originInput = document.getElementById('origin');
-            const destInput = document.getElementById('destination');
+            // Add event listeners for origin and destination (page 2 fields)
+            const originPage2Input = document.getElementById('origin_page2');
+            const destPage2Input = document.getElementById('destination_page2');
 
-            if (originInput) {
-                originInput.addEventListener('input', () => {
-                    validateField('origin');
+            if (originPage2Input) {
+                originPage2Input.addEventListener('input', () => {
+                    validateField('origin_page2');
                 });
-                originInput.addEventListener('blur', () => {
-                    validateField('origin');
+                originPage2Input.addEventListener('blur', () => {
+                    validateField('origin_page2');
                 });
             }
 
-            if (destInput) {
-                destInput.addEventListener('input', () => {
-                    validateField('destination');
+            if (destPage2Input) {
+                destPage2Input.addEventListener('input', () => {
+                    validateField('destination_page2');
                 });
-                destInput.addEventListener('blur', () => {
-                    validateField('destination');
+                destPage2Input.addEventListener('blur', () => {
+                    validateField('destination_page2');
                 });
             }
 
@@ -1678,6 +1682,25 @@
                     }
                 });
             });
+
+            // Form submission handler: copy page 2 values to hidden fields
+            const form = document.getElementById('multi-page-form');
+            if (form) {
+                form.addEventListener('submit', function(event) {
+                    // Copy origin_page2 and destination_page2 to hidden fields
+                    const originPage2 = document.getElementById('origin_page2');
+                    const destinationPage2 = document.getElementById('destination_page2');
+                    const originHidden = document.getElementById('origin');
+                    const destinationHidden = document.getElementById('destination');
+
+                    if (originPage2 && originPage2.value && originHidden) {
+                        originHidden.value = originPage2.value.toUpperCase().trim();
+                    }
+                    if (destinationPage2 && destinationPage2.value && destinationHidden) {
+                        destinationHidden.value = destinationPage2.value.toUpperCase().trim();
+                    }
+                });
+            }
 
             // Update compensation display when passenger count changes
             const passengerCountInput = document.getElementById('passenger_count');
@@ -1725,6 +1748,12 @@
         // Pre-fill all form fields
         document.getElementById('origin').value = backData.origin;
         document.getElementById('destination').value = backData.destination;
+        // Also pre-fill page 2 visible fields
+        const originPage2Field = document.getElementById('origin_page2');
+        const destinationPage2Field = document.getElementById('destination_page2');
+        if (originPage2Field) originPage2Field.value = backData.origin;
+        if (destinationPage2Field) destinationPage2Field.value = backData.destination;
+
         document.getElementById('delay_hours').value = backData.delay_hours;
         document.getElementById('ticket_price').value = backData.ticket_price;
         document.getElementById('airline').value = backData.airline;
