@@ -659,10 +659,16 @@
         const allInputs = document.querySelectorAll('input, select, textarea, [contenteditable="true"]');
         allInputs.forEach(input => {
             input.addEventListener('focus', function() {
-                // Small delay to let keyboard appear
+                // Longer delay to let keyboard fully appear
                 setTimeout(() => {
-                    this.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }, 300);
+                    // Scroll input to top of viewport with some padding
+                    const inputRect = this.getBoundingClientRect();
+                    const scrollOffset = inputRect.top + window.pageYOffset - 20; // 20px padding from top
+                    window.scrollTo({
+                        top: scrollOffset,
+                        behavior: 'smooth'
+                    });
+                }, 400);
             });
         });
     </script>
