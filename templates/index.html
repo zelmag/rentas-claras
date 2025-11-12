@@ -635,40 +635,18 @@
                 style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; float: left; margin-right: 12px;">
             <p style="margin: 0; color: #2c3e50; font-size: 0.9em; line-height: 1.4;">
                 <strong style="color: #006847;">Hola, soy Zelma</strong>, ingeniera de software mexicana. Hice
-                VueloDigno después de luchar para que mis papás pudieran venir a verme correr un maraton en Islandia
+                VueloDigno después de pelear para que mis papás pudieran venir a verme correr un maraton en Islandia
                 despues de que les cancelaron su vuelo a ultimo minuto.
                 Ahora tú puedes reclamar en 3 minutos.
             </p>
         </div>
 
-        <!-- How It Works -->
-        <div id="how-it-works-section"
-            style="background: linear-gradient(135deg, #f0fdf4 0%, #e8f4f8 100%); padding: 12px; border-radius: 10px; margin-bottom: 12px; border: 2px solid #006847;">
-            <div style="display: grid; gap: 8px;">
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <div
-                        style="background: #006847; color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; font-size: 0.8em;">
-                        1</div>
-                    <strong style="color: #2c3e50; font-size: 0.9em;">Calcula tu compensación</strong>
-                </div>
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <div
-                        style="background: #006847; color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; font-size: 0.8em;">
-                        2</div>
-                    <strong style="color: #2c3e50; font-size: 0.9em;">Genera tu email legal</strong>
-                </div>
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <div
-                        style="background: #006847; color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; font-size: 0.8em;">
-                        3</div>
-                    <strong style="color: #2c3e50; font-size: 0.9em;">Envíalo a la aerolínea</strong>
-                </div>
-            </div>
-            <div style="background: #ffffff; padding: 8px; border-radius: 6px; margin-top: 10px; text-align: center;">
-                <p style="margin: 0; font-weight: 700; color: #006847; font-size: 0.9em;">
-                    ⚡ GRATIS • 3 min • Garantizado por ley
-                </p>
-            </div>
+        <!-- Trust Badge -->
+        <div id="trust-badge-section"
+            style="background: #f0fdf4; padding: 8px 12px; border-radius: 8px; margin-bottom: 12px; text-align: center; border: 1px solid #10b981;">
+            <p style="margin: 0; font-weight: 700; color: #006847; font-size: 0.85em;">
+                ⚡ GRATIS • 3 min • Garantizado por ley
+            </p>
         </div>
 
         <h2 id="page-title" style="display: none;">
@@ -1025,13 +1003,13 @@
             const pageTitleContainer = document.getElementById('page-title');
             const heroSection = document.getElementById('hero-section');
             const whySection = document.getElementById('why-section');
-            const howItWorksSection = document.getElementById('how-it-works-section');
+            const trustBadgeSection = document.getElementById('trust-badge-section');
 
             if (currentPage === 2 && calculatedCompensation > 0 && selectedAirline) {
-                // Hide hero, why, and how-it-works on page 2
+                // Hide hero, why, and trust-badge on page 2
                 heroSection.style.display = 'none';
                 whySection.style.display = 'none';
-                howItWorksSection.style.display = 'none';
+                trustBadgeSection.style.display = 'none';
 
                 // Show the title elements on page 2
                 pageTitleContainer.style.display = 'block';
@@ -1054,10 +1032,10 @@
                 subtitleElement.textContent = "";
                 descriptionElement.innerHTML = "";
             } else if (currentPage === 1) {
-                // Show hero, why, and how-it-works on page 1
+                // Show hero, why, and trust-badge on page 1
                 heroSection.style.display = 'block';
                 whySection.style.display = 'block';
-                howItWorksSection.style.display = 'block';
+                trustBadgeSection.style.display = 'block';
 
                 // Hide title elements on page 1 (we have the hero section instead)
                 pageTitleContainer.style.display = 'none';
@@ -1067,7 +1045,7 @@
                 // Default state
                 heroSection.style.display = 'none';
                 whySection.style.display = 'none';
-                howItWorksSection.style.display = 'none';
+                trustBadgeSection.style.display = 'none';
                 pageTitleContainer.style.display = 'none';
                 subtitleElement.style.display = 'none';
                 descriptionElement.style.display = 'none';
