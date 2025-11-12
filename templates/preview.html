@@ -183,11 +183,14 @@
             align-items: center;
             z-index: 2;
             position: relative;
-            cursor: pointer;
             transition: transform 0.2s ease;
         }
 
-        .milestone:hover {
+        .milestone.completed {
+            cursor: pointer;
+        }
+
+        .milestone.completed:hover {
             transform: scale(1.05);
         }
 
