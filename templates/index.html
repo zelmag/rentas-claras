@@ -11,21 +11,21 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         .progress-bar-section {
-            padding: 0 0 6px 0;
-            margin-bottom: 6px;
+            padding: 0 0 4px 0;
+            margin-bottom: 4px;
         }
 
         @media (min-width: 768px) {
             .progress-bar-section {
-                padding: 0 0 8px 0;
-                margin-bottom: 8px;
+                padding: 0 0 6px 0;
+                margin-bottom: 6px;
             }
         }
 
         @media (min-width: 1024px) {
             .progress-bar-section {
-                padding: 0 0 10px 0;
-                margin-bottom: 10px;
+                padding: 0 0 8px 0;
+                margin-bottom: 8px;
             }
         }
 
@@ -1769,20 +1769,31 @@
         // Update compensation choice visibility
         updateCompensationChoiceVisibility();
 
-        // Mobile keyboard scroll fix - scroll input into view when focused
+        // Mobile keyboard scroll fix - scroll input into view when focused or typing
         const allInputs = document.querySelectorAll('input, select, textarea');
+
+        function scrollInputIntoView(element) {
+            // Scroll input to top of viewport with some padding
+            const inputRect = element.getBoundingClientRect();
+            const scrollOffset = inputRect.top + window.pageYOffset - 20; // 20px padding from top
+            window.scrollTo({
+                top: scrollOffset,
+                behavior: 'smooth'
+            });
+        }
+
         allInputs.forEach(input => {
+            // Scroll on focus (when keyboard appears)
             input.addEventListener('focus', function() {
                 // Longer delay to let keyboard fully appear
                 setTimeout(() => {
-                    // Scroll input to top of viewport with some padding
-                    const inputRect = this.getBoundingClientRect();
-                    const scrollOffset = inputRect.top + window.pageYOffset - 20; // 20px padding from top
-                    window.scrollTo({
-                        top: scrollOffset,
-                        behavior: 'smooth'
-                    });
+                    scrollInputIntoView(this);
                 }, 400);
+            });
+
+            // Also scroll on input (as user types)
+            input.addEventListener('input', function() {
+                scrollInputIntoView(this);
             });
         });
 
