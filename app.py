@@ -52,7 +52,7 @@ def generate_tweet_text(flight_data, compensation_amount):
         delay_text = f"{delay_hours} horas"
 
     # Build angry tweet (no emojis)
-    tweet = f"""{airline_handle} me debe {comp_text} por retraso de {delay_text} en el vuelo {flight_data['flight_number']}.
+    tweet = f"""Según @VueloDigno, {airline_handle} me debe {comp_text} por retraso de {delay_text} en el vuelo {flight_data['flight_number']}.
 
 Reclamo enviado. Plazo legal: 10 días.
 
