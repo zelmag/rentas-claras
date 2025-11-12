@@ -655,7 +655,7 @@
                 <div
                     style="background: #fff3cd; padding: 12px 14px; border-radius: 8px; margin: 10px 0 14px 0; border-left: 4px solid #ffc107; text-align: center;">
                     <p style="margin: 0; font-weight: 600; color: #856404; font-size: 0.95em;">
-                        👇 3 preguntas para calcular cuánto te deben
+                        👇 5 preguntas para calcular cuánto te deben
                     </p>
                 </div>
 
@@ -702,58 +702,11 @@
                     <div class="error-message" id="airline_error">Por favor selecciona una aerolínea</div>
                 </div>
 
-                <!-- Hidden fields for origin/destination - will be filled on page 2 -->
-                <input type="hidden" name="origin" id="origin" value="MEX">
-                <input type="hidden" name="destination" id="destination" value="CUN">
-
-                <div class="btn-group" style="justify-content: center;">
-                    <button type="button" class="btn-secondary" id="back-1" onclick="showPage(1)" disabled
-                        style="visibility: hidden; display: none;">← Atrás</button>
-                    <button type="button" class="btn-primary" id="next-1" onclick="nextPage()"
-                        style="flex-grow: 0;">¿Cuánto Me Deben?</button>
-                </div>
-
-                <div
-                    style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 12px 15px; border-radius: 5px; margin-top: 15px; font-size: 0.9em; line-height: 1.5;">
-                    <strong>⏰ Importante:</strong> La Ley de Aviación Civil en México te permite reclamar tu
-                    compensación hasta un año después del vuelo
-                </div>
-
-                <!-- About Us Section -->
-                <div id="about-section"
-                    style="background: #ffffff; border: 2px solid #e5e7eb; border-radius: 10px; padding: 12px 14px; margin-top: 24px;">
-                    <img src="{{ url_for('static', filename='zelma_pfp.png') }}?v=2" alt="Zelma"
-                        style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; float: left; margin-right: 12px;">
-                    <p style="margin: 0; color: #2c3e50; font-size: 0.9em; line-height: 1.4;">
-                        <strong style="color: #006847;">Hola, soy Zelma</strong>, ingeniera de software mexicana. Hice
-                        VueloDigno después de pelear para que mis papás pudieran venir a verme correr un maraton en Islandia
-                        despues de que les cancelaron su vuelo a ultimo minuto.
-                        <br><br>
-                        Es gratis porque creo que todos merecen conocer sus derechos.
-                    </p>
-                </div>
-            </div>
-
-            <div class="page" data-page="2">
-                <!-- Eligibility Info Banner -->
-                <div id="eligibility-message-box"
-                    style="display:none; margin: 20px 0; padding: 15px; border-radius: 8px; background-color: #f0fdf4; border-left: 5px solid #006847;">
-                    <div id="claim-result" style="margin-bottom: 10px;"></div>
-                </div>
-
-                <!-- Page 2 Banner -->
-                <div
-                    style="background: #fff3cd; padding: 15px 20px; border-radius: 10px; margin: 20px 0 30px 0; border-left: 4px solid #ffc107; text-align: center;">
-                    <p style="margin: 0; font-weight: 600; color: #856404; font-size: 1.05em;">
-                        📧 Responde estas preguntas para generar tu email de reclamo
-                    </p>
-                </div>
-
                 <!-- Origin and Destination (Side by Side) -->
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
                     <div class="form-group" style="margin-bottom: 0;">
                         <label>Origen del vuelo:</label>
-                        <input type="text" name="origin_page2" id="origin_page2" list="origin-list" placeholder="Ej: MEX, GDL"
+                        <input type="text" name="origin" id="origin" list="origin-list" placeholder="Ej: MEX, GDL"
                             pattern="[A-Za-z]{3}" maxlength="3" required style="text-transform: uppercase;"
                             autocomplete="off">
                         <datalist id="origin-list">
@@ -794,12 +747,12 @@
                             <option value="ZIH">🇲🇽 ZIH - Zihuatanejo</option>
                         </datalist>
                         <span class="input-checkmark">✓</span>
-                        <div class="error-message" id="origin_page2_error">Debe ser un aeropuerto mexicano</div>
+                        <div class="error-message" id="origin_error">Debe ser un aeropuerto mexicano</div>
                     </div>
 
                     <div class="form-group" style="margin-bottom: 0;">
                         <label>Destino del vuelo:</label>
-                        <input type="text" name="destination_page2" id="destination_page2" list="destination-list"
+                        <input type="text" name="destination" id="destination" list="destination-list"
                             placeholder="Ej: CUN, LAX" pattern="[A-Za-z]{3}" maxlength="3" required
                             style="text-transform: uppercase;" autocomplete="off">
                         <datalist id="destination-list">
@@ -851,12 +804,55 @@
                             <option value="LHR">🇬🇧 LHR - London</option>
                         </datalist>
                         <span class="input-checkmark">✓</span>
-                        <div class="error-message" id="destination_page2_error">Código inválido</div>
+                        <div class="error-message" id="destination_error">Código inválido</div>
                     </div>
                 </div>
                 <small style="color: #666; font-size: 0.8em; display: block; margin: 0 0 20px 0;">
                     💡 Escribe para filtrar resultados (ej: "can" muestra Cancún)
                 </small>
+
+                <div class="btn-group" style="justify-content: center;">
+                    <button type="button" class="btn-secondary" id="back-1" onclick="showPage(1)" disabled
+                        style="visibility: hidden; display: none;">← Atrás</button>
+                    <button type="button" class="btn-primary" id="next-1" onclick="nextPage()"
+                        style="flex-grow: 0;">¿Cuánto Me Deben?</button>
+                </div>
+
+                <div
+                    style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 12px 15px; border-radius: 5px; margin-top: 15px; font-size: 0.9em; line-height: 1.5;">
+                    <strong>⏰ Importante:</strong> La Ley de Aviación Civil en México te permite reclamar tu
+                    compensación hasta un año después del vuelo
+                </div>
+
+                <!-- About Us Section -->
+                <div id="about-section"
+                    style="background: #ffffff; border: 2px solid #e5e7eb; border-radius: 10px; padding: 12px 14px; margin-top: 24px;">
+                    <img src="{{ url_for('static', filename='zelma_pfp.png') }}?v=2" alt="Zelma"
+                        style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; float: left; margin-right: 12px;">
+                    <p style="margin: 0; color: #2c3e50; font-size: 0.9em; line-height: 1.4;">
+                        <strong style="color: #006847;">Hola, soy Zelma</strong>, ingeniera de software mexicana. Hice
+                        VueloDigno después de pelear para que mis papás pudieran venir a verme correr un maraton en Islandia
+                        despues de que les cancelaron su vuelo a ultimo minuto.
+                        <br><br>
+                        Es gratis porque las aerolíneas ya te deben este dinero por ley y me da coraje que no respondan.
+                    </p>
+                </div>
+            </div>
+
+            <div class="page" data-page="2">
+                <!-- Eligibility Info Banner -->
+                <div id="eligibility-message-box"
+                    style="display:none; margin: 20px 0; padding: 15px; border-radius: 8px; background-color: #f0fdf4; border-left: 5px solid #006847;">
+                    <div id="claim-result" style="margin-bottom: 10px;"></div>
+                </div>
+
+                <!-- Page 2 Banner -->
+                <div
+                    style="background: #fff3cd; padding: 15px 20px; border-radius: 10px; margin: 20px 0 30px 0; border-left: 4px solid #ffc107; text-align: center;">
+                    <p style="margin: 0; font-weight: 600; color: #856404; font-size: 1.05em;">
+                        📧 Responde estas preguntas para generar tu email de reclamo
+                    </p>
+                </div>
 
                 <div class="form-group">
                     <label>Número de vuelo:</label>
@@ -1125,9 +1121,10 @@
 
                 const ticketPriceValid = validateField('ticket_price');
                 const airlineValid = validateField('airline');
-                // Origin and destination are now on page 2, so don't validate them on page 1
+                const originValid = validateField('origin');
+                const destValid = validateField('destination');
 
-                return ticketPriceValid && airlineValid;
+                return ticketPriceValid && airlineValid && originValid && destValid;
             }
 
             const currentPageElement = document.querySelector(`.page[data-page="${pageNumber}"]`);
@@ -1644,25 +1641,25 @@
                 });
             }
 
-            // Add event listeners for origin and destination (page 2 fields)
-            const originPage2Input = document.getElementById('origin_page2');
-            const destPage2Input = document.getElementById('destination_page2');
+            // Add event listeners for origin and destination on page 1
+            const originInput = document.getElementById('origin');
+            const destInput = document.getElementById('destination');
 
-            if (originPage2Input) {
-                originPage2Input.addEventListener('input', () => {
-                    validateField('origin_page2');
+            if (originInput) {
+                originInput.addEventListener('input', () => {
+                    validateField('origin');
                 });
-                originPage2Input.addEventListener('blur', () => {
-                    validateField('origin_page2');
+                originInput.addEventListener('blur', () => {
+                    validateField('origin');
                 });
             }
 
-            if (destPage2Input) {
-                destPage2Input.addEventListener('input', () => {
-                    validateField('destination_page2');
+            if (destInput) {
+                destInput.addEventListener('input', () => {
+                    validateField('destination');
                 });
-                destPage2Input.addEventListener('blur', () => {
-                    validateField('destination_page2');
+                destInput.addEventListener('blur', () => {
+                    validateField('destination');
                 });
             }
 
@@ -1682,25 +1679,6 @@
                     }
                 });
             });
-
-            // Form submission handler: copy page 2 values to hidden fields
-            const form = document.getElementById('multi-page-form');
-            if (form) {
-                form.addEventListener('submit', function(event) {
-                    // Copy origin_page2 and destination_page2 to hidden fields
-                    const originPage2 = document.getElementById('origin_page2');
-                    const destinationPage2 = document.getElementById('destination_page2');
-                    const originHidden = document.getElementById('origin');
-                    const destinationHidden = document.getElementById('destination');
-
-                    if (originPage2 && originPage2.value && originHidden) {
-                        originHidden.value = originPage2.value.toUpperCase().trim();
-                    }
-                    if (destinationPage2 && destinationPage2.value && destinationHidden) {
-                        destinationHidden.value = destinationPage2.value.toUpperCase().trim();
-                    }
-                });
-            }
 
             // Update compensation display when passenger count changes
             const passengerCountInput = document.getElementById('passenger_count');
@@ -1748,12 +1726,6 @@
         // Pre-fill all form fields
         document.getElementById('origin').value = backData.origin;
         document.getElementById('destination').value = backData.destination;
-        // Also pre-fill page 2 visible fields
-        const originPage2Field = document.getElementById('origin_page2');
-        const destinationPage2Field = document.getElementById('destination_page2');
-        if (originPage2Field) originPage2Field.value = backData.origin;
-        if (destinationPage2Field) destinationPage2Field.value = backData.destination;
-
         document.getElementById('delay_hours').value = backData.delay_hours;
         document.getElementById('ticket_price').value = backData.ticket_price;
         document.getElementById('airline').value = backData.airline;
