@@ -126,7 +126,7 @@ def validate_mexican_jurisdiction(origin_code, destination_code, airline_name):
             - applies: Boolean - True if Mexican law applies
             - reason: String - Why it applies or doesn't
             - redirect_url: String or None - Where to redirect if not applicable
-            - jurisdiction_type: String - MEXICO_ORIGIN, MEXICO_DEST, EU_261, or NOT_APPLICABLE
+            - jurisdiction_type: String - MEXICO_ORIGIN, EU_261, or NOT_APPLICABLE
     """
 
     origin = origin_code.upper().strip()
@@ -160,23 +160,11 @@ def validate_mexican_jurisdiction(origin_code, destination_code, airline_name):
             'jurisdiction_type': 'MEXICO_ORIGIN'
         }
 
-    # Case 3: Flight lands in Mexico → Mexican law applies (Montreal Convention)
-    if dest_is_mexico:
-        dest_name = MEXICO_AIRPORTS.get(dest, dest)
-        return {
-            'applies': True,
-            'reason': f'✅ Tu vuelo aterriza en <strong>{dest_name}</strong>, México. Bajo el <strong>Convenio de Montreal</strong>, puedes reclamar usando los estándares de la Ley de Aviación Civil Mexicana (Artículo 47 Bis).',
-            'redirect_message': None,
-            'redirect_url': None,
-            'redirect_service': None,
-            'jurisdiction_type': 'MEXICO_DESTINATION'
-        }
-
-    # Case 4: No Mexican connection
+    # Case 3: No flight from Mexico (NOT APPLICABLE)
     return {
         'applies': False,
-        'reason': f'❌ Este vuelo ({origin} → {dest}) no tiene conexión con México.',
-        'redirect_message': 'VueloDigno solo procesa reclamos para vuelos que salen de o llegan a México. Consulta las leyes de aviación del país de origen del vuelo.',
+        'reason': f'❌ Este vuelo ({origin} → {dest}) no sale de México.',
+        'redirect_message': 'VueloDigno solo procesa reclamos para vuelos que salen de México.',
         'redirect_url': None,
         'redirect_service': None,
         'jurisdiction_type': 'NOT_APPLICABLE'

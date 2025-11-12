@@ -1497,25 +1497,12 @@
                 return;
             }
 
-            // Case 3: Flight lands in Mexico
-            if (destIsMexico) {
-                jurisdictionValid = true;
-                jurisdictionMsg.innerHTML = `
-                    <strong style="font-size: 1.1em; color: #059669;">✅ Tu vuelo está cubierto por la ley mexicana</strong><br><br>
-                    El vuelo aterriza en México. Bajo el <strong>Convenio de Montreal</strong>, puedes reclamar usando los estándares de la Ley de Aviación Civil Mexicana (Artículo 47 Bis).
-                `;
-                jurisdictionMsg.style.backgroundColor = '#f0fdf4';
-                jurisdictionMsg.style.borderLeft = '4px solid #059669';
-                jurisdictionMsg.style.display = 'block';
-                return;
-            }
-
-            // Case 4: No Mexican connection
+            // Case 3: No flight from Mexico (BLOCKED)
             jurisdictionValid = false;
             jurisdictionMsg.innerHTML = `
                 <strong style="font-size: 1.1em;">❌ Este vuelo no está cubierto</strong><br><br>
-                El vuelo (${origin} → ${dest}) no tiene conexión con México.<br><br>
-                VueloDigno solo procesa reclamos para vuelos que salen de o llegan a México.
+                El vuelo (${origin} → ${dest}) no sale de México.<br><br>
+                VueloDigno solo procesa reclamos para vuelos que <strong>salen de México</strong>.
             `;
             jurisdictionMsg.style.backgroundColor = '#fee';
             jurisdictionMsg.style.borderLeft = '4px solid #e74c3c';
