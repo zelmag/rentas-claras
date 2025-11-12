@@ -167,6 +167,7 @@
         }
 
         @media (min-width: 768px) {
+
             input,
             select {
                 padding: 18px 20px;
@@ -531,28 +532,28 @@
         }
 
         select#airline option[value="Volaris"] {
-            background-image: url('{{ url_for('static', filename='volaris.png') }}');
+            background-image: url('{{ url_for(' static', filename=' volaris.png') }}');
         }
 
         select#airline option[value="VivaAerobus"] {
-            background-image: url('{{ url_for('static', filename='viva.svg') }}');
+            background-image: url('{{ url_for(' static', filename=' viva.svg') }}');
         }
 
         select#airline option[value="Aeromexico"] {
-            background-image: url('{{ url_for('static', filename='aeromexico.png') }}');
+            background-image: url('{{ url_for(' static', filename=' aeromexico.png') }}');
         }
 
         /* Update select background based on selection */
         select#airline.volaris-selected {
-            background-image: url('{{ url_for('static', filename='volaris.png') }}');
+            background-image: url('{{ url_for(' static', filename=' volaris.png') }}');
         }
 
         select#airline.vivaaerobus-selected {
-            background-image: url('{{ url_for('static', filename='viva.svg') }}');
+            background-image: url('{{ url_for(' static', filename=' viva.svg') }}');
         }
 
         select#airline.aeromexico-selected {
-            background-image: url('{{ url_for('static', filename='aeromexico.png') }}');
+            background-image: url('{{ url_for(' static', filename=' aeromexico.png') }}');
         }
 
         .error-message {
@@ -594,7 +595,8 @@
 <body>
     <div class="container">
         <div class="progress-bar-section">
-            <div style="display: flex; justify-content: flex-end; align-items: center; margin-top: 16px; margin-bottom: 10px;">
+            <div
+                style="display: flex; justify-content: flex-end; align-items: center; margin-top: 16px; margin-bottom: 10px;">
                 <span style="font-size: 1.5em;" id="compensation-display"></span>
             </div>
             <div class="progress-container">
@@ -627,30 +629,43 @@
         </div>
 
         <!-- Why I Built This -->
-        <div id="why-section" style="background: #ffffff; border: 2px solid #e5e7eb; border-radius: 10px; padding: 12px 14px; margin-bottom: 10px;">
-            <p style="margin: 0 0 8px 0; color: #2c3e50; font-size: 0.9em; line-height: 1.5;">
-                <strong style="color: #006847;">Hola, soy Zelma</strong> — ingeniera de software de México.
-                Cuando cancelaron el vuelo de mis papás 24 horas antes de verme correr un maratón en Islandia, investigué la ley de derechos del pasajero.
-                Los llamé (líneas colapsadas), les mandé emails, tweets, y DMs en Instagram exigiendo lo que nos debían: un vuelo sustituto.
-            </p>
-            <p style="margin: 0; color: #2c3e50; font-size: 0.9em; line-height: 1.5;">
-                Luché hasta que los acomodaron — ahorrándoles $2,500 USD. Creé VueloDigno para que viajeros en México puedan hacer lo mismo sin gastar horas investigando leyes ni peleando solos con aerolíneas.
-            </p>
+        <div id="why-section"
+            style="background: #ffffff; border: 2px solid #e5e7eb; border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; display: flex; gap: 12px; align-items: flex-start;">
+            <img src="{{ url_for('static', filename='zelma_pfp.png') }}" alt="Zelma"
+                style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; flex-shrink: 0;">
+            <div style="flex: 1;">
+                <p style="margin: 0 0 8px 0; color: #2c3e50; font-size: 0.9em; line-height: 1.5;">
+                    <strong style="color: #006847;">Hola, soy Zelma</strong>, ingeniera de software mexicana.
+                    Cuando cancelaron el vuelo de mis papás 24 horas antes de verme correr un maratón en Islandia,
+                    investigué la ley de Aviación Civil mexicana y llamé a la aerolínea (linea colapsada), les mandé emails, tweets, y DMs exigiendo lo que nos debían.
+                </p>
+                <p style="margin: 0; color: #2c3e50; font-size: 0.9em; line-height: 1.5;">
+                    Luché hasta que nos dieron otro vuelo — ahorrandonos $2,500 USD de hoteles, tours, y otro vuelo. Creé VueloDigno para que viajeros en
+                    México puedan hacer lo mismo sin gastar horas investigando las leyes ni peleando solos con aerolíneas.
+                </p>
+            </div>
         </div>
 
         <!-- How It Works -->
-        <div id="how-it-works-section" style="background: linear-gradient(135deg, #f0fdf4 0%, #e8f4f8 100%); padding: 12px; border-radius: 10px; margin-bottom: 12px; border: 2px solid #006847;">
+        <div id="how-it-works-section"
+            style="background: linear-gradient(135deg, #f0fdf4 0%, #e8f4f8 100%); padding: 12px; border-radius: 10px; margin-bottom: 12px; border: 2px solid #006847;">
             <div style="display: grid; gap: 8px;">
                 <div style="display: flex; align-items: center; gap: 8px;">
-                    <div style="background: #006847; color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; font-size: 0.8em;">1</div>
+                    <div
+                        style="background: #006847; color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; font-size: 0.8em;">
+                        1</div>
                     <strong style="color: #2c3e50; font-size: 0.9em;">Calcula tu compensación</strong>
                 </div>
                 <div style="display: flex; align-items: center; gap: 8px;">
-                    <div style="background: #006847; color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; font-size: 0.8em;">2</div>
+                    <div
+                        style="background: #006847; color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; font-size: 0.8em;">
+                        2</div>
                     <strong style="color: #2c3e50; font-size: 0.9em;">Genera tu email legal</strong>
                 </div>
                 <div style="display: flex; align-items: center; gap: 8px;">
-                    <div style="background: #006847; color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; font-size: 0.8em;">3</div>
+                    <div
+                        style="background: #006847; color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; font-size: 0.8em;">
+                        3</div>
                     <strong style="color: #2c3e50; font-size: 0.9em;">Envíalo a la aerolínea</strong>
                 </div>
             </div>
@@ -688,11 +703,9 @@
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
                     <div class="form-group" style="margin-bottom: 0;">
                         <label>Origen del vuelo:</label>
-                        <input type="text" name="origin" id="origin" list="origin-list"
-                               placeholder="Ej: MEX, GDL"
-                               pattern="[A-Za-z]{3}" maxlength="3" required
-                               style="text-transform: uppercase;"
-                               autocomplete="off">
+                        <input type="text" name="origin" id="origin" list="origin-list" placeholder="Ej: MEX, GDL"
+                            pattern="[A-Za-z]{3}" maxlength="3" required style="text-transform: uppercase;"
+                            autocomplete="off">
                         <datalist id="origin-list">
                             <!-- ONLY Mexican airports (must depart from Mexico) -->
                             <option value="MEX">🇲🇽 MEX - Ciudad de México</option>
@@ -737,10 +750,8 @@
                     <div class="form-group" style="margin-bottom: 0;">
                         <label>Destino del vuelo:</label>
                         <input type="text" name="destination" id="destination" list="destination-list"
-                               placeholder="Ej: CUN, LAX"
-                               pattern="[A-Za-z]{3}" maxlength="3" required
-                               style="text-transform: uppercase;"
-                               autocomplete="off">
+                            placeholder="Ej: CUN, LAX" pattern="[A-Za-z]{3}" maxlength="3" required
+                            style="text-transform: uppercase;" autocomplete="off">
                         <datalist id="destination-list">
                             <!-- Mexican airports -->
                             <option value="MEX">🇲🇽 MEX - Ciudad de México</option>
@@ -885,12 +896,14 @@
                     <small style="color: #666; font-size: 0.85em; display: block; margin-top: 5px;">
                         💡 Lo encuentras en tu email de confirmación
                     </small>
-                    <div class="error-message" id="reservation_code_error">Por favor ingresa una clave de reserva válida</div>
+                    <div class="error-message" id="reservation_code_error">Por favor ingresa una clave de reserva válida
+                    </div>
                 </div>
 
                 <div class="form-group">
                     <label for="date">Fecha del Vuelo:</label>
-                    <input type="date" id="date" name="date" required min="{{ min_date }}" max="{{ max_date }}" value="{{ max_date }}">
+                    <input type="date" id="date" name="date" required min="{{ min_date }}" max="{{ max_date }}"
+                        value="{{ max_date }}">
                     <span class="input-checkmark">✓</span>
                     <div class="error-message" id="date_error">Por favor selecciona la fecha del vuelo</div>
                 </div>
@@ -898,14 +911,16 @@
                 <hr>
 
                 <div class="form-group">
-                    <label>¿Cuántos pasajeros viajaron? <span style="color: #999; font-size: 0.85em;">(cada uno tiene derecho a compensación)</span></label>
+                    <label>¿Cuántos pasajeros viajaron? <span style="color: #999; font-size: 0.85em;">(cada uno tiene
+                            derecho a compensación)</span></label>
                     <input type="number" name="passenger_count" id="passenger_count" min="1" max="10" value="1" required
-                           style="width: 100px; text-align: center; font-size: 1.2em; font-weight: bold;">
+                        style="width: 100px; text-align: center; font-size: 1.2em; font-weight: bold;">
                     <span class="input-checkmark">✓</span>
                     <small style="color: #006847; font-size: 0.85em; display: block; margin-top: 5px;">
                         💡 Si viajaron 4 personas, ¡la compensación se multiplica por 4!
                     </small>
-                    <div class="error-message" id="passenger_count_error">Por favor ingresa un número válido (1-10)</div>
+                    <div class="error-message" id="passenger_count_error">Por favor ingresa un número válido (1-10)
+                    </div>
                 </div>
 
                 <!-- Compensation Choice (Only for 4+ hour delays or cancellations) -->
@@ -917,14 +932,17 @@
                     </small>
 
                     <div class="delay-buttons">
-                        <button type="button" class="delay-option compensation-option" data-value="transporte_sustituto">
+                        <button type="button" class="delay-option compensation-option"
+                            data-value="transporte_sustituto">
                             <strong>Transporte sustituto en el primer vuelo disponible</strong><br>
                             <span style="font-size: 0.85em; color: #7f8c8d; font-weight: normal;">
-                                + Llamadas, correos, alimentos, alojamiento y transporte terrestre sin cargo (si es necesaria pernocta)
+                                + Llamadas, correos, alimentos, alojamiento y transporte terrestre sin cargo (si es
+                                necesaria pernocta)
                             </span>
                         </button>
 
-                        <button type="button" class="delay-option compensation-option" data-value="reembolso_indemnizacion">
+                        <button type="button" class="delay-option compensation-option"
+                            data-value="reembolso_indemnizacion">
                             <strong>Reembolso completo (100%) + 25% de indemnización</strong><br>
                             <span style="font-size: 0.85em; color: #7f8c8d; font-weight: normal;">
                                 Solicitar el dinero en efectivo o transferencia bancaria
@@ -932,11 +950,13 @@
                         </button>
                     </div>
                     <input type="hidden" id="compensation_choice" name="compensation_choice" required>
-                    <div class="error-message" id="compensation_choice_error">Por favor selecciona una opción de compensación</div>
+                    <div class="error-message" id="compensation_choice_error">Por favor selecciona una opción de
+                        compensación</div>
                 </div>
 
                 <div class="btn-group">
-                    <button type="button" class="btn-secondary" id="back-2" onclick="prevPage()">← Regresar a cálculo</button>
+                    <button type="button" class="btn-secondary" id="back-2" onclick="prevPage()">← Regresar a
+                        cálculo</button>
                     <button type="submit" class="btn-primary">Ver y Editar Mi Email de Reclamo →</button>
                 </div>
             </div>
@@ -1800,7 +1820,7 @@
 
         allInputs.forEach(input => {
             // Scroll on focus (when keyboard appears)
-            input.addEventListener('focus', function() {
+            input.addEventListener('focus', function () {
                 // Longer delay to let keyboard fully appear
                 setTimeout(() => {
                     scrollInputIntoView(this);
@@ -1808,7 +1828,7 @@
             });
 
             // Also scroll on input (as user types)
-            input.addEventListener('input', function() {
+            input.addEventListener('input', function () {
                 scrollInputIntoView(this);
             });
         });
