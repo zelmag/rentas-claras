@@ -558,9 +558,6 @@
                     </p>
                 </div>
 
-                <!-- Jurisdiction validation message -->
-                <div id="jurisdiction-message" style="display: none; margin: 0 0 20px 0; padding: 15px; border-radius: 8px;"></div>
-
                 <!-- Origin and Destination (Side by Side) -->
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
                     <div class="form-group" style="margin-bottom: 0;">
@@ -987,21 +984,6 @@
 
         function validatePage(pageNumber) {
             if (pageNumber === 1) {
-                // Check jurisdiction first
-                const origin = document.getElementById('origin').value;
-                const dest = document.getElementById('destination').value;
-                const airline = document.getElementById('airline').value;
-
-                if (!origin || !dest || !airline) {
-                    alert('Por favor, completa origen, destino y aerolínea primero.');
-                    return false;
-                }
-
-                if (!jurisdictionValid) {
-                    alert('Lo sentimos - este vuelo no está cubierto por la ley mexicana. Por favor revisa el mensaje arriba.');
-                    return false;
-                }
-
                 const delayHours = document.getElementById('delay_hours').value;
                 if (!delayHours || delayHours === '' || parseInt(delayHours) === 0) {
                     alert('Por favor, selecciona cuánto fue el retraso del vuelo.');
@@ -1435,65 +1417,6 @@
 
         const EUROPEAN_AIRLINES = new Set(['Lufthansa', 'Air France', 'KLM', 'British Airways', 'Iberia', 'Ryanair', 'EasyJet', 'Vueling', 'Wizz Air', 'Norwegian', 'TAP Portugal', 'Alitalia', 'ITA Airways', 'Swiss', 'Austrian Airlines', 'Brussels Airlines', 'Finnair', 'SAS', 'Aegean Airlines', 'Air Europa', 'Eurowings', 'Condor', 'Transavia', 'LOT Polish']);
 
-        let jurisdictionValid = false;
-
-        function validateJurisdiction() {
-            const origin = document.getElementById('origin').value.toUpperCase().trim();
-            const dest = document.getElementById('destination').value.toUpperCase().trim();
-            const airline = document.getElementById('airline').value;
-            const jurisdictionMsg = document.getElementById('jurisdiction-message');
-
-            // Only validate if all three fields are filled
-            if (!origin || !dest || !airline || origin.length !== 3 || dest.length !== 3) {
-                jurisdictionMsg.style.display = 'none';
-                jurisdictionValid = false;
-                return;
-            }
-
-            const originIsMexico = MEXICO_AIRPORTS.has(origin);
-            const destIsMexico = MEXICO_AIRPORTS.has(dest);
-            const originIsEU = EU_AIRPORTS.has(origin);
-            const airlineIsEU = EUROPEAN_AIRLINES.has(airline);
-
-            // Case 1: EU 261 applies (redirect to AirHelp)
-            if (originIsEU || (airlineIsEU && destIsMexico)) {
-                jurisdictionValid = false;
-                jurisdictionMsg.innerHTML = `
-                    <strong style="font-size: 1.1em;">🇪🇺 Este vuelo está cubierto por la Regulación Europea EU 261/2004</strong><br><br>
-                    VueloDigno solo procesa reclamos bajo la ley mexicana.<br><br>
-                    Este vuelo no está cubierto por nuestra plataforma.
-                `;
-                jurisdictionMsg.style.backgroundColor = '#fee';
-                jurisdictionMsg.style.borderLeft = '4px solid #e74c3c';
-                jurisdictionMsg.style.display = 'block';
-                return;
-            }
-
-            // Case 2: Flight originates in Mexico
-            if (originIsMexico) {
-                jurisdictionValid = true;
-                jurisdictionMsg.innerHTML = `
-                    <strong style="font-size: 1.1em; color: #059669;">✅ Tu vuelo está cubierto por la ley mexicana</strong><br><br>
-                    El vuelo sale de México. Aplica la <strong>Ley de Aviación Civil Mexicana (Artículo 47 Bis)</strong>.
-                `;
-                jurisdictionMsg.style.backgroundColor = '#f0fdf4';
-                jurisdictionMsg.style.borderLeft = '4px solid #059669';
-                jurisdictionMsg.style.display = 'block';
-                return;
-            }
-
-            // Case 3: No flight from Mexico (BLOCKED)
-            jurisdictionValid = false;
-            jurisdictionMsg.innerHTML = `
-                <strong style="font-size: 1.1em;">❌ Este vuelo no está cubierto</strong><br><br>
-                El vuelo (${origin} → ${dest}) no sale de México.<br><br>
-                VueloDigno solo procesa reclamos para vuelos que <strong>salen de México</strong>.
-            `;
-            jurisdictionMsg.style.backgroundColor = '#fee';
-            jurisdictionMsg.style.borderLeft = '4px solid #e74c3c';
-            jurisdictionMsg.style.display = 'block';
-        }
-
         // EVENT LISTENERS
         document.addEventListener('DOMContentLoaded', () => {
             const priceInput = document.getElementById('ticket_price');
@@ -1559,7 +1482,6 @@
 
                 airlineSelect.addEventListener('input', () => {
                     updateAirlineLogo();
-                    validateJurisdiction(); // Check jurisdiction when airline changes
                     if (currentPage === 1) {
                         calculateCompensationPreview();
                     } else if (currentPage === 2) {
@@ -1569,7 +1491,6 @@
                 });
                 airlineSelect.addEventListener('change', () => {
                     updateAirlineLogo();
-                    validateJurisdiction(); // Check jurisdiction when airline changes
                     if (currentPage === 1) {
                         calculateCompensationPreview();
                     } else if (currentPage === 2) {
@@ -1585,7 +1506,6 @@
 
             if (originInput) {
                 originInput.addEventListener('input', () => {
-                    validateJurisdiction();
                     validateField('origin');
                 });
                 originInput.addEventListener('blur', () => {
@@ -1595,7 +1515,6 @@
 
             if (destInput) {
                 destInput.addEventListener('input', () => {
-                    validateJurisdiction();
                     validateField('destination');
                 });
                 destInput.addEventListener('blur', () => {
@@ -1674,9 +1593,6 @@
         document.getElementById('date').value = backData.date;
         document.getElementById('passenger_name').value = backData.passenger_name;
         document.getElementById('passenger_email').value = backData.passenger_email;
-
-        // Trigger jurisdiction validation with back data
-        validateJurisdiction();
 
         // Mark the correct delay option as selected
         const delayHoursFloat = parseFloat(backData.delay_hours);

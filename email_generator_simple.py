@@ -154,14 +154,17 @@ def generate_mexico_claim_letter(flight_data):
     is_service = comp_data.get('is_service', False)
 
     # Format passenger information
+    passenger_name = flight_data.get('passenger_name', '') or '[TU NOMBRE]'
+    passenger_email = flight_data.get('passenger_email', '') or '[TU EMAIL]'
+
     if passenger_count > 1:
-        passenger_text = f"* Pasajeros: **{flight_data['passenger_name']}** ({passenger_count} personas)"
+        passenger_text = f"* Pasajeros: **{passenger_name}** ({passenger_count} personas)"
         if is_service:
             compensation_text = f"Transporte sustituto para {passenger_count} pasajeros en el primer vuelo disponible"
         else:
             compensation_text = f"${total_amount:,.2f} MXN (${per_passenger_amount:,.2f} MXN × {passenger_count} pasajeros)"
     else:
-        passenger_text = f"* Pasajero: **{flight_data['passenger_name']}**"
+        passenger_text = f"* Pasajero: **{passenger_name}**"
         if is_service:
             compensation_text = f"Transporte sustituto en el primer vuelo disponible"
         else:
@@ -212,8 +215,8 @@ En caso de no recibir la compensación en el plazo establecido, presentaré la q
 Quedo a la espera de su respuesta dentro del plazo legal.
 
 Atentamente,
-{flight_data['passenger_name']}
-{flight_data['passenger_email']}
+{passenger_name}
+{passenger_email}
 """
 
     return letter

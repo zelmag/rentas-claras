@@ -319,9 +319,6 @@
             <h2 style="margin-top: 30px; color: #2c3e50;">
                 📝 Revisa y edita tu email de reclamación
             </h2>
-            <p style="color: #7f8c8d; font-size: 0.95em; margin-top: -10px;">
-                Puedes personalizar el mensaje antes de enviarlo
-            </p>
 
             <div class="success-message" id="copy-success">
                 ✅ <strong>¡Email copiado!</strong><br>
@@ -490,6 +487,32 @@
 
         if (compensationAmount > 0 && compensationDisplay) {
             compensationDisplay.textContent = `💰 ${formatter.format(compensationAmount)}`;
+        }
+
+        // Replace [TU NOMBRE] and [TU EMAIL] placeholders as user types
+        const nameInput = document.querySelector('input[name="passenger_name"]');
+        const emailInput = document.querySelector('input[name="passenger_email"]');
+        const editor = document.getElementById('single_editor');
+
+        function replacePlaceholders() {
+            const name = nameInput.value.trim();
+            const email = emailInput.value.trim();
+
+            if (name) {
+                editor.innerHTML = editor.innerHTML.replace(/\[TU NOMBRE\]/g, name);
+            }
+            if (email) {
+                editor.innerHTML = editor.innerHTML.replace(/\[TU EMAIL\]/g, email);
+            }
+        }
+
+        if (nameInput) {
+            nameInput.addEventListener('input', replacePlaceholders);
+            nameInput.addEventListener('blur', replacePlaceholders);
+        }
+        if (emailInput) {
+            emailInput.addEventListener('input', replacePlaceholders);
+            emailInput.addEventListener('blur', replacePlaceholders);
         }
     </script>
 </body>

@@ -41,21 +41,21 @@ def generate_tweet_text(flight_data, compensation_amount):
     # Format compensation amount
     comp_text = f"${compensation_amount:,.0f} MXN" if compensation_amount > 0 else "compensación"
 
-    # Get the legal source based on delay
+    # Get delay hours text
     delay_hours = flight_data['delay_hours']
-    if delay_hours == 5.0:
-        legal_source = "Art. 47 Bis LACM"
+    if delay_hours == 1.5:
+        delay_text = "1-2 horas"
     elif delay_hours == 3.0:
-        legal_source = "Art. 47 Bis LACM"
+        delay_text = "2-4 horas"
+    elif delay_hours == 5.0:
+        delay_text = "más de 4 horas"
     else:
-        legal_source = f"Política de {airline}"
+        delay_text = f"{delay_hours} horas"
 
-    # Build tweet
-    tweet = f"""#VueloDigno me ayudó a darme cuenta que {airline_handle} me debe {comp_text} según {legal_source}
+    # Build angry tweet (no emojis)
+    tweet = f"""#VueloDigno me ayudó a darme cuenta que {airline_handle} me debe {comp_text} porque se retrasó el vuelo {delay_text}.
 
-✈️ Reclamo enviado
-
-📧 Plazo legal: 10 días
+Reclamo enviado. Plazo legal: 10 días.
 
 Si no responden, presentaré queja con @Profeco
 
