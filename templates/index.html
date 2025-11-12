@@ -561,134 +561,133 @@
                 <!-- Jurisdiction validation message -->
                 <div id="jurisdiction-message" style="display: none; margin: 0 0 20px 0; padding: 15px; border-radius: 8px;"></div>
 
-                <!-- Origin and Destination -->
-                <div class="form-group">
-                    <label>Origen del vuelo:</label>
-                    <input type="text" name="origin" id="origin" list="origin-list"
-                           placeholder="Busca o escribe código (ej: MEX, GDL, MAD)"
-                           pattern="[A-Za-z]{3}" maxlength="3" required
-                           style="text-transform: uppercase;"
-                           autocomplete="off">
-                    <datalist id="origin-list">
-                        <!-- Mexican airports -->
-                        <option value="MEX">🇲🇽 MEX - Ciudad de México (AICM)</option>
-                        <option value="GDL">🇲🇽 GDL - Guadalajara</option>
-                        <option value="MTY">🇲🇽 MTY - Monterrey</option>
-                        <option value="CUN">🇲🇽 CUN - Cancún</option>
-                        <option value="TIJ">🇲🇽 TIJ - Tijuana</option>
-                        <option value="BJX">🇲🇽 BJX - Bajío (León/Guanajuato)</option>
-                        <option value="PVR">🇲🇽 PVR - Puerto Vallarta</option>
-                        <option value="SJD">🇲🇽 SJD - Los Cabos</option>
-                        <option value="MZT">🇲🇽 MZT - Mazatlán</option>
-                        <option value="QRO">🇲🇽 QRO - Querétaro</option>
-                        <option value="AGU">🇲🇽 AGU - Aguascalientes</option>
-                        <option value="CUL">🇲🇽 CUL - Culiacán</option>
-                        <option value="HMO">🇲🇽 HMO - Hermosillo</option>
-                        <option value="MID">🇲🇽 MID - Mérida</option>
-                        <option value="OAX">🇲🇽 OAX - Oaxaca</option>
-                        <option value="TAM">🇲🇽 TAM - Tampico</option>
-                        <option value="VER">🇲🇽 VER - Veracruz</option>
-                        <option value="ZCL">🇲🇽 ZCL - Zacatecas</option>
-                        <option value="CJS">🇲🇽 CJS - Ciudad Juárez</option>
-                        <option value="CUU">🇲🇽 CUU - Chihuahua</option>
-                        <option value="CTM">🇲🇽 CTM - Chetumal</option>
-                        <option value="CZM">🇲🇽 CZM - Cozumel</option>
-                        <option value="HUX">🇲🇽 HUX - Huatulco</option>
-                        <option value="LAP">🇲🇽 LAP - La Paz</option>
-                        <option value="MLM">🇲🇽 MLM - Morelia</option>
-                        <option value="PBC">🇲🇽 PBC - Puebla</option>
-                        <option value="REX">🇲🇽 REX - Reynosa</option>
-                        <option value="SLP">🇲🇽 SLP - San Luis Potosí</option>
-                        <option value="TAP">🇲🇽 TAP - Tapachula</option>
-                        <option value="TGZ">🇲🇽 TGZ - Tuxtla Gutiérrez</option>
-                        <option value="TLC">🇲🇽 TLC - Toluca</option>
-                        <option value="TRC">🇲🇽 TRC - Torreón</option>
-                        <option value="VSA">🇲🇽 VSA - Villahermosa</option>
-                        <option value="ZIH">🇲🇽 ZIH - Ixtapa/Zihuatanejo</option>
-                        <!-- Common international airports for reference -->
-                        <option value="LAX">🇺🇸 LAX - Los Angeles</option>
-                        <option value="JFK">🇺🇸 JFK - New York JFK</option>
-                        <option value="MIA">🇺🇸 MIA - Miami</option>
-                        <option value="IAH">🇺🇸 IAH - Houston</option>
-                        <option value="DFW">🇺🇸 DFW - Dallas</option>
-                        <option value="ORD">🇺🇸 ORD - Chicago</option>
-                        <option value="MAD">🇪🇸 MAD - Madrid</option>
-                        <option value="BCN">🇪🇸 BCN - Barcelona</option>
-                        <option value="CDG">🇫🇷 CDG - Paris</option>
-                        <option value="LHR">🇬🇧 LHR - London</option>
-                        <option value="FRA">🇩🇪 FRA - Frankfurt</option>
-                        <option value="AMS">🇳🇱 AMS - Amsterdam</option>
-                    </datalist>
-                    <span class="input-checkmark">✓</span>
-                    <small style="color: #666; font-size: 0.85em; display: block; margin-top: 5px;">
-                        💡 Escribe para buscar o ingresa código IATA de 3 letras
-                    </small>
-                    <div class="error-message" id="origin_error">Por favor ingresa un código de aeropuerto válido (3 letras)</div>
-                </div>
+                <!-- Origin and Destination (Side by Side) -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>Origen del vuelo:</label>
+                        <input type="text" name="origin" id="origin" list="origin-list"
+                               placeholder="Ej: MEX, GDL"
+                               pattern="[A-Za-z]{3}" maxlength="3" required
+                               style="text-transform: uppercase;"
+                               autocomplete="off">
+                        <datalist id="origin-list">
+                            <!-- Mexican airports -->
+                            <option value="MEX">🇲🇽 MEX - Ciudad de México (AICM)</option>
+                            <option value="GDL">🇲🇽 GDL - Guadalajara</option>
+                            <option value="MTY">🇲🇽 MTY - Monterrey</option>
+                            <option value="CUN">🇲🇽 CUN - Cancún</option>
+                            <option value="TIJ">🇲🇽 TIJ - Tijuana</option>
+                            <option value="BJX">🇲🇽 BJX - Bajío (León/Guanajuato)</option>
+                            <option value="PVR">🇲🇽 PVR - Puerto Vallarta</option>
+                            <option value="SJD">🇲🇽 SJD - Los Cabos</option>
+                            <option value="MZT">🇲🇽 MZT - Mazatlán</option>
+                            <option value="QRO">🇲🇽 QRO - Querétaro</option>
+                            <option value="AGU">🇲🇽 AGU - Aguascalientes</option>
+                            <option value="CUL">🇲🇽 CUL - Culiacán</option>
+                            <option value="HMO">🇲🇽 HMO - Hermosillo</option>
+                            <option value="MID">🇲🇽 MID - Mérida</option>
+                            <option value="OAX">🇲🇽 OAX - Oaxaca</option>
+                            <option value="TAM">🇲🇽 TAM - Tampico</option>
+                            <option value="VER">🇲🇽 VER - Veracruz</option>
+                            <option value="ZCL">🇲🇽 ZCL - Zacatecas</option>
+                            <option value="CJS">🇲🇽 CJS - Ciudad Juárez</option>
+                            <option value="CUU">🇲🇽 CUU - Chihuahua</option>
+                            <option value="CTM">🇲🇽 CTM - Chetumal</option>
+                            <option value="CZM">🇲🇽 CZM - Cozumel</option>
+                            <option value="HUX">🇲🇽 HUX - Huatulco</option>
+                            <option value="LAP">🇲🇽 LAP - La Paz</option>
+                            <option value="MLM">🇲🇽 MLM - Morelia</option>
+                            <option value="PBC">🇲🇽 PBC - Puebla</option>
+                            <option value="REX">🇲🇽 REX - Reynosa</option>
+                            <option value="SLP">🇲🇽 SLP - San Luis Potosí</option>
+                            <option value="TAP">🇲🇽 TAP - Tapachula</option>
+                            <option value="TGZ">🇲🇽 TGZ - Tuxtla Gutiérrez</option>
+                            <option value="TLC">🇲🇽 TLC - Toluca</option>
+                            <option value="TRC">🇲🇽 TRC - Torreón</option>
+                            <option value="VSA">🇲🇽 VSA - Villahermosa</option>
+                            <option value="ZIH">🇲🇽 ZIH - Ixtapa/Zihuatanejo</option>
+                            <!-- Common international airports for reference -->
+                            <option value="LAX">🇺🇸 LAX - Los Angeles</option>
+                            <option value="JFK">🇺🇸 JFK - New York JFK</option>
+                            <option value="MIA">🇺🇸 MIA - Miami</option>
+                            <option value="IAH">🇺🇸 IAH - Houston</option>
+                            <option value="DFW">🇺🇸 DFW - Dallas</option>
+                            <option value="ORD">🇺🇸 ORD - Chicago</option>
+                            <option value="MAD">🇪🇸 MAD - Madrid</option>
+                            <option value="BCN">🇪🇸 BCN - Barcelona</option>
+                            <option value="CDG">🇫🇷 CDG - Paris</option>
+                            <option value="LHR">🇬🇧 LHR - London</option>
+                            <option value="FRA">🇩🇪 FRA - Frankfurt</option>
+                            <option value="AMS">🇳🇱 AMS - Amsterdam</option>
+                        </datalist>
+                        <span class="input-checkmark">✓</span>
+                        <div class="error-message" id="origin_error">Código inválido</div>
+                    </div>
 
-                <div class="form-group">
-                    <label>Destino del vuelo:</label>
-                    <input type="text" name="destination" id="destination" list="destination-list"
-                           placeholder="Busca o escribe código (ej: CUN, TIJ, LAX)"
-                           pattern="[A-Za-z]{3}" maxlength="3" required
-                           style="text-transform: uppercase;"
-                           autocomplete="off">
-                    <datalist id="destination-list">
-                        <!-- Mexican airports -->
-                        <option value="MEX">🇲🇽 MEX - Ciudad de México (AICM)</option>
-                        <option value="GDL">🇲🇽 GDL - Guadalajara</option>
-                        <option value="MTY">🇲🇽 MTY - Monterrey</option>
-                        <option value="CUN">🇲🇽 CUN - Cancún</option>
-                        <option value="TIJ">🇲🇽 TIJ - Tijuana</option>
-                        <option value="BJX">🇲🇽 BJX - Bajío (León/Guanajuato)</option>
-                        <option value="PVR">🇲🇽 PVR - Puerto Vallarta</option>
-                        <option value="SJD">🇲🇽 SJD - Los Cabos</option>
-                        <option value="MZT">🇲🇽 MZT - Mazatlán</option>
-                        <option value="QRO">🇲🇽 QRO - Querétaro</option>
-                        <option value="AGU">🇲🇽 AGU - Aguascalientes</option>
-                        <option value="CUL">🇲🇽 CUL - Culiacán</option>
-                        <option value="HMO">🇲🇽 HMO - Hermosillo</option>
-                        <option value="MID">🇲🇽 MID - Mérida</option>
-                        <option value="OAX">🇲🇽 OAX - Oaxaca</option>
-                        <option value="TAM">🇲🇽 TAM - Tampico</option>
-                        <option value="VER">🇲🇽 VER - Veracruz</option>
-                        <option value="ZCL">🇲🇽 ZCL - Zacatecas</option>
-                        <option value="CJS">🇲🇽 CJS - Ciudad Juárez</option>
-                        <option value="CUU">🇲🇽 CUU - Chihuahua</option>
-                        <option value="CTM">🇲🇽 CTM - Chetumal</option>
-                        <option value="CZM">🇲🇽 CZM - Cozumel</option>
-                        <option value="HUX">🇲🇽 HUX - Huatulco</option>
-                        <option value="LAP">🇲🇽 LAP - La Paz</option>
-                        <option value="MLM">🇲🇽 MLM - Morelia</option>
-                        <option value="PBC">🇲🇽 PBC - Puebla</option>
-                        <option value="REX">🇲🇽 REX - Reynosa</option>
-                        <option value="SLP">🇲🇽 SLP - San Luis Potosí</option>
-                        <option value="TAP">🇲🇽 TAP - Tapachula</option>
-                        <option value="TGZ">🇲🇽 TGZ - Tuxtla Gutiérrez</option>
-                        <option value="TLC">🇲🇽 TLC - Toluca</option>
-                        <option value="TRC">🇲🇽 TRC - Torreón</option>
-                        <option value="VSA">🇲🇽 VSA - Villahermosa</option>
-                        <option value="ZIH">🇲🇽 ZIH - Ixtapa/Zihuatanejo</option>
-                        <!-- Common international airports -->
-                        <option value="LAX">🇺🇸 LAX - Los Angeles</option>
-                        <option value="JFK">🇺🇸 JFK - New York JFK</option>
-                        <option value="MIA">🇺🇸 MIA - Miami</option>
-                        <option value="IAH">🇺🇸 IAH - Houston</option>
-                        <option value="DFW">🇺🇸 DFW - Dallas</option>
-                        <option value="ORD">🇺🇸 ORD - Chicago</option>
-                        <option value="MAD">🇪🇸 MAD - Madrid</option>
-                        <option value="BCN">🇪🇸 BCN - Barcelona</option>
-                        <option value="CDG">🇫🇷 CDG - Paris</option>
-                        <option value="LHR">🇬🇧 LHR - London</option>
-                        <option value="FRA">🇩🇪 FRA - Frankfurt</option>
-                        <option value="AMS">🇳🇱 AMS - Amsterdam</option>
-                    </datalist>
-                    <span class="input-checkmark">✓</span>
-                    <small style="color: #666; font-size: 0.85em; display: block; margin-top: 5px;">
-                        💡 Escribe para buscar o ingresa código IATA de 3 letras
-                    </small>
-                    <div class="error-message" id="destination_error">Por favor ingresa un código de aeropuerto válido (3 letras)</div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>Destino del vuelo:</label>
+                        <input type="text" name="destination" id="destination" list="destination-list"
+                               placeholder="Ej: CUN, LAX"
+                               pattern="[A-Za-z]{3}" maxlength="3" required
+                               style="text-transform: uppercase;"
+                               autocomplete="off">
+                        <datalist id="destination-list">
+                            <!-- Mexican airports -->
+                            <option value="MEX">🇲🇽 MEX - Ciudad de México (AICM)</option>
+                            <option value="GDL">🇲🇽 GDL - Guadalajara</option>
+                            <option value="MTY">🇲🇽 MTY - Monterrey</option>
+                            <option value="CUN">🇲🇽 CUN - Cancún</option>
+                            <option value="TIJ">🇲🇽 TIJ - Tijuana</option>
+                            <option value="BJX">🇲🇽 BJX - Bajío (León/Guanajuato)</option>
+                            <option value="PVR">🇲🇽 PVR - Puerto Vallarta</option>
+                            <option value="SJD">🇲🇽 SJD - Los Cabos</option>
+                            <option value="MZT">🇲🇽 MZT - Mazatlán</option>
+                            <option value="QRO">🇲🇽 QRO - Querétaro</option>
+                            <option value="AGU">🇲🇽 AGU - Aguascalientes</option>
+                            <option value="CUL">🇲🇽 CUL - Culiacán</option>
+                            <option value="HMO">🇲🇽 HMO - Hermosillo</option>
+                            <option value="MID">🇲🇽 MID - Mérida</option>
+                            <option value="OAX">🇲🇽 OAX - Oaxaca</option>
+                            <option value="TAM">🇲🇽 TAM - Tampico</option>
+                            <option value="VER">🇲🇽 VER - Veracruz</option>
+                            <option value="ZCL">🇲🇽 ZCL - Zacatecas</option>
+                            <option value="CJS">🇲🇽 CJS - Ciudad Juárez</option>
+                            <option value="CUU">🇲🇽 CUU - Chihuahua</option>
+                            <option value="CTM">🇲🇽 CTM - Chetumal</option>
+                            <option value="CZM">🇲🇽 CZM - Cozumel</option>
+                            <option value="HUX">🇲🇽 HUX - Huatulco</option>
+                            <option value="LAP">🇲🇽 LAP - La Paz</option>
+                            <option value="MLM">🇲🇽 MLM - Morelia</option>
+                            <option value="PBC">🇲🇽 PBC - Puebla</option>
+                            <option value="REX">🇲🇽 REX - Reynosa</option>
+                            <option value="SLP">🇲🇽 SLP - San Luis Potosí</option>
+                            <option value="TAP">🇲🇽 TAP - Tapachula</option>
+                            <option value="TGZ">🇲🇽 TGZ - Tuxtla Gutiérrez</option>
+                            <option value="TLC">🇲🇽 TLC - Toluca</option>
+                            <option value="TRC">🇲🇽 TRC - Torreón</option>
+                            <option value="VSA">🇲🇽 VSA - Villahermosa</option>
+                            <option value="ZIH">🇲🇽 ZIH - Ixtapa/Zihuatanejo</option>
+                            <!-- Common international airports -->
+                            <option value="LAX">🇺🇸 LAX - Los Angeles</option>
+                            <option value="JFK">🇺🇸 JFK - New York JFK</option>
+                            <option value="MIA">🇺🇸 MIA - Miami</option>
+                            <option value="IAH">🇺🇸 IAH - Houston</option>
+                            <option value="DFW">🇺🇸 DFW - Dallas</option>
+                            <option value="ORD">🇺🇸 ORD - Chicago</option>
+                            <option value="MAD">🇪🇸 MAD - Madrid</option>
+                            <option value="BCN">🇪🇸 BCN - Barcelona</option>
+                            <option value="CDG">🇫🇷 CDG - Paris</option>
+                            <option value="LHR">🇬🇧 LHR - London</option>
+                            <option value="FRA">🇩🇪 FRA - Frankfurt</option>
+                            <option value="AMS">🇳🇱 AMS - Amsterdam</option>
+                        </datalist>
+                        <span class="input-checkmark">✓</span>
+                        <div class="error-message" id="destination_error">Código inválido</div>
+                    </div>
                 </div>
+                <small style="color: #666; font-size: 0.85em; display: block; margin: -15px 0 20px 0;">
+                    💡 Escribe para buscar o ingresa código IATA de 3 letras
+                </small>
 
                 <div class="form-group">
                     <label>Aerolínea:</label>
