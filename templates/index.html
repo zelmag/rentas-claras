@@ -630,14 +630,15 @@
 
         <!-- Why I Built This -->
         <div id="why-section"
-            style="background: #ffffff; border: 2px solid #e5e7eb; border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; display: flex; gap: 12px; align-items: center;">
+            style="background: #ffffff; border: 2px solid #e5e7eb; border-radius: 10px; padding: 12px 14px; margin-bottom: 10px;">
             <img src="{{ url_for('static', filename='zelma_pfp.png') }}?v=2" alt="Zelma"
-                style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; flex-shrink: 0;">
-            <div style="flex: 1;">
-                <p style="margin: 0; color: #2c3e50; font-size: 0.9em; line-height: 1.4;">
-                    <strong style="color: #006847;">Hola, soy Zelma</strong>, ingeniera de software mexicana. Construí VueloDigno después de luchar para que mis papás recibieran un vuelo sustituto cuando cancelaron su vuelo a Islandia. Ahora tú puedes reclamar en 3 minutos.
-                </p>
-            </div>
+                style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; float: left; margin-right: 12px;">
+            <p style="margin: 0; color: #2c3e50; font-size: 0.9em; line-height: 1.4;">
+                <strong style="color: #006847;">Hola, soy Zelma</strong>, ingeniera de software mexicana. Hice
+                VueloDigno después de luchar para que mis papás pudieran venir a verme correr un maraton en Islandia
+                despues de que les cancelaron su vuelo a ultimo minuto.
+                Ahora tú puedes reclamar en 3 minutos.
+            </p>
         </div>
 
         <!-- How It Works -->
@@ -685,122 +686,122 @@
         <form action="/preview" method="POST" id="multi-page-form">
 
             <div class="page active" data-page="1">
-                <!-- Start Here Banner -->
+                <!-- Start Here Banner with Origin/Destination -->
                 <div
-                    style="background: #fff3cd; padding: 8px 12px; border-radius: 8px; margin: 10px 0 14px 0; border-left: 4px solid #ffc107; text-align: center;">
-                    <p style="margin: 0; font-weight: 600; color: #856404; font-size: 0.85em;">
+                    style="background: #fff3cd; padding: 12px 14px; border-radius: 8px; margin: 10px 0 14px 0; border-left: 4px solid #ffc107;">
+                    <p style="margin: 0 0 12px 0; font-weight: 600; color: #856404; font-size: 0.85em; text-align: center;">
                         👇 5 preguntas rápidas para calcular cuánto te deben
                     </p>
-                </div>
 
-                <!-- Origin and Destination (Side by Side) -->
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
-                    <div class="form-group" style="margin-bottom: 0;">
-                        <label>Origen del vuelo:</label>
-                        <input type="text" name="origin" id="origin" list="origin-list" placeholder="Ej: MEX, GDL"
-                            pattern="[A-Za-z]{3}" maxlength="3" required style="text-transform: uppercase;"
-                            autocomplete="off">
-                        <datalist id="origin-list">
-                            <!-- ONLY Mexican airports (must depart from Mexico) -->
-                            <option value="MEX">🇲🇽 MEX - Ciudad de México</option>
-                            <option value="GDL">🇲🇽 GDL - Guadalajara</option>
-                            <option value="MTY">🇲🇽 MTY - Monterrey</option>
-                            <option value="CUN">🇲🇽 CUN - Cancún</option>
-                            <option value="TIJ">🇲🇽 TIJ - Tijuana</option>
-                            <option value="BJX">🇲🇽 BJX - León/Guanajuato</option>
-                            <option value="PVR">🇲🇽 PVR - Puerto Vallarta</option>
-                            <option value="SJD">🇲🇽 SJD - Los Cabos</option>
-                            <option value="MZT">🇲🇽 MZT - Mazatlán</option>
-                            <option value="QRO">🇲🇽 QRO - Querétaro</option>
-                            <option value="AGU">🇲🇽 AGU - Aguascalientes</option>
-                            <option value="CUL">🇲🇽 CUL - Culiacán</option>
-                            <option value="HMO">🇲🇽 HMO - Hermosillo</option>
-                            <option value="MID">🇲🇽 MID - Mérida</option>
-                            <option value="OAX">🇲🇽 OAX - Oaxaca</option>
-                            <option value="TAM">🇲🇽 TAM - Tampico</option>
-                            <option value="VER">🇲🇽 VER - Veracruz</option>
-                            <option value="ZCL">🇲🇽 ZCL - Zacatecas</option>
-                            <option value="CJS">🇲🇽 CJS - Ciudad Juárez</option>
-                            <option value="CUU">🇲🇽 CUU - Chihuahua</option>
-                            <option value="CTM">🇲🇽 CTM - Chetumal</option>
-                            <option value="CZM">🇲🇽 CZM - Cozumel</option>
-                            <option value="HUX">🇲🇽 HUX - Huatulco</option>
-                            <option value="LAP">🇲🇽 LAP - La Paz</option>
-                            <option value="MLM">🇲🇽 MLM - Morelia</option>
-                            <option value="PBC">🇲🇽 PBC - Puebla</option>
-                            <option value="REX">🇲🇽 REX - Reynosa</option>
-                            <option value="SLP">🇲🇽 SLP - San Luis Potosí</option>
-                            <option value="TAP">🇲🇽 TAP - Tapachula</option>
-                            <option value="TGZ">🇲🇽 TGZ - Tuxtla Gutiérrez</option>
-                            <option value="TLC">🇲🇽 TLC - Toluca</option>
-                            <option value="TRC">🇲🇽 TRC - Torreón</option>
-                            <option value="VSA">🇲🇽 VSA - Villahermosa</option>
-                            <option value="ZIH">🇲🇽 ZIH - Zihuatanejo</option>
-                        </datalist>
-                        <span class="input-checkmark">✓</span>
-                        <div class="error-message" id="origin_error">Debe ser un aeropuerto mexicano</div>
-                    </div>
+                    <!-- Origin and Destination (Side by Side) -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 8px;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>Origen del vuelo:</label>
+                            <input type="text" name="origin" id="origin" list="origin-list" placeholder="Ej: MEX, GDL"
+                                pattern="[A-Za-z]{3}" maxlength="3" required style="text-transform: uppercase;"
+                                autocomplete="off">
+                            <datalist id="origin-list">
+                                <!-- ONLY Mexican airports (must depart from Mexico) -->
+                                <option value="MEX">🇲🇽 MEX - Ciudad de México</option>
+                                <option value="GDL">🇲🇽 GDL - Guadalajara</option>
+                                <option value="MTY">🇲🇽 MTY - Monterrey</option>
+                                <option value="CUN">🇲🇽 CUN - Cancún</option>
+                                <option value="TIJ">🇲🇽 TIJ - Tijuana</option>
+                                <option value="BJX">🇲🇽 BJX - León/Guanajuato</option>
+                                <option value="PVR">🇲🇽 PVR - Puerto Vallarta</option>
+                                <option value="SJD">🇲🇽 SJD - Los Cabos</option>
+                                <option value="MZT">🇲🇽 MZT - Mazatlán</option>
+                                <option value="QRO">🇲🇽 QRO - Querétaro</option>
+                                <option value="AGU">🇲🇽 AGU - Aguascalientes</option>
+                                <option value="CUL">🇲🇽 CUL - Culiacán</option>
+                                <option value="HMO">🇲🇽 HMO - Hermosillo</option>
+                                <option value="MID">🇲🇽 MID - Mérida</option>
+                                <option value="OAX">🇲🇽 OAX - Oaxaca</option>
+                                <option value="TAM">🇲🇽 TAM - Tampico</option>
+                                <option value="VER">🇲🇽 VER - Veracruz</option>
+                                <option value="ZCL">🇲🇽 ZCL - Zacatecas</option>
+                                <option value="CJS">🇲🇽 CJS - Ciudad Juárez</option>
+                                <option value="CUU">🇲🇽 CUU - Chihuahua</option>
+                                <option value="CTM">🇲🇽 CTM - Chetumal</option>
+                                <option value="CZM">🇲🇽 CZM - Cozumel</option>
+                                <option value="HUX">🇲🇽 HUX - Huatulco</option>
+                                <option value="LAP">🇲🇽 LAP - La Paz</option>
+                                <option value="MLM">🇲🇽 MLM - Morelia</option>
+                                <option value="PBC">🇲🇽 PBC - Puebla</option>
+                                <option value="REX">🇲🇽 REX - Reynosa</option>
+                                <option value="SLP">🇲🇽 SLP - San Luis Potosí</option>
+                                <option value="TAP">🇲🇽 TAP - Tapachula</option>
+                                <option value="TGZ">🇲🇽 TGZ - Tuxtla Gutiérrez</option>
+                                <option value="TLC">🇲🇽 TLC - Toluca</option>
+                                <option value="TRC">🇲🇽 TRC - Torreón</option>
+                                <option value="VSA">🇲🇽 VSA - Villahermosa</option>
+                                <option value="ZIH">🇲🇽 ZIH - Zihuatanejo</option>
+                            </datalist>
+                            <span class="input-checkmark">✓</span>
+                            <div class="error-message" id="origin_error">Debe ser un aeropuerto mexicano</div>
+                        </div>
 
-                    <div class="form-group" style="margin-bottom: 0;">
-                        <label>Destino del vuelo:</label>
-                        <input type="text" name="destination" id="destination" list="destination-list"
-                            placeholder="Ej: CUN, LAX" pattern="[A-Za-z]{3}" maxlength="3" required
-                            style="text-transform: uppercase;" autocomplete="off">
-                        <datalist id="destination-list">
-                            <!-- Mexican airports -->
-                            <option value="MEX">🇲🇽 MEX - Ciudad de México</option>
-                            <option value="GDL">🇲🇽 GDL - Guadalajara</option>
-                            <option value="MTY">🇲🇽 MTY - Monterrey</option>
-                            <option value="CUN">🇲🇽 CUN - Cancún</option>
-                            <option value="TIJ">🇲🇽 TIJ - Tijuana</option>
-                            <option value="BJX">🇲🇽 BJX - León/Guanajuato</option>
-                            <option value="PVR">🇲🇽 PVR - Puerto Vallarta</option>
-                            <option value="SJD">🇲🇽 SJD - Los Cabos</option>
-                            <option value="MZT">🇲🇽 MZT - Mazatlán</option>
-                            <option value="QRO">🇲🇽 QRO - Querétaro</option>
-                            <option value="AGU">🇲🇽 AGU - Aguascalientes</option>
-                            <option value="CUL">🇲🇽 CUL - Culiacán</option>
-                            <option value="HMO">🇲🇽 HMO - Hermosillo</option>
-                            <option value="MID">🇲🇽 MID - Mérida</option>
-                            <option value="OAX">🇲🇽 OAX - Oaxaca</option>
-                            <option value="TAM">🇲🇽 TAM - Tampico</option>
-                            <option value="VER">🇲🇽 VER - Veracruz</option>
-                            <option value="ZCL">🇲🇽 ZCL - Zacatecas</option>
-                            <option value="CJS">🇲🇽 CJS - Ciudad Juárez</option>
-                            <option value="CUU">🇲🇽 CUU - Chihuahua</option>
-                            <option value="CTM">🇲🇽 CTM - Chetumal</option>
-                            <option value="CZM">🇲🇽 CZM - Cozumel</option>
-                            <option value="HUX">🇲🇽 HUX - Huatulco</option>
-                            <option value="LAP">🇲🇽 LAP - La Paz</option>
-                            <option value="MLM">🇲🇽 MLM - Morelia</option>
-                            <option value="PBC">🇲🇽 PBC - Puebla</option>
-                            <option value="REX">🇲🇽 REX - Reynosa</option>
-                            <option value="SLP">🇲🇽 SLP - San Luis Potosí</option>
-                            <option value="TAP">🇲🇽 TAP - Tapachula</option>
-                            <option value="TGZ">🇲🇽 TGZ - Tuxtla Gutiérrez</option>
-                            <option value="TLC">🇲🇽 TLC - Toluca</option>
-                            <option value="TRC">🇲🇽 TRC - Torreón</option>
-                            <option value="VSA">🇲🇽 VSA - Villahermosa</option>
-                            <option value="ZIH">🇲🇽 ZIH - Zihuatanejo</option>
-                            <!-- Common international destinations -->
-                            <option value="LAX">🇺🇸 LAX - Los Angeles</option>
-                            <option value="JFK">🇺🇸 JFK - New York</option>
-                            <option value="MIA">🇺🇸 MIA - Miami</option>
-                            <option value="IAH">🇺🇸 IAH - Houston</option>
-                            <option value="DFW">🇺🇸 DFW - Dallas</option>
-                            <option value="ORD">🇺🇸 ORD - Chicago</option>
-                            <option value="MAD">🇪🇸 MAD - Madrid</option>
-                            <option value="BCN">🇪🇸 BCN - Barcelona</option>
-                            <option value="CDG">🇫🇷 CDG - Paris</option>
-                            <option value="LHR">🇬🇧 LHR - London</option>
-                        </datalist>
-                        <span class="input-checkmark">✓</span>
-                        <div class="error-message" id="destination_error">Código inválido</div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>Destino del vuelo:</label>
+                            <input type="text" name="destination" id="destination" list="destination-list"
+                                placeholder="Ej: CUN, LAX" pattern="[A-Za-z]{3}" maxlength="3" required
+                                style="text-transform: uppercase;" autocomplete="off">
+                            <datalist id="destination-list">
+                                <!-- Mexican airports -->
+                                <option value="MEX">🇲🇽 MEX - Ciudad de México</option>
+                                <option value="GDL">🇲🇽 GDL - Guadalajara</option>
+                                <option value="MTY">🇲🇽 MTY - Monterrey</option>
+                                <option value="CUN">🇲🇽 CUN - Cancún</option>
+                                <option value="TIJ">🇲🇽 TIJ - Tijuana</option>
+                                <option value="BJX">🇲🇽 BJX - León/Guanajuato</option>
+                                <option value="PVR">🇲🇽 PVR - Puerto Vallarta</option>
+                                <option value="SJD">🇲🇽 SJD - Los Cabos</option>
+                                <option value="MZT">🇲🇽 MZT - Mazatlán</option>
+                                <option value="QRO">🇲🇽 QRO - Querétaro</option>
+                                <option value="AGU">🇲🇽 AGU - Aguascalientes</option>
+                                <option value="CUL">🇲🇽 CUL - Culiacán</option>
+                                <option value="HMO">🇲🇽 HMO - Hermosillo</option>
+                                <option value="MID">🇲🇽 MID - Mérida</option>
+                                <option value="OAX">🇲🇽 OAX - Oaxaca</option>
+                                <option value="TAM">🇲🇽 TAM - Tampico</option>
+                                <option value="VER">🇲🇽 VER - Veracruz</option>
+                                <option value="ZCL">🇲🇽 ZCL - Zacatecas</option>
+                                <option value="CJS">🇲🇽 CJS - Ciudad Juárez</option>
+                                <option value="CUU">🇲🇽 CUU - Chihuahua</option>
+                                <option value="CTM">🇲🇽 CTM - Chetumal</option>
+                                <option value="CZM">🇲🇽 CZM - Cozumel</option>
+                                <option value="HUX">🇲🇽 HUX - Huatulco</option>
+                                <option value="LAP">🇲🇽 LAP - La Paz</option>
+                                <option value="MLM">🇲🇽 MLM - Morelia</option>
+                                <option value="PBC">🇲🇽 PBC - Puebla</option>
+                                <option value="REX">🇲🇽 REX - Reynosa</option>
+                                <option value="SLP">🇲🇽 SLP - San Luis Potosí</option>
+                                <option value="TAP">🇲🇽 TAP - Tapachula</option>
+                                <option value="TGZ">🇲🇽 TGZ - Tuxtla Gutiérrez</option>
+                                <option value="TLC">🇲🇽 TLC - Toluca</option>
+                                <option value="TRC">🇲🇽 TRC - Torreón</option>
+                                <option value="VSA">🇲🇽 VSA - Villahermosa</option>
+                                <option value="ZIH">🇲🇽 ZIH - Zihuatanejo</option>
+                                <!-- Common international destinations -->
+                                <option value="LAX">🇺🇸 LAX - Los Angeles</option>
+                                <option value="JFK">🇺🇸 JFK - New York</option>
+                                <option value="MIA">🇺🇸 MIA - Miami</option>
+                                <option value="IAH">🇺🇸 IAH - Houston</option>
+                                <option value="DFW">🇺🇸 DFW - Dallas</option>
+                                <option value="ORD">🇺🇸 ORD - Chicago</option>
+                                <option value="MAD">🇪🇸 MAD - Madrid</option>
+                                <option value="BCN">🇪🇸 BCN - Barcelona</option>
+                                <option value="CDG">🇫🇷 CDG - Paris</option>
+                                <option value="LHR">🇬🇧 LHR - London</option>
+                            </datalist>
+                            <span class="input-checkmark">✓</span>
+                            <div class="error-message" id="destination_error">Código inválido</div>
+                        </div>
                     </div>
+                    <small style="color: #856404; font-size: 0.8em; display: block; margin: 0;">
+                        💡 Escribe para filtrar resultados (ej: "can" muestra Cancún)
+                    </small>
                 </div>
-                <small style="color: #666; font-size: 0.85em; display: block; margin: -15px 0 20px 0;">
-                    💡 Escribe para filtrar resultados (ej: "can" muestra Cancún)
-                </small>
 
                 <div class="form-group">
                     <label>Aerolínea:</label>
