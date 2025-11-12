@@ -14,8 +14,8 @@
         body {
             font-family: 'Montserrat', sans-serif;
             max-width: 640px;
-            margin: 50px auto;
-            padding: 24px;
+            margin: 0 auto;
+            padding: 8px 24px 24px 24px;
             background: linear-gradient(135deg, #006847 0%, #ffffff 50%, #CE1126 100%);
             min-height: 100vh;
         }
@@ -23,33 +23,33 @@
         @media (min-width: 768px) {
             body {
                 max-width: 720px;
-                padding: 32px;
+                padding: 16px 32px 32px 32px;
             }
         }
 
         @media (min-width: 1024px) {
             body {
                 max-width: 880px;
-                padding: 48px;
+                padding: 32px 48px 48px 48px;
             }
         }
 
         .container {
             background: white;
-            padding: 4px 24px 32px 24px;
+            padding: 2px 24px 32px 24px;
             border-radius: 20px;
             box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04);
         }
 
         @media (min-width: 768px) {
             .container {
-                padding: 8px 40px 48px 40px;
+                padding: 4px 40px 48px 40px;
             }
         }
 
         @media (min-width: 1024px) {
             .container {
-                padding: 12px 48px 56px 48px;
+                padding: 8px 48px 56px 48px;
             }
         }
 
@@ -640,6 +640,17 @@
             emailInput.addEventListener('input', replacePlaceholders);
             emailInput.addEventListener('blur', replacePlaceholders);
         }
+
+        // Mobile keyboard scroll fix - scroll input into view when focused
+        const allInputs = document.querySelectorAll('input, select, textarea, [contenteditable="true"]');
+        allInputs.forEach(input => {
+            input.addEventListener('focus', function() {
+                // Small delay to let keyboard appear
+                setTimeout(() => {
+                    this.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 300);
+            });
+        });
     </script>
 </body>
 
