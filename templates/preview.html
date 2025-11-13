@@ -35,10 +35,13 @@
         }
 
         .container {
-            background: white;
+            background: rgba(255, 255, 255, 0.90);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             padding: 0px 24px 32px 24px;
             border-radius: 20px;
-            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
         }
 
         @media (min-width: 768px) {
@@ -95,6 +98,18 @@
             cursor: text;
             transition: all 0.3s ease;
             background-color: #ffffff;
+            animation: borderPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes borderPulse {
+            0%, 100% {
+                border-color: #3498db;
+                box-shadow: 0 0 0 0 rgba(52, 152, 219, 0);
+            }
+            50% {
+                border-color: #2980b9;
+                box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.2);
+            }
         }
 
         .letter-editor:hover {
