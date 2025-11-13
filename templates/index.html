@@ -833,7 +833,7 @@
                         <span style="font-size: 1.5em;">💰</span>
                         <strong style="color: #0369a1; font-size: 1.05em;">Tu compensación estimada</strong>
                     </div>
-                    <p id="page-2-preview-text" style="margin: 0; color: #0c4a6e; font-size: 0.95em; line-height: 1.5;"></p>
+                    <p id="page-2-preview-text" style="margin: 0; color: #0c4a6e; font-size: 0.95em; line-height: 1.5; white-space: pre-line;"></p>
                 </div>
 
                 <label style="margin-top: 20px;">¿De cuánto fue el retraso del vuelo?
@@ -871,7 +871,7 @@
                         <span style="font-size: 1.5em;">💰</span>
                         <strong style="color: #0369a1; font-size: 1.05em;">Tu compensación estimada</strong>
                     </div>
-                    <p id="page-3-preview-text" style="margin: 0; color: #0c4a6e; font-size: 0.95em; line-height: 1.5;"></p>
+                    <p id="page-3-preview-text" style="margin: 0; color: #0c4a6e; font-size: 0.95em; line-height: 1.5; white-space: pre-line;"></p>
                 </div>
 
                 <div class="form-group" style="margin-top: 20px;">
@@ -885,7 +885,7 @@
 
                 <div class="btn-group">
                     <button type="button" class="btn-secondary" id="back-3" onclick="prevPage()">← Regresar</button>
-                    <button type="button" class="btn-primary" id="next-3" onclick="nextPage()">Calcular monto exacto →</button>
+                    <button type="button" class="btn-primary" id="next-3" onclick="nextPage()">Seleccionar aerolínea →</button>
                 </div>
             </div>
 
@@ -896,7 +896,7 @@
                         <span style="font-size: 1.5em;">💰</span>
                         <strong style="color: #0369a1; font-size: 1.05em;">Tu compensación estimada</strong>
                     </div>
-                    <p id="page-4-preview-text" style="margin: 0; color: #0c4a6e; font-size: 0.95em; line-height: 1.5;"></p>
+                    <p id="page-4-preview-text" style="margin: 0; color: #0c4a6e; font-size: 0.95em; line-height: 1.5; white-space: pre-line;"></p>
                 </div>
 
                 <div class="form-group">
@@ -1079,6 +1079,9 @@
             if (pageNumber === 1) {
                 if (aboutSection) aboutSection.style.display = 'block';
                 if (aboutHeading) aboutHeading.style.display = 'block';
+                // Reset compensation when going back to page 1
+                calculatedCompensation = 0;
+                selectedAirline = '';
             } else {
                 if (aboutSection) aboutSection.style.display = 'none';
                 if (aboutHeading) aboutHeading.style.display = 'none';
@@ -1344,16 +1347,22 @@
                 progressLineFill.style.width = percentage + '%';
             }
 
-            // Display compensation amount - visible on all pages after calculation
-            if (calculatedCompensation > 0 && compensationDisplay) {
+            // Display compensation amount - visible on all pages after calculation, but hide on page 1
+            if (currentPage === 1) {
+                // Clear compensation on page 1
+                if (compensationDisplay) {
+                    compensationDisplay.style.display = 'none';
+                    compensationDisplay.textContent = '';
+                }
+            } else if (calculatedCompensation > 0 && compensationDisplay) {
                 const oldText = compensationDisplay.textContent;
                 const newText = `💰 ${formatter.format(calculatedCompensation)}`;
 
                 compensationDisplay.textContent = newText;
                 compensationDisplay.style.display = 'inline';
 
-                // Add animation if compensation changed
-                if (oldText !== newText && oldText !== '') {
+                // Add animation if compensation changed (including first time)
+                if (oldText !== newText) {
                     compensationDisplay.classList.remove('compensation-updated');
                     // Force reflow to restart animation
                     void compensationDisplay.offsetWidth;
@@ -1492,11 +1501,11 @@
                 let previewText = '';
 
                 if (delayHours === 1.5) {
-                    previewText = 'Retraso de 1-2 horas: Entre $50-75 MXN o 5% del boleto según aerolínea. Ingresa el precio del boleto para calcular tu compensación exacta.';
+                    previewText = 'Retraso de 1-2 horas: Entre $50-75 MXN o 5% del boleto según aerolínea.\nIngresa el precio del boleto para calcular tu compensación exacta.';
                 } else if (delayHours === 3.0) {
-                    previewText = 'Retraso de 2-4 horas: Mínimo 7.5% del precio del boleto por ley. Algunas aerolíneas ofrecen más. Ingresa el precio del boleto para ver tu compensación.';
+                    previewText = 'Retraso de 2-4 horas: Mínimo 7.5% del precio del boleto por ley. Algunas aerolíneas ofrecen más.\nIngresa el precio del boleto para ver tu compensación.';
                 } else if (delayHours === 5.0) {
-                    previewText = 'Retraso de +4 horas o cancelación: 125% del precio del boleto garantizado por ley. Ingresa el precio para calcular tu compensación exacta.';
+                    previewText = 'Retraso de +4 horas o cancelación: 125% del precio del boleto garantizado por ley.\nIngresa el precio para calcular tu compensación exacta.';
                 }
 
                 if (page2PreviewText) page2PreviewText.textContent = previewText;
