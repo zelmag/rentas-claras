@@ -248,7 +248,7 @@
         .input-checkmark {
             position: absolute;
             right: 18px;
-            top: 50%;
+            top: calc(1.4em + 6px + 28px); /* label height + margin + half of input height */
             transform: translateY(-50%);
             color: #10b981;
             font-size: 1.4em;
@@ -260,6 +260,7 @@
         @media (min-width: 768px) {
             .input-checkmark {
                 right: 20px;
+                top: calc(1.4em + 6px + 30px); /* label height + margin + half of larger input */
                 font-size: 1.5em;
             }
         }
