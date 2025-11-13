@@ -651,57 +651,6 @@
         <form action="/preview" method="POST" id="multi-page-form">
 
             <div class="page active" data-page="1">
-                <!-- Start Here Banner -->
-                <div
-                    style="background: #fff3cd; padding: 12px 14px; border-radius: 8px; margin: 10px 0 14px 0; border-left: 4px solid #ffc107; text-align: center;">
-                    <p style="margin: 0; font-weight: 600; color: #856404; font-size: 0.95em;">
-                        👇 5 preguntas para calcular cuánto te deben
-                    </p>
-                </div>
-
-                <label style="margin-top: 20px;">¿De cuánto fue el retraso del vuelo?
-                </label>
-                <div class="delay-buttons">
-                    <button type="button" class="delay-option" data-value="1">
-                        <strong>1-2 horas</strong><br>
-                        <span style="font-size: 0.85em; color: #7f8c8d; font-weight: normal;">$50-75 MXN o 5% del boleto
-                            según aerolínea</span>
-                    </button>
-                    <button type="button" class="delay-option" data-value="2">
-                        <strong>2-4 horas</strong><br>
-                        <span style="font-size: 0.85em; color: #7f8c8d; font-weight: normal;">Mínimo 7.5% del boleto por
-                            ley</span>
-                    </button>
-                    <button type="button" class="delay-option" data-value="3">
-                        <strong>Más de 4 horas o Cancelación</strong><br>
-                        <span style="font-size: 0.85em; color: #7f8c8d; font-weight: normal;">125% del boleto por
-                            ley</span>
-                    </button>
-                </div>
-                <input type="hidden" id="delay_hours" name="delay_hours">
-
-                <div class="form-group" style="margin-top: 20px;">
-                    <label>Precio por boleto (MXN):</label>
-                    <input type="number" name="ticket_price" id="ticket_price" step="0.01" min="1"
-                        placeholder="Ej: 2500.00" required>
-                    <span class="input-checkmark">✓</span>
-                    <div class="error-message" id="ticket_price_error">Por favor ingresa un precio válido mayor a 0
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>Aerolínea:</label>
-                    <select name="airline" id="airline" required>
-                        <option value="">Selecciona...</option>
-                        <option value="Volaris">Volaris</option>
-                        <option value="VivaAerobus">VivaAerobus</option>
-                        <option value="Aeromexico">Aeroméxico</option>
-                        <option value="Demo">Demo (Prueba)</option>
-                    </select>
-                    <span class="input-checkmark">✓</span>
-                    <div class="error-message" id="airline_error">Por favor selecciona una aerolínea</div>
-                </div>
-
                 <!-- Origin and Destination (Side by Side) -->
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
                     <div class="form-group" style="margin-bottom: 0;">
@@ -815,7 +764,7 @@
                     <button type="button" class="btn-secondary" id="back-1" onclick="showPage(1)" disabled
                         style="visibility: hidden; display: none;">← Atrás</button>
                     <button type="button" class="btn-primary" id="next-1" onclick="nextPage()"
-                        style="flex-grow: 0;">¿Cuánto Me Deben?</button>
+                        style="flex-grow: 0;">Continuar →</button>
                 </div>
 
                 <div
@@ -853,6 +802,51 @@
                         📧 Responde estas preguntas para generar tu email de reclamo
                     </p>
                 </div>
+
+                <label style="margin-top: 20px;">¿De cuánto fue el retraso del vuelo?
+                </label>
+                <div class="delay-buttons">
+                    <button type="button" class="delay-option" data-value="1">
+                        <strong>1-2 horas</strong><br>
+                        <span style="font-size: 0.85em; color: #7f8c8d; font-weight: normal;">$50-75 MXN o 5% del boleto
+                            según aerolínea</span>
+                    </button>
+                    <button type="button" class="delay-option" data-value="2">
+                        <strong>2-4 horas</strong><br>
+                        <span style="font-size: 0.85em; color: #7f8c8d; font-weight: normal;">Mínimo 7.5% del boleto por
+                            ley</span>
+                    </button>
+                    <button type="button" class="delay-option" data-value="3">
+                        <strong>Más de 4 horas o Cancelación</strong><br>
+                        <span style="font-size: 0.85em; color: #7f8c8d; font-weight: normal;">125% del boleto por
+                            ley</span>
+                    </button>
+                </div>
+                <input type="hidden" id="delay_hours" name="delay_hours">
+
+                <div class="form-group" style="margin-top: 20px;">
+                    <label>Precio por boleto (MXN):</label>
+                    <input type="number" name="ticket_price" id="ticket_price" step="0.01" min="1"
+                        placeholder="Ej: 2500.00" required>
+                    <span class="input-checkmark">✓</span>
+                    <div class="error-message" id="ticket_price_error">Por favor ingresa un precio válido mayor a 0
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Aerolínea:</label>
+                    <select name="airline" id="airline" required>
+                        <option value="">Selecciona...</option>
+                        <option value="Volaris">Volaris</option>
+                        <option value="VivaAerobus">VivaAerobus</option>
+                        <option value="Aeromexico">Aeroméxico</option>
+                        <option value="Demo">Demo (Prueba)</option>
+                    </select>
+                    <span class="input-checkmark">✓</span>
+                    <div class="error-message" id="airline_error">Por favor selecciona una aerolínea</div>
+                </div>
+
+                <hr style="margin: 24px 0;">
 
                 <div class="form-group">
                     <label>Número de vuelo:</label>
@@ -1113,6 +1107,17 @@
 
         function validatePage(pageNumber) {
             if (pageNumber === 1) {
+                const originValid = validateField('origin');
+                const destValid = validateField('destination');
+
+                if (!originValid || !destValid) {
+                    alert('Por favor, completa todos los campos correctamente antes de continuar.');
+                }
+
+                return originValid && destValid;
+            }
+
+            if (pageNumber === 2) {
                 const delayHours = document.getElementById('delay_hours').value;
                 if (!delayHours || delayHours === '' || parseInt(delayHours) === 0) {
                     alert('Por favor, selecciona cuánto fue el retraso del vuelo.');
@@ -1121,10 +1126,11 @@
 
                 const ticketPriceValid = validateField('ticket_price');
                 const airlineValid = validateField('airline');
-                const originValid = validateField('origin');
-                const destValid = validateField('destination');
 
-                return ticketPriceValid && airlineValid && originValid && destValid;
+                if (!ticketPriceValid || !airlineValid) {
+                    alert('Por favor, completa todos los campos correctamente antes de continuar.');
+                    return false;
+                }
             }
 
             const currentPageElement = document.querySelector(`.page[data-page="${pageNumber}"]`);
@@ -1560,9 +1566,9 @@
                     this.classList.add('selected');
                     document.getElementById('delay_hours').value = delayMap[this.dataset.value].value;
 
-                    // Calculate compensation on page 1 to show running man and money bag
-                    if (currentPage === 1) {
-                        calculateCompensationPreview();
+                    // Calculate compensation on page 2
+                    if (currentPage === 2) {
+                        calculateCompensation();
                     }
 
                     // Update compensation choice visibility
@@ -1595,9 +1601,7 @@
                     }
                     e.target.value = value;
 
-                    if (currentPage === 1) {
-                        calculateCompensationPreview();
-                    } else if (currentPage === 2) {
+                    if (currentPage === 2) {
                         calculateCompensation();
                     }
                 });
@@ -1623,18 +1627,14 @@
 
                 airlineSelect.addEventListener('input', () => {
                     updateAirlineLogo();
-                    if (currentPage === 1) {
-                        calculateCompensationPreview();
-                    } else if (currentPage === 2) {
+                    if (currentPage === 2) {
                         calculateCompensation();
                     }
                     validateField('airline');
                 });
                 airlineSelect.addEventListener('change', () => {
                     updateAirlineLogo();
-                    if (currentPage === 1) {
-                        calculateCompensationPreview();
-                    } else if (currentPage === 2) {
+                    if (currentPage === 2) {
                         calculateCompensation();
                     }
                     validateField('airline');
