@@ -129,6 +129,7 @@ def index():
             'date': request.args.get('date', ''),
             'passenger_name': request.args.get('passenger_name', ''),
             'passenger_email': request.args.get('passenger_email', ''),
+            'passenger_count': request.args.get('passenger_count', '1'),
             'compensation_choice': request.args.get('compensation_choice', 'reembolso_indemnizacion')
         }
 

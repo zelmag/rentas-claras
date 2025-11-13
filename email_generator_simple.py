@@ -195,6 +195,7 @@ Solicito formalmente la compensación que me corresponde por el retraso de mi vu
 
 **COMPENSACIÓN SOLICITADA:**
 {compensation_text}
+
 **CÁLCULO DE LA COMPENSACIÓN:**
 * Precio del boleto: ${flight_data['ticket_price']:,.2f} MXN
 * Base legal: {comp_data['description']}{f"""

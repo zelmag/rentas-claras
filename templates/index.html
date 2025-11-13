@@ -1966,6 +1966,7 @@
         document.getElementById('date').value = backData.date;
         document.getElementById('passenger_name').value = backData.passenger_name;
         document.getElementById('passenger_email').value = backData.passenger_email;
+        document.getElementById('passenger_count').value = backData.passenger_count || '1';
 
         // Mark the correct delay option as selected
         const delayHoursFloat = parseFloat(backData.delay_hours);
