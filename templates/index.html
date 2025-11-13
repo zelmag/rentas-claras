@@ -631,7 +631,8 @@
     <div class="container">
         <div class="progress-bar-section">
             <div
-                style="display: flex; justify-content: flex-end; align-items: center; margin-top: 16px; margin-bottom: 10px;">
+                style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px; margin-bottom: 10px;">
+                <span style="font-weight: 700; font-size: 1.1em; color: #2c3e50;">VueloDigno</span>
                 <span style="font-size: 1.5em;" id="compensation-display"></span>
             </div>
             <div class="progress-container">
@@ -678,8 +679,8 @@
         <form action="/preview" method="POST" id="multi-page-form">
 
             <div class="page active" data-page="1">
-                <!-- Origin, Destination, and Button (Side by Side) -->
-                <div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 12px; margin-bottom: 20px; align-items: end;">
+                <!-- Origin and Destination (Side by Side) -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
                     <div class="form-group" style="margin-bottom: 0;">
                         <label>Origen del vuelo:</label>
                         <input type="text" name="origin" id="origin" list="origin-list" placeholder="Ej: MEX, GDL"
@@ -782,20 +783,20 @@
                         <span class="input-checkmark">✓</span>
                         <div class="error-message" id="destination_error">Código inválido</div>
                     </div>
-
-                    <div style="margin-bottom: 0;">
-                        <button type="button" class="btn-primary" id="next-1" onclick="nextPage()" style="height: 56px;">Calcular cuánto me deben →</button>
-                    </div>
                 </div>
                 <small style="color: #666; font-size: 0.8em; display: block; margin: 0 0 20px 0;">
                     💡 Escribe para filtrar resultados (ej: "can" muestra Cancún)
                 </small>
 
+                <div class="btn-group">
+                    <button type="button" class="btn-primary" id="next-1" onclick="nextPage()">Calcular cuánto me deben →</button>
+                </div>
+
                 <!-- Trust Badge -->
                 <div id="trust-badge-section"
                     style="background: #f0fdf4; padding: 10px 14px; border-radius: 8px; margin-bottom: 16px; text-align: center; border: 1px solid #10b981;">
                     <p style="margin: 0; font-weight: 700; color: #006847; font-size: 0.85em; line-height: 1.4;">
-                        ⚡ GRATIS (PORQUE LA AEROLINEA TE DEBE COMPENSACION POR LEY) • 3 min • Citando la ley de aviación civil mexicana
+                        ⚡ GRATIS • 3 min • Basado en Ley de Aviación Civil
                     </p>
                 </div>
 
@@ -1292,14 +1293,10 @@
                 progressLineFill.style.width = percentage + '%';
             }
 
-            // Display compensation amount - visible on page 1, hidden on other pages
+            // Display compensation amount - visible on all pages after calculation
             if (calculatedCompensation > 0 && compensationDisplay) {
-                if (currentPage === 1) {
-                    compensationDisplay.textContent = `💰 ${formatter.format(calculatedCompensation)}`;
-                    compensationDisplay.style.display = 'inline';
-                } else {
-                    compensationDisplay.style.display = 'none';
-                }
+                compensationDisplay.textContent = `💰 ${formatter.format(calculatedCompensation)}`;
+                compensationDisplay.style.display = 'inline';
             } else if (compensationDisplay) {
                 compensationDisplay.style.display = 'none';
             }
