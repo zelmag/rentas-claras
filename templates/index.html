@@ -884,22 +884,6 @@
                     </div>
                 </div>
 
-                <div class="btn-group">
-                    <button type="button" class="btn-secondary" id="back-3" onclick="prevPage()">← Regresar</button>
-                    <button type="button" class="btn-primary" id="next-3" onclick="nextPage()">Seleccionar aerolínea →</button>
-                </div>
-            </div>
-
-            <div class="page" data-page="4">
-                <!-- Compensation Preview for Page 4 -->
-                <div id="page-4-preview" style="display: none; background: #e0f2fe; border-left: 4px solid #0284c7; padding: 16px; border-radius: 8px; margin-bottom: 20px;">
-                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
-                        <span style="font-size: 1.5em;">💰</span>
-                        <strong style="color: #0369a1; font-size: 1.05em;">Tu compensación estimada</strong>
-                    </div>
-                    <p id="page-4-preview-text" style="margin: 0; color: #0c4a6e; font-size: 0.95em; line-height: 1.5; white-space: pre-line;"></p>
-                </div>
-
                 <div class="form-group">
                     <label>Aerolínea:</label>
                     <select name="airline" id="airline" required>
@@ -914,12 +898,12 @@
                 </div>
 
                 <div class="btn-group">
-                    <button type="button" class="btn-secondary" id="back-4" onclick="prevPage()">← Regresar</button>
-                    <button type="button" class="btn-primary" id="next-4" onclick="nextPage()">¿Cuánto me deben? →</button>
+                    <button type="button" class="btn-secondary" id="back-3" onclick="prevPage()">← Regresar</button>
+                    <button type="button" class="btn-primary" id="next-3" onclick="nextPage()">¿Cuánto me deben? →</button>
                 </div>
             </div>
 
-            <div class="page" data-page="5">
+            <div class="page" data-page="4">
                 <!-- Banner for page 5 -->
                 <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px 18px; border-radius: 12px; margin-bottom: 20px; text-align: center; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);">
                     <strong style="font-size: 1.05em; display: block; margin-bottom: 4px;">✍️ Contesta estas 4 preguntas</strong>
@@ -1053,7 +1037,7 @@
         };
 
         let currentPage = 1;
-        const totalPages = 5;
+        const totalPages = 4;
         let calculatedCompensation = 0;
         let selectedAirline = '';
 
@@ -1119,13 +1103,13 @@
             const aboutSection = document.getElementById('about-section');
             const trustBadgeSection = document.getElementById('trust-badge-section');
 
-            if (currentPage === 5 && calculatedCompensation > 0 && selectedAirline) {
-                // Hide hero, about, and trust-badge on page 5
+            if (currentPage === 4 && calculatedCompensation > 0 && selectedAirline) {
+                // Hide hero, about, and trust-badge on page 4
                 heroSection.style.display = 'none';
                 aboutSection.style.display = 'none';
                 trustBadgeSection.style.display = 'none';
 
-                // Show the title elements on page 5
+                // Show the title elements on page 4
                 pageTitleContainer.style.display = 'block';
                 subtitleElement.style.display = 'block';
                 descriptionElement.style.display = 'block';
@@ -1263,7 +1247,7 @@
                 return true;
             }
 
-            if (pageNumber === 5) {
+            if (pageNumber === 4) {
                 const currentPageElement = document.querySelector(`.page[data-page="${pageNumber}"]`);
                 const requiredFields = currentPageElement.querySelectorAll('[required]');
                 let isValid = true;
@@ -1293,8 +1277,8 @@
                 if (currentPage >= 2 && currentPage <= 4) {
                     calculateCompensationPreview();
                 }
-                // Calculate full compensation when reaching page 5
-                if (currentPage === 5) {
+                // Calculate full compensation when reaching page 4
+                if (currentPage === 4) {
                     calculateCompensation();
                     updatePageTitles();
                     updateCompensationChoiceVisibility();
@@ -1322,12 +1306,10 @@
             if (currentPage === 1) {
                 percentage = 0;
             } else if (currentPage === 2) {
-                percentage = 25;
+                percentage = 33;
             } else if (currentPage === 3) {
-                percentage = 50;
+                percentage = 66;
             } else if (currentPage === 4) {
-                percentage = 75;
-            } else if (currentPage === 5) {
                 percentage = 100;
             }
 
@@ -1344,7 +1326,7 @@
             // Set states based on current page
             if (currentPage === 1) {
                 milestone1.classList.add('active');
-            } else if (currentPage >= 2 && currentPage <= 5) {
+            } else if (currentPage >= 2 && currentPage <= 4) {
                 milestone1.classList.add('completed');
                 milestone2.classList.add('active');
             }
@@ -1490,13 +1472,11 @@
         }
 
         function updateCompensationPreviews() {
-            // Update preview boxes on pages 2, 3, 4 based on available data
+            // Update preview boxes on pages 2 and 3 based on available data
             const page2Preview = document.getElementById('page-2-preview');
             const page2PreviewText = document.getElementById('page-2-preview-text');
             const page3Preview = document.getElementById('page-3-preview');
             const page3PreviewText = document.getElementById('page-3-preview-text');
-            const page4Preview = document.getElementById('page-4-preview');
-            const page4PreviewText = document.getElementById('page-4-preview-text');
 
             const delayValue = document.getElementById('delay_hours').value;
             const delayHours = parseFloat(delayValue);
@@ -1521,43 +1501,37 @@
                 page2Preview.style.display = 'none';
             }
 
-            // Page 3: Show preview when delay is selected (before ticket price is entered)
+            // Page 3: Show preview when delay is selected - update based on available info
             if (currentPage === 3 && delayValue && !isNaN(delayHours)) {
                 let previewText = '';
 
-                if (delayHours === 1.5) {
-                    previewText = 'Con el retraso de 1-2 horas, tu compensación será entre $50-75 MXN o 5% del boleto según aerolínea.';
-                } else if (delayHours === 3.0) {
-                    previewText = 'Con el retraso de 2-4 horas, te corresponde mínimo 7.5% del precio del boleto. ¡Ingresa el precio para ver tu compensación exacta!';
-                } else if (delayHours === 5.0) {
-                    previewText = 'Con el retraso de +4 horas o cancelación, te corresponde el 125% del precio del boleto. ¡Ingresa el precio para calcular cuánto te deben!';
+                // If ticket price is entered, show detailed calculation
+                if (ticketPrice > 0) {
+                    if (delayHours === 1.5) {
+                        const minComp = ticketPrice * 0.05;
+                        previewText = `Con tu boleto de ${formatter.format(ticketPrice)}, tu compensación será entre $50-75 MXN o ${formatter.format(minComp)} (5% del boleto), dependiendo de la aerolínea que selecciones.`;
+                    } else if (delayHours === 3.0) {
+                        const minComp = ticketPrice * 0.075;
+                        previewText = `Con tu boleto de ${formatter.format(ticketPrice)}, tu compensación mínima es ${formatter.format(minComp)} (7.5% por ley). Algunas aerolíneas ofrecen más. ¡Selecciona tu aerolínea para ver el monto exacto!`;
+                    } else if (delayHours === 5.0) {
+                        const comp = ticketPrice * 1.25;
+                        previewText = `Con tu boleto de ${formatter.format(ticketPrice)}, tu compensación garantizada es ${formatter.format(comp)} (125% del boleto). ¡Selecciona tu aerolínea para continuar!`;
+                    }
+                } else {
+                    // If ticket price not entered yet, show basic info
+                    if (delayHours === 1.5) {
+                        previewText = 'Con el retraso de 1-2 horas, tu compensación será entre $50-75 MXN o 5% del boleto según aerolínea.';
+                    } else if (delayHours === 3.0) {
+                        previewText = 'Con el retraso de 2-4 horas, te corresponde mínimo 7.5% del precio del boleto. ¡Ingresa el precio para ver tu compensación exacta!';
+                    } else if (delayHours === 5.0) {
+                        previewText = 'Con el retraso de +4 horas o cancelación, te corresponde el 125% del precio del boleto. ¡Ingresa el precio para calcular cuánto te deben!';
+                    }
                 }
 
                 if (page3PreviewText) page3PreviewText.textContent = previewText;
                 if (page3Preview) page3Preview.style.display = 'block';
             } else if (page3Preview) {
                 page3Preview.style.display = 'none';
-            }
-
-            // Page 4: Show preview with ticket price calculation
-            if (currentPage === 4 && delayValue && !isNaN(delayHours) && ticketPrice > 0) {
-                let previewText = '';
-
-                if (delayHours === 1.5) {
-                    const minComp = ticketPrice * 0.05;
-                    previewText = `Con tu boleto de ${formatter.format(ticketPrice)}, tu compensación será entre $50-75 MXN o ${formatter.format(minComp)} (5% del boleto), dependiendo de la aerolínea que selecciones.`;
-                } else if (delayHours === 3.0) {
-                    const minComp = ticketPrice * 0.075;
-                    previewText = `Con tu boleto de ${formatter.format(ticketPrice)}, tu compensación mínima es ${formatter.format(minComp)} (7.5% por ley). Algunas aerolíneas ofrecen más. ¡Selecciona tu aerolínea para ver el monto exacto!`;
-                } else if (delayHours === 5.0) {
-                    const comp = ticketPrice * 1.25;
-                    previewText = `Con tu boleto de ${formatter.format(ticketPrice)}, tu compensación garantizada es ${formatter.format(comp)} (125% del boleto). ¡Selecciona tu aerolínea para continuar!`;
-                }
-
-                if (page4PreviewText) page4PreviewText.textContent = previewText;
-                if (page4Preview) page4Preview.style.display = 'block';
-            } else if (page4Preview) {
-                page4Preview.style.display = 'none';
             }
         }
 
@@ -2047,8 +2021,8 @@
             });
         });
 
-        // Show page 5 instead of page 1 when returning from preview
-        showPage(5);
+        // Show page 4 instead of page 1 when returning from preview
+        showPage(4);
         {% else %}
         showPage(1);
         {% endif %}
