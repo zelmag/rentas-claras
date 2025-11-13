@@ -821,7 +821,7 @@
                 <div id="trust-badge-section"
                     style="background: #f0fdf4; padding: 10px 14px; border-radius: 8px; margin-bottom: 32px; text-align: center; border: 1px solid #10b981;">
                     <p style="margin: 0; font-weight: 700; color: #006847; font-size: 0.85em; line-height: 1.4;">
-                        ⚡ GRATIS • 3 min • Basado en la ley de aviación civil mexicana
+                        ⚡ GRATIS • 3 min • Basado en la Ley de Aviación Civil
                     </p>
                 </div>
 
@@ -837,6 +837,15 @@
                 <div id="eligibility-message-box"
                     style="display:none; margin: 20px 0; padding: 15px; border-radius: 8px; background-color: #f0fdf4; border-left: 5px solid #006847;">
                     <div id="claim-result" style="margin-bottom: 10px;"></div>
+                </div>
+
+                <!-- Compensation Preview for Page 2 -->
+                <div id="page-2-preview" style="display: none; background: #e0f2fe; border-left: 4px solid #0284c7; padding: 16px; border-radius: 8px; margin-bottom: 20px;">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                        <span style="font-size: 1.5em;">💰</span>
+                        <strong style="color: #0369a1; font-size: 1.05em;">Tu compensación estimada</strong>
+                    </div>
+                    <p id="page-2-preview-text" style="margin: 0; color: #0c4a6e; font-size: 0.95em; line-height: 1.5;"></p>
                 </div>
 
                 <label style="margin-top: 20px;">¿De cuánto fue el retraso del vuelo?
@@ -1070,6 +1079,7 @@
 
             updateProgress();
             updatePageTitles();
+            updateCompensationPreviews();
 
             // Scroll to top of page on navigation
             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1456,6 +1466,38 @@
             updateProgress();
         }
 
+        function updateCompensationPreviews() {
+            // Update preview boxes on pages 2, 3, 4 based on available data
+            const page2Preview = document.getElementById('page-2-preview');
+            const page2PreviewText = document.getElementById('page-2-preview-text');
+
+            const delayValue = document.getElementById('delay_hours').value;
+            const delayHours = parseFloat(delayValue);
+            const ticketPrice = parseFloat(document.getElementById('ticket_price')?.value || 0);
+            const airline = document.getElementById('airline')?.value || '';
+
+            // Page 2: Show preview when delay is selected
+            if (currentPage === 2 && delayValue && !isNaN(delayHours)) {
+                let previewText = '';
+
+                if (delayHours === 1.5) {
+                    previewText = 'Retraso de 1-2 horas: Entre $50-75 MXN o 5% del boleto según aerolínea. Ingresa el precio del boleto para calcular tu compensación exacta.';
+                } else if (delayHours === 3.0) {
+                    previewText = 'Retraso de 2-4 horas: Mínimo 7.5% del precio del boleto por ley. Algunas aerolíneas ofrecen más. Ingresa el precio del boleto para ver tu compensación.';
+                } else if (delayHours === 5.0) {
+                    previewText = 'Retraso de +4 horas o cancelación: 125% del precio del boleto garantizado por ley. Ingresa el precio para calcular tu compensación exacta.';
+                }
+
+                if (page2PreviewText) page2PreviewText.textContent = previewText;
+                if (page2Preview) page2Preview.style.display = 'block';
+            } else if (page2Preview) {
+                page2Preview.style.display = 'none';
+            }
+
+            // Pages 3-4: Show compensation in top display (already handled by updateProgress)
+            // No additional preview boxes needed as compensation is shown at top
+        }
+
         function calculateCompensation() {
             const delayValue = document.getElementById('delay_hours').value;
             const delayHours = parseFloat(delayValue);
@@ -1704,6 +1746,9 @@
 
                     // Calculate compensation preview when delay is selected
                     calculateCompensationPreview();
+
+                    // Update compensation previews on page
+                    updateCompensationPreviews();
 
                     // Update compensation choice visibility
                     updateCompensationChoiceVisibility();
