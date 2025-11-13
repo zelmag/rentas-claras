@@ -865,6 +865,15 @@
             </div>
 
             <div class="page" data-page="3">
+                <!-- Compensation Preview for Page 3 -->
+                <div id="page-3-preview" style="display: none; background: #e0f2fe; border-left: 4px solid #0284c7; padding: 16px; border-radius: 8px; margin-bottom: 20px;">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                        <span style="font-size: 1.5em;">💰</span>
+                        <strong style="color: #0369a1; font-size: 1.05em;">Tu compensación estimada</strong>
+                    </div>
+                    <p id="page-3-preview-text" style="margin: 0; color: #0c4a6e; font-size: 0.95em; line-height: 1.5;"></p>
+                </div>
+
                 <div class="form-group" style="margin-top: 20px;">
                     <label>Precio por boleto (MXN):</label>
                     <input type="number" name="ticket_price" id="ticket_price" step="0.01" min="1"
@@ -881,6 +890,15 @@
             </div>
 
             <div class="page" data-page="4">
+                <!-- Compensation Preview for Page 4 -->
+                <div id="page-4-preview" style="display: none; background: #e0f2fe; border-left: 4px solid #0284c7; padding: 16px; border-radius: 8px; margin-bottom: 20px;">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                        <span style="font-size: 1.5em;">💰</span>
+                        <strong style="color: #0369a1; font-size: 1.05em;">Tu compensación estimada</strong>
+                    </div>
+                    <p id="page-4-preview-text" style="margin: 0; color: #0c4a6e; font-size: 0.95em; line-height: 1.5;"></p>
+                </div>
+
                 <div class="form-group">
                     <label>Aerolínea:</label>
                     <select name="airline" id="airline" required>
@@ -896,7 +914,7 @@
 
                 <div class="btn-group">
                     <button type="button" class="btn-secondary" id="back-4" onclick="prevPage()">← Regresar</button>
-                    <button type="button" class="btn-primary" id="next-4" onclick="nextPage()">Ingresar detalles del vuelo →</button>
+                    <button type="button" class="btn-primary" id="next-4" onclick="nextPage()">¿Cuánto me deben? →</button>
                 </div>
             </div>
 
@@ -1459,6 +1477,10 @@
             // Update preview boxes on pages 2, 3, 4 based on available data
             const page2Preview = document.getElementById('page-2-preview');
             const page2PreviewText = document.getElementById('page-2-preview-text');
+            const page3Preview = document.getElementById('page-3-preview');
+            const page3PreviewText = document.getElementById('page-3-preview-text');
+            const page4Preview = document.getElementById('page-4-preview');
+            const page4PreviewText = document.getElementById('page-4-preview-text');
 
             const delayValue = document.getElementById('delay_hours').value;
             const delayHours = parseFloat(delayValue);
@@ -1483,8 +1505,44 @@
                 page2Preview.style.display = 'none';
             }
 
-            // Pages 3-4: Show compensation in top display (already handled by updateProgress)
-            // No additional preview boxes needed as compensation is shown at top
+            // Page 3: Show preview when delay is selected (before ticket price is entered)
+            if (currentPage === 3 && delayValue && !isNaN(delayHours)) {
+                let previewText = '';
+
+                if (delayHours === 1.5) {
+                    previewText = 'Con el retraso de 1-2 horas, tu compensación será entre $50-75 MXN o 5% del boleto según aerolínea.';
+                } else if (delayHours === 3.0) {
+                    previewText = 'Con el retraso de 2-4 horas, te corresponde mínimo 7.5% del precio del boleto. ¡Ingresa el precio para ver tu compensación exacta!';
+                } else if (delayHours === 5.0) {
+                    previewText = 'Con el retraso de +4 horas o cancelación, te corresponde el 125% del precio del boleto. ¡Ingresa el precio para calcular cuánto te deben!';
+                }
+
+                if (page3PreviewText) page3PreviewText.textContent = previewText;
+                if (page3Preview) page3Preview.style.display = 'block';
+            } else if (page3Preview) {
+                page3Preview.style.display = 'none';
+            }
+
+            // Page 4: Show preview with ticket price calculation
+            if (currentPage === 4 && delayValue && !isNaN(delayHours) && ticketPrice > 0) {
+                let previewText = '';
+
+                if (delayHours === 1.5) {
+                    const minComp = ticketPrice * 0.05;
+                    previewText = `Con tu boleto de ${formatter.format(ticketPrice)}, tu compensación será entre $50-75 MXN o ${formatter.format(minComp)} (5% del boleto), dependiendo de la aerolínea que selecciones.`;
+                } else if (delayHours === 3.0) {
+                    const minComp = ticketPrice * 0.075;
+                    previewText = `Con tu boleto de ${formatter.format(ticketPrice)}, tu compensación mínima es ${formatter.format(minComp)} (7.5% por ley). Algunas aerolíneas ofrecen más. ¡Selecciona tu aerolínea para ver el monto exacto!`;
+                } else if (delayHours === 5.0) {
+                    const comp = ticketPrice * 1.25;
+                    previewText = `Con tu boleto de ${formatter.format(ticketPrice)}, tu compensación garantizada es ${formatter.format(comp)} (125% del boleto). ¡Selecciona tu aerolínea para continuar!`;
+                }
+
+                if (page4PreviewText) page4PreviewText.textContent = previewText;
+                if (page4Preview) page4Preview.style.display = 'block';
+            } else if (page4Preview) {
+                page4Preview.style.display = 'none';
+            }
         }
 
         function calculateCompensation() {
