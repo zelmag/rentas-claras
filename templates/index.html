@@ -678,8 +678,8 @@
         <form action="/preview" method="POST" id="multi-page-form">
 
             <div class="page active" data-page="1">
-                <!-- Origin and Destination (Side by Side) -->
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
+                <!-- Origin, Destination, and Button (Side by Side) -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 12px; margin-bottom: 20px; align-items: end;">
                     <div class="form-group" style="margin-bottom: 0;">
                         <label>Origen del vuelo:</label>
                         <input type="text" name="origin" id="origin" list="origin-list" placeholder="Ej: MEX, GDL"
@@ -782,6 +782,10 @@
                         <span class="input-checkmark">✓</span>
                         <div class="error-message" id="destination_error">Código inválido</div>
                     </div>
+
+                    <div style="margin-bottom: 0;">
+                        <button type="button" class="btn-primary" id="next-1" onclick="nextPage()">Calcular cuánto me deben →</button>
+                    </div>
                 </div>
                 <small style="color: #666; font-size: 0.8em; display: block; margin: 0 0 20px 0;">
                     💡 Escribe para filtrar resultados (ej: "can" muestra Cancún)
@@ -793,13 +797,6 @@
                     <p style="margin: 0; font-weight: 700; color: #006847; font-size: 0.85em; line-height: 1.4;">
                         ⚡ GRATIS (PORQUE LA AEROLINEA TE DEBE COMPENSACION POR LEY) • 3 min • Citando la ley de aviación civil mexicana
                     </p>
-                </div>
-
-                <div class="btn-group" style="justify-content: center;">
-                    <button type="button" class="btn-secondary" id="back-1" onclick="showPage(1)" disabled
-                        style="visibility: hidden; display: none;">← Atrás</button>
-                    <button type="button" class="btn-primary" id="next-1" onclick="nextPage()"
-                        style="flex-grow: 0;">Calcular cuánto me deben →</button>
                 </div>
 
                 <div
