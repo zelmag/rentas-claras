@@ -383,6 +383,20 @@
             color: #7f8c8d;
             margin-top: 5px;
         }
+
+        /* Responsive grid for contact fields */
+        .contact-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+
+        @media (min-width: 640px) {
+            .contact-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 12px;
+            }
+        }
     </style>
 
     <!-- Google tag (gtag.js) -->
@@ -423,34 +437,29 @@
         <h1>🚀 ¡Tu Reclamo Legal está Listo!</h1>
 
         <form action="/send" method="POST">
-            <!-- Very Compact Para Section - just text, no input box -->
-            <div style="background: #f0fdf4; border-left: 4px solid #006847; padding: 10px 12px; border-radius: 8px; margin: 12px 0;">
-                <div style="font-size: 0.85em; color: #065f46;">
-                    <strong>📧 Para:</strong> {{ airline_email }}
-                </div>
-                <input type="hidden" name="airline_email" value="{{ airline_email }}" required>
-            </div>
-
-            <!-- Compact Contact Information Section -->
+            <!-- Compact Contact Information Section - Fields in same row -->
             <div style="background-color: #f0f9ff; border-left: 4px solid #3b82f6; padding: 12px; border-radius: 8px; margin: 12px 0;">
                 <div style="margin-bottom: 10px;">
                     <strong style="color: #1e40af; font-size: 0.95em;">🔒 Tus Datos</strong>
                 </div>
 
-                <div style="margin-bottom: 10px;">
-                    <label style="display: block; margin-bottom: 4px; font-weight: 600; color: #1e40af; font-size: 0.85rem;">
-                        Nombre(s) <span style="color: #ef4444;">*</span>
-                    </label>
-                    <input type="text" name="passenger_name" placeholder="Ej: Juan Pérez{% if flight_data.passenger_count > 1 %}, María Pérez{% endif %}" required
-                           style="width: 100%; padding: 10px 12px; border: 2px solid #3b82f6; border-radius: 10px; font-size: 14px; box-sizing: border-box; font-family: 'Montserrat', sans-serif; min-height: 42px;">
-                </div>
+                <!-- Two column layout for mobile and desktop -->
+                <div class="contact-grid">
+                    <div>
+                        <label style="display: block; margin-bottom: 4px; font-weight: 600; color: #1e40af; font-size: 0.85rem;">
+                            Nombre(s) <span style="color: #ef4444;">*</span>
+                        </label>
+                        <input type="text" name="passenger_name" placeholder="Ej: Juan Pérez{% if flight_data.passenger_count > 1 %}, María Pérez{% endif %}" required
+                               style="width: 100%; padding: 10px 12px; border: 2px solid #3b82f6; border-radius: 10px; font-size: 14px; box-sizing: border-box; font-family: 'Montserrat', sans-serif; min-height: 42px;">
+                    </div>
 
-                <div>
-                    <label style="display: block; margin-bottom: 4px; font-weight: 600; color: #1e40af; font-size: 0.85rem;">
-                        Tu email <span style="color: #ef4444;">*</span>
-                    </label>
-                    <input type="email" name="passenger_email" placeholder="tu@email.com" required
-                           style="width: 100%; padding: 10px 12px; border: 2px solid #3b82f6; border-radius: 10px; font-size: 14px; box-sizing: border-box; font-family: 'Montserrat', sans-serif; min-height: 42px;">
+                    <div>
+                        <label style="display: block; margin-bottom: 4px; font-weight: 600; color: #1e40af; font-size: 0.85rem;">
+                            Tu email <span style="color: #ef4444;">*</span>
+                        </label>
+                        <input type="email" name="passenger_email" placeholder="tu@email.com" required
+                               style="width: 100%; padding: 10px 12px; border: 2px solid #3b82f6; border-radius: 10px; font-size: 14px; box-sizing: border-box; font-family: 'Montserrat', sans-serif; min-height: 42px;">
+                    </div>
                 </div>
             </div>
 
@@ -477,6 +486,15 @@
                 class="letter-editor"
                 style="border: 2px solid #3498db; font-family: 'Montserrat', sans-serif; font-size: 14px;"
             >{{ letter | safe }}</div> <input type="hidden" name="letter" id="final_letter_content">
+
+            <!-- Airline Email Section - After letter, before buttons -->
+            <div style="background: #f0fdf4; border-left: 4px solid #006847; padding: 10px 12px; border-radius: 8px; margin: 16px 0 12px 0;">
+                <div style="font-size: 0.85em; color: #065f46;">
+                    <strong>📧 Para:</strong> {{ airline_email }}
+                </div>
+                <input type="hidden" name="airline_email" value="{{ airline_email }}" required>
+            </div>
+
             <input type="hidden" name="origin" value="{{ flight_data.origin }}">
             <input type="hidden" name="destination" value="{{ flight_data.destination }}">
             <input type="hidden" name="airline" value="{{ flight_data.airline }}">
