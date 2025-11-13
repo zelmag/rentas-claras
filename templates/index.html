@@ -834,6 +834,14 @@
                 </div>
                 <input type="hidden" id="delay_hours" name="delay_hours">
 
+                <div class="btn-group">
+                    <button type="button" class="btn-secondary" id="back-2" onclick="prevPage()">← Regresar a
+                        cálculo</button>
+                    <button type="button" class="btn-primary" id="next-2" onclick="nextPage()">Siguiente →</button>
+                </div>
+            </div>
+
+            <div class="page" data-page="3">
                 <div class="form-group" style="margin-top: 20px;">
                     <label>Precio por boleto (MXN):</label>
                     <input type="number" name="ticket_price" id="ticket_price" step="0.01" min="1"
@@ -843,6 +851,13 @@
                     </div>
                 </div>
 
+                <div class="btn-group">
+                    <button type="button" class="btn-secondary" id="back-3" onclick="prevPage()">← Regresar</button>
+                    <button type="button" class="btn-primary" id="next-3" onclick="nextPage()">Siguiente →</button>
+                </div>
+            </div>
+
+            <div class="page" data-page="4">
                 <div class="form-group">
                     <label>Aerolínea:</label>
                     <select name="airline" id="airline" required>
@@ -856,8 +871,13 @@
                     <div class="error-message" id="airline_error">Por favor selecciona una aerolínea</div>
                 </div>
 
-                <hr style="margin: 24px 0;">
+                <div class="btn-group">
+                    <button type="button" class="btn-secondary" id="back-4" onclick="prevPage()">← Regresar</button>
+                    <button type="button" class="btn-primary" id="next-4" onclick="nextPage()">Siguiente →</button>
+                </div>
+            </div>
 
+            <div class="page" data-page="5">
                 <div class="form-group">
                     <label>Número de vuelo:</label>
                     <input type="text" name="flight_number" id="flight_number" placeholder="Ej: 1099"
@@ -933,8 +953,7 @@
                 </div>
 
                 <div class="btn-group">
-                    <button type="button" class="btn-secondary" id="back-2" onclick="prevPage()">← Regresar a
-                        cálculo</button>
+                    <button type="button" class="btn-secondary" id="back-5" onclick="prevPage()">← Regresar</button>
                     <button type="submit" class="btn-primary">Ver y Editar Mi Email de Reclamo →</button>
                 </div>
             </div>
@@ -976,7 +995,7 @@
         };
 
         let currentPage = 1;
-        const totalPages = 2;
+        const totalPages = 5;
         let calculatedCompensation = 0;
         let selectedAirline = '';
 
@@ -1038,13 +1057,13 @@
             const aboutSection = document.getElementById('about-section');
             const trustBadgeSection = document.getElementById('trust-badge-section');
 
-            if (currentPage === 2 && calculatedCompensation > 0 && selectedAirline) {
-                // Hide hero, about, and trust-badge on page 2
+            if (currentPage === 5 && calculatedCompensation > 0 && selectedAirline) {
+                // Hide hero, about, and trust-badge on page 5
                 heroSection.style.display = 'none';
                 aboutSection.style.display = 'none';
                 trustBadgeSection.style.display = 'none';
 
-                // Show the title elements on page 2
+                // Show the title elements on page 5
                 pageTitleContainer.style.display = 'block';
                 subtitleElement.style.display = 'block';
                 descriptionElement.style.display = 'block';
@@ -1075,9 +1094,9 @@
                 subtitleElement.style.display = 'none';
                 descriptionElement.style.display = 'none';
             } else {
-                // Default state
+                // Pages 2, 3, 4: Hide everything
                 heroSection.style.display = 'none';
-                whySection.style.display = 'none';
+                aboutSection.style.display = 'none';
                 trustBadgeSection.style.display = 'none';
                 pageTitleContainer.style.display = 'none';
                 subtitleElement.style.display = 'none';
@@ -1161,43 +1180,62 @@
                     alert('Por favor, selecciona cuánto fue el retraso del vuelo.');
                     return false;
                 }
+                return true;
+            }
 
+            if (pageNumber === 3) {
                 const ticketPriceValid = validateField('ticket_price');
-                const airlineValid = validateField('airline');
-
-                if (!ticketPriceValid || !airlineValid) {
-                    alert('Por favor, completa todos los campos correctamente antes de continuar.');
+                if (!ticketPriceValid) {
+                    alert('Por favor, ingresa el precio del boleto correctamente.');
                     return false;
                 }
+                return true;
             }
 
-            const currentPageElement = document.querySelector(`.page[data-page="${pageNumber}"]`);
-            const requiredFields = currentPageElement.querySelectorAll('[required]');
-            let isValid = true;
-
-            requiredFields.forEach(field => {
-                if (field.type === 'hidden') {
-                    return;
+            if (pageNumber === 4) {
+                const airlineValid = validateField('airline');
+                if (!airlineValid) {
+                    alert('Por favor, selecciona una aerolínea.');
+                    return false;
                 }
-                if (!validateField(field.id)) {
-                    isValid = false;
-                }
-            });
-
-            if (!isValid) {
-                alert('Por favor, completa todos los campos correctamente antes de continuar.');
+                return true;
             }
-            return isValid;
+
+            if (pageNumber === 5) {
+                const currentPageElement = document.querySelector(`.page[data-page="${pageNumber}"]`);
+                const requiredFields = currentPageElement.querySelectorAll('[required]');
+                let isValid = true;
+
+                requiredFields.forEach(field => {
+                    if (field.type === 'hidden') {
+                        return;
+                    }
+                    if (!validateField(field.id)) {
+                        isValid = false;
+                    }
+                });
+
+                if (!isValid) {
+                    alert('Por favor, completa todos los campos correctamente antes de continuar.');
+                }
+                return isValid;
+            }
+
+            return true;
         }
 
         function nextPage() {
             if (validatePage(currentPage) && currentPage < totalPages) {
                 showPage(currentPage + 1);
-                // Calculate compensation when moving from page 1 to page 2
-                if (currentPage === 2) {
+                // Calculate compensation preview as user progresses through pages 2, 3, 4
+                if (currentPage >= 2 && currentPage <= 4) {
+                    calculateCompensationPreview();
+                }
+                // Calculate full compensation when reaching page 5
+                if (currentPage === 5) {
                     calculateCompensation();
-                    updatePageTitles(); // Update titles after calculating compensation
-                    updateCompensationChoiceVisibility(); // Show/hide compensation choice section
+                    updatePageTitles();
+                    updateCompensationChoiceVisibility();
                 }
             }
         }
@@ -1214,9 +1252,22 @@
             const compensationDisplay = document.getElementById('compensation-display');
             const page2Subtitle = document.getElementById('page2-subtitle');
 
-            // Calculate percentage based on 3 conceptual steps (not just 2 pages)
-            // Page 1 = 33%, Page 2 = 66%, Letter generated = 100%
-            const percentage = currentPage === 1 ? 50 : 100;
+            // Calculate percentage based on 5 pages mapped to 3 milestones
+            // Page 1 = 0% (milestone 1 active)
+            // Pages 2-4 = 25%, 50%, 75% (milestone 2 active, progressing towards milestone 2)
+            // Page 5 = 100% (milestone 2 active, ready for milestone 3)
+            let percentage = 0;
+            if (currentPage === 1) {
+                percentage = 0;
+            } else if (currentPage === 2) {
+                percentage = 25;
+            } else if (currentPage === 3) {
+                percentage = 50;
+            } else if (currentPage === 4) {
+                percentage = 75;
+            } else if (currentPage === 5) {
+                percentage = 100;
+            }
 
             // Update milestone states
             const milestone1 = document.getElementById('milestone-1');
@@ -1231,7 +1282,7 @@
             // Set states based on current page
             if (currentPage === 1) {
                 milestone1.classList.add('active');
-            } else if (currentPage === 2) {
+            } else if (currentPage >= 2 && currentPage <= 5) {
                 milestone1.classList.add('completed');
                 milestone2.classList.add('active');
             }
@@ -1241,7 +1292,7 @@
                 progressLineFill.style.width = percentage + '%';
             }
 
-            // Display compensation amount - visible on page 1, hidden on page 2
+            // Display compensation amount - visible on page 1, hidden on other pages
             if (calculatedCompensation > 0 && compensationDisplay) {
                 if (currentPage === 1) {
                     compensationDisplay.textContent = `💰 ${formatter.format(calculatedCompensation)}`;
@@ -1253,9 +1304,9 @@
                 compensationDisplay.style.display = 'none';
             }
 
-            // Show page 2 subtitle when on page 2 with valid compensation
+            // Show page 2 subtitle when on page 2+ with valid compensation
             if (page2Subtitle) {
-                if (currentPage === 2 && calculatedCompensation > 0 && selectedAirline) {
+                if (currentPage >= 2 && calculatedCompensation > 0 && selectedAirline) {
                     page2Subtitle.style.display = 'block';
                 } else {
                     page2Subtitle.style.display = 'none';
@@ -1604,10 +1655,8 @@
                     this.classList.add('selected');
                     document.getElementById('delay_hours').value = delayMap[this.dataset.value].value;
 
-                    // Calculate compensation on page 2
-                    if (currentPage === 2) {
-                        calculateCompensation();
-                    }
+                    // Calculate compensation preview when delay is selected
+                    calculateCompensationPreview();
 
                     // Update compensation choice visibility
                     updateCompensationChoiceVisibility();
@@ -1639,9 +1688,8 @@
                     }
                     e.target.value = value;
 
-                    if (currentPage === 2) {
-                        calculateCompensation();
-                    }
+                    // Calculate compensation preview when ticket price is entered
+                    calculateCompensationPreview();
                 });
                 priceInput.addEventListener('blur', () => {
                     validateField('ticket_price');
@@ -1665,16 +1713,14 @@
 
                 airlineSelect.addEventListener('input', () => {
                     updateAirlineLogo();
-                    if (currentPage === 2) {
-                        calculateCompensation();
-                    }
+                    // Calculate compensation preview when airline is selected
+                    calculateCompensationPreview();
                     validateField('airline');
                 });
                 airlineSelect.addEventListener('change', () => {
                     updateAirlineLogo();
-                    if (currentPage === 2) {
-                        calculateCompensation();
-                    }
+                    // Calculate compensation preview when airline is selected
+                    calculateCompensationPreview();
                     validateField('airline');
                 });
             }
@@ -1845,8 +1891,8 @@
             });
         });
 
-        // Show page 2 instead of page 1
-        showPage(2);
+        // Show page 5 instead of page 1 when returning from preview
+        showPage(5);
         {% else %}
         showPage(1);
         {% endif %}
