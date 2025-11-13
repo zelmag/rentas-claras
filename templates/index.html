@@ -29,6 +29,26 @@
             }
         }
 
+        @keyframes compensationUpdate {
+            0% {
+                transform: scale(1);
+                color: inherit;
+            }
+            50% {
+                transform: scale(1.15);
+                color: #10b981;
+                text-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+            }
+            100% {
+                transform: scale(1);
+                color: inherit;
+            }
+        }
+
+        .compensation-updated {
+            animation: compensationUpdate 0.5s ease-in-out;
+        }
+
         body {
             font-family: 'Montserrat', sans-serif;
             max-width: 640px;
@@ -631,8 +651,7 @@
     <div class="container">
         <div class="progress-bar-section">
             <div
-                style="display: flex; justify-content: space-between; align-items: center; margin-top: 32px; margin-bottom: 10px;">
-                <span style="font-weight: 700; font-size: 1.1em; color: #2c3e50;">VueloDigno</span>
+                style="display: flex; justify-content: flex-end; align-items: center; margin-top: 32px; margin-bottom: 10px;">
                 <span style="font-size: 1.5em;" id="compensation-display"></span>
             </div>
             <div class="progress-container">
@@ -788,15 +807,15 @@
                     💡 Escribe para filtrar resultados (ej: "can" muestra Cancún)
                 </small>
 
-                <div class="btn-group">
+                <div class="btn-group" style="margin-bottom: 32px;">
                     <button type="button" class="btn-primary" id="next-1" onclick="nextPage()">Calcular cuánto me deben →</button>
                 </div>
 
                 <!-- Trust Badge -->
                 <div id="trust-badge-section"
-                    style="background: #f0fdf4; padding: 10px 14px; border-radius: 8px; margin-bottom: 16px; text-align: center; border: 1px solid #10b981;">
+                    style="background: #f0fdf4; padding: 10px 14px; border-radius: 8px; margin-bottom: 32px; text-align: center; border: 1px solid #10b981;">
                     <p style="margin: 0; font-weight: 700; color: #006847; font-size: 0.85em; line-height: 1.4;">
-                        ⚡ GRATIS • 3 min • Basado en Ley de Aviación Civil
+                        ⚡ GRATIS • 3 min • Basado en la ley de aviación civil mexicana
                     </p>
                 </div>
 
@@ -838,7 +857,7 @@
                 <div class="btn-group">
                     <button type="button" class="btn-secondary" id="back-2" onclick="prevPage()">← Regresar a
                         cálculo</button>
-                    <button type="button" class="btn-primary" id="next-2" onclick="nextPage()">Siguiente →</button>
+                    <button type="button" class="btn-primary" id="next-2" onclick="nextPage()">Ver mi compensación →</button>
                 </div>
             </div>
 
@@ -854,7 +873,7 @@
 
                 <div class="btn-group">
                     <button type="button" class="btn-secondary" id="back-3" onclick="prevPage()">← Regresar</button>
-                    <button type="button" class="btn-primary" id="next-3" onclick="nextPage()">Siguiente →</button>
+                    <button type="button" class="btn-primary" id="next-3" onclick="nextPage()">Calcular monto exacto →</button>
                 </div>
             </div>
 
@@ -874,7 +893,7 @@
 
                 <div class="btn-group">
                     <button type="button" class="btn-secondary" id="back-4" onclick="prevPage()">← Regresar</button>
-                    <button type="button" class="btn-primary" id="next-4" onclick="nextPage()">Siguiente →</button>
+                    <button type="button" class="btn-primary" id="next-4" onclick="nextPage()">Generar mi reclamo →</button>
                 </div>
             </div>
 
@@ -1301,8 +1320,24 @@
 
             // Display compensation amount - visible on all pages after calculation
             if (calculatedCompensation > 0 && compensationDisplay) {
-                compensationDisplay.textContent = `💰 ${formatter.format(calculatedCompensation)}`;
+                const oldText = compensationDisplay.textContent;
+                const newText = `💰 ${formatter.format(calculatedCompensation)}`;
+
+                compensationDisplay.textContent = newText;
                 compensationDisplay.style.display = 'inline';
+
+                // Add animation if compensation changed
+                if (oldText !== newText && oldText !== '') {
+                    compensationDisplay.classList.remove('compensation-updated');
+                    // Force reflow to restart animation
+                    void compensationDisplay.offsetWidth;
+                    compensationDisplay.classList.add('compensation-updated');
+
+                    // Remove animation class after it completes
+                    setTimeout(() => {
+                        compensationDisplay.classList.remove('compensation-updated');
+                    }, 500);
+                }
             } else if (compensationDisplay) {
                 compensationDisplay.style.display = 'none';
             }
