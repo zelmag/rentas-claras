@@ -58,28 +58,31 @@
 
         h1 {
             color: #2c3e50;
-            font-size: 1.75rem;
+            font-size: 1.5rem;
             font-weight: 700;
             line-height: 1.2;
+            margin: 12px 0;
         }
 
         @media (min-width: 768px) {
             h1 {
-                font-size: 2rem;
+                font-size: 1.75rem;
+                margin: 16px 0;
             }
         }
 
         h2 {
             color: #2c3e50;
-            font-size: 1.4rem;
+            font-size: 1.15rem;
             font-weight: 600;
-            margin-top: 32px;
+            margin-top: 20px;
+            margin-bottom: 10px;
         }
 
         @media (min-width: 768px) {
             h2 {
-                font-size: 1.6rem;
-                margin-top: 36px;
+                font-size: 1.3rem;
+                margin-top: 24px;
             }
         }
 
@@ -145,28 +148,33 @@
         .airline-email {
             background: #f0fdf4;
             border-left: 4px solid #006847;
-            padding: 15px;
+            padding: 12px 15px;
             border-radius: 8px;
-            margin: 20px 0;
+            margin: 15px 0;
         }
 
         .airline-email input {
             width: 100%;
-            padding: 16px 18px;
+            padding: 12px 14px;
             border: 2px solid #e1e8ed;
             border-radius: 12px;
-            margin-top: 10px;
+            margin-top: 8px;
             box-sizing: border-box;
-            font-size: 16px;
+            font-size: 15px;
             font-family: 'Montserrat', sans-serif;
-            min-height: 56px;
+            min-height: 48px;
         }
 
         @media (min-width: 768px) {
+            .airline-email {
+                padding: 15px;
+                margin: 20px 0;
+            }
+
             .airline-email input {
-                padding: 18px 20px;
-                font-size: 17px;
-                min-height: 60px;
+                padding: 14px 16px;
+                font-size: 16px;
+                min-height: 52px;
             }
         }
 
@@ -187,40 +195,40 @@
         }
 
         button {
-            padding: 18px 28px;
+            padding: 14px 20px;
             background: linear-gradient(135deg, #10b981 0%, #059669 100%);
             color: white;
             border: none;
             border-radius: 12px;
-            font-size: 17px;
+            font-size: 15px;
             cursor: pointer;
             margin-right: 10px;
             box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
             transition: all 0.3s ease;
             font-weight: 700;
-            min-height: 56px;
+            min-height: 48px;
         }
 
         @media (min-width: 768px) {
             button {
-                padding: 20px 32px;
-                font-size: 18px;
+                padding: 18px 28px;
+                font-size: 17px;
                 border-radius: 14px;
-                min-height: 60px;
+                min-height: 56px;
             }
         }
 
         .button-group {
             display: flex;
             justify-content: space-between;
-            gap: 14px;
-            margin-top: 28px;
+            gap: 12px;
+            margin-top: 20px;
         }
 
         @media (min-width: 768px) {
             .button-group {
-                gap: 16px;
-                margin-top: 32px;
+                gap: 14px;
+                margin-top: 28px;
             }
         }
 
@@ -415,55 +423,50 @@
         <h1>🚀 ¡Tu Reclamo Legal está Listo!</h1>
 
         <form action="/send" method="POST">
-            <div class="airline-email">
-                <strong>📧 Para:</strong>
-                <small style="display: block; color: #7f8c8d; margin-bottom: 5px;">Departamento de Atención al Cliente de {{ flight_data.airline }}</small>
-                <input type="email" name="airline_email" value="{{ airline_email }}" required readonly style="background-color: #f5f5f5; cursor: not-allowed; color: #6b7280;">
+            <!-- Compact Para Section -->
+            <div class="airline-email" style="padding: 12px 15px; margin: 15px 0;">
+                <strong style="font-size: 0.95em;">📧 Para: {{ flight_data.airline }}</strong>
+                <input type="email" name="airline_email" value="{{ airline_email }}" required readonly style="background-color: #f5f5f5; cursor: not-allowed; color: #6b7280; margin-top: 8px; padding: 12px 14px; min-height: 48px;">
             </div>
 
-            <!-- Contact Information Section -->
-            <div style="background-color: #f0f9ff; border-left: 4px solid #3b82f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
-                    <span style="font-size: 1.8em;">🔒</span>
-                    <div>
-                        <strong style="color: #1e40af; font-size: 1.1em;">Tus Datos de Contacto</strong>
-                        <p style="margin: 5px 0 0 0; color: #1e40af; font-size: 0.9em;">100% protegidos. Solo para enviar el reclamo.</p>
-                    </div>
+            <!-- Compact Contact Information Section -->
+            <div style="background-color: #f0f9ff; border-left: 4px solid #3b82f6; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                <div style="margin-bottom: 12px;">
+                    <strong style="color: #1e40af; font-size: 1em;">🔒 Tus Datos de Contacto</strong>
+                    <small style="display: block; color: #1e40af; font-size: 0.8em; margin-top: 2px;">100% protegidos</small>
                 </div>
 
-                <div style="margin-bottom: 15px;">
-                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #1e40af; font-size: 0.9375rem;">
-                        Nombre(s) del/los pasajero(s) <span style="color: #ef4444;">*</span>
+                <div style="margin-bottom: 12px;">
+                    <label style="display: block; margin-bottom: 6px; font-weight: 600; color: #1e40af; font-size: 0.875rem;">
+                        Nombre(s) <span style="color: #ef4444;">*</span>
                     </label>
                     <input type="text" name="passenger_name" placeholder="Ej: Juan Pérez{% if flight_data.passenger_count > 1 %}, María Pérez{% endif %}" required
-                           style="width: 100%; padding: 16px 18px; border: 2px solid #3b82f6; border-radius: 12px; font-size: 16px; box-sizing: border-box; font-family: 'Montserrat', sans-serif; min-height: 56px;">
-                    <small style="color: #1e40af; font-size: 0.875rem; display: block; margin-top: 8px;">
-                        {% if flight_data.passenger_count > 1 %}
-                            💡 Ingresa {{ flight_data.passenger_count }} nombres separados por comas
-                        {% else %}
-                            💡 Aparecerá en el email de reclamo
-                        {% endif %}
+                           style="width: 100%; padding: 12px 14px; border: 2px solid #3b82f6; border-radius: 12px; font-size: 15px; box-sizing: border-box; font-family: 'Montserrat', sans-serif; min-height: 48px;">
+                    {% if flight_data.passenger_count > 1 %}
+                    <small style="color: #1e40af; font-size: 0.8rem; display: block; margin-top: 4px;">
+                        💡 {{ flight_data.passenger_count }} nombres separados por comas
                     </small>
+                    {% endif %}
                 </div>
 
                 <div>
-                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #1e40af; font-size: 0.9375rem;">
+                    <label style="display: block; margin-bottom: 6px; font-weight: 600; color: #1e40af; font-size: 0.875rem;">
                         Tu email <span style="color: #ef4444;">*</span>
                     </label>
                     <input type="email" name="passenger_email" placeholder="tu@email.com" required
-                           style="width: 100%; padding: 16px 18px; border: 2px solid #3b82f6; border-radius: 12px; font-size: 16px; box-sizing: border-box; font-family: 'Montserrat', sans-serif; min-height: 56px;">
-                    <small style="color: #1e40af; font-size: 0.875rem; display: block; margin-top: 8px;">
-                        💡 Recibirás una copia del reclamo aquí
+                           style="width: 100%; padding: 12px 14px; border: 2px solid #3b82f6; border-radius: 12px; font-size: 15px; box-sizing: border-box; font-family: 'Montserrat', sans-serif; min-height: 48px;">
+                    <small style="color: #1e40af; font-size: 0.8rem; display: block; margin-top: 4px;">
+                        💡 Recibirás una copia aquí
                     </small>
                 </div>
             </div>
 
-            <h2 style="margin-top: 30px; color: #2c3e50;">
-                📝 Revisa y edita tu email de reclamación
+            <h2 style="margin-top: 20px; color: #2c3e50; font-size: 1.25rem;">
+                📝 Revisa y edita tu email
             </h2>
 
-            <div style="background: #fff3cd; padding: 12px 16px; border-radius: 8px; margin: 12px 0; border-left: 4px solid #ffc107;">
-                <p style="margin: 0; font-weight: 600; color: #856404; font-size: 0.9em;">
+            <div style="background: #fff3cd; padding: 10px 12px; border-radius: 8px; margin: 10px 0; border-left: 4px solid #ffc107;">
+                <p style="margin: 0; font-weight: 600; color: #856404; font-size: 0.85em;">
                     💡 Haz clic en el texto abajo para editarlo
                 </p>
             </div>
