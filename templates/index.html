@@ -248,19 +248,19 @@
         .input-checkmark {
             position: absolute;
             right: 18px;
-            top: calc(1.4em + 6px + 28px); /* label height + margin + half of input height */
-            transform: translateY(-50%);
+            top: 55px; /* label(21px) + margin(6px) + input-center(28px) */
             color: #10b981;
             font-size: 1.4em;
             opacity: 0;
             transition: opacity 0.3s ease;
             pointer-events: none;
+            /* Remove transform to avoid positioning issues */
         }
 
         @media (min-width: 768px) {
             .input-checkmark {
                 right: 20px;
-                top: calc(1.4em + 6px + 30px); /* label height + margin + half of larger input */
+                top: 60px; /* label(22px) + margin(8px) + input-center(30px) */
                 font-size: 1.5em;
             }
         }
