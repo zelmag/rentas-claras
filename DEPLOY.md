@@ -55,7 +55,7 @@ Your site is returning 503 errors because the Vercel deployment is not active. F
    - **Output Directory**: (leave empty)
    - **Install Command**: `pip install -r requirements.txt`
 5. Add Environment Variables:
-   - `RESEND_API_KEY` = `re_eM3juG4m_At9ydx1n95pQf4RRTKd8Mkc7`
+   - `RESEND_API_KEY` = `<your-resend-api-key-here>`
    - `FROM_EMAIL` = `reclamos@vuelodigno.com`
 6. Click "Deploy"
 7. Once deployed, go to "Settings" → "Domains" and add `vuelodigno.com`
