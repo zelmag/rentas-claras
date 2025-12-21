@@ -269,7 +269,7 @@ export default function Home() {
                 </a>
               </div>
               <p className="text-neutral-600 text-xs">
-                Creado con ❤️ en México
+                Creado con ❤️ por Zelma en México
               </p>
             </div>
           </div>
