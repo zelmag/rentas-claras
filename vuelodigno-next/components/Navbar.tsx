@@ -30,7 +30,7 @@ export default function Navbar() {
 
     document.addEventListener("mousedown", handleClickOutside);
     document.addEventListener("touchstart", handleClickOutside as unknown as EventListener);
-    
+
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
       document.removeEventListener("touchstart", handleClickOutside as unknown as EventListener);
@@ -46,10 +46,10 @@ export default function Navbar() {
 
   const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
     e.preventDefault();
-    
+
     // Close mobile menu first
     setMobileMenuOpen(false);
-    
+
     // Small delay to let menu close animation complete
     setTimeout(() => {
       // If we're not on the home page, navigate there first then scroll
@@ -64,7 +64,7 @@ export default function Navbar() {
         }, 300);
         return;
       }
-      
+
       // If we're on the home page, just scroll
       const element = document.querySelector(href);
       if (element) {
