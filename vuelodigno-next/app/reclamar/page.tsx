@@ -157,14 +157,17 @@ function ReclamarContent() {
   const handleNextStep = () => {
     if (step === 1 && validateStep1()) {
       setStep(2);
+      window.scrollTo({ top: 0, behavior: "smooth" });
     } else if (step === 2 && validateStep2()) {
       setStep(3);
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
   const handlePrevStep = () => {
     if (step > 1) {
       setStep((step - 1) as Step);
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
@@ -249,7 +252,7 @@ function ReclamarContent() {
                     <label className="block text-sm text-neutral-300 mb-3">
                       Aerolínea
                     </label>
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-3 gap-2 sm:gap-3">
                       {AIRLINES.map((a) => (
                         <button
                           key={a.value}
@@ -258,14 +261,14 @@ function ReclamarContent() {
                             setAirline(a.value);
                             setErrors({ ...errors, airline: "" });
                           }}
-                          className={`p-4 rounded-2xl text-center transition-all ${
+                          className={`p-3 sm:p-4 rounded-2xl text-center transition-all ${
                             airline === a.value
                               ? "bg-accent-500/20 border-2 border-accent-500"
                               : "bg-white/5 border-2 border-transparent hover:bg-white/10"
                           }`}
                         >
                           <span className="text-2xl block mb-1">{a.emoji}</span>
-                          <span className="font-medium text-white text-sm">{a.label}</span>
+                          <span className="font-medium text-white text-xs sm:text-sm truncate block">{a.label}</span>
                         </button>
                       ))}
                     </div>
