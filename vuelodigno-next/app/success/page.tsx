@@ -240,9 +240,9 @@ function SuccessContent() {
                   <p className="text-neutral-500 text-xs">Lista para compartir</p>
                 </div>
               </div>
-              <p className="text-neutral-300 text-sm leading-relaxed whitespace-pre-wrap">
-                {tweetText}
-              </p>
+              <p className="text-neutral-300 text-sm leading-relaxed whitespace-pre-wrap break-words">
+                  {tweetText}
+                </p>
             </div>
 
             {/* Tweet Actions */}

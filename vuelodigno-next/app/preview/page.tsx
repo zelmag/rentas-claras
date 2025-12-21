@@ -349,8 +349,8 @@ function PreviewContent() {
               contentEditable
               suppressContentEditableWarning
               dangerouslySetInnerHTML={{ __html: letterHtml }}
-              className="bg-white/5 border-2 border-accent-500/50 rounded-2xl p-6 text-white text-sm leading-relaxed
-                       focus:border-accent-500 focus:outline-none min-h-[400px] max-h-[500px] overflow-y-auto
+              className="bg-white/5 border-2 border-accent-500/50 rounded-2xl p-4 md:p-6 text-white text-sm leading-relaxed
+                       focus:border-accent-500 focus:outline-none min-h-[300px] md:min-h-[400px] max-h-[400px] md:max-h-[500px] overflow-y-auto
                        [&_strong]:text-gold-400 [&_a]:text-accent-400 [&_a]:underline"
               style={{ fontFamily: "system-ui, sans-serif" }}
             />

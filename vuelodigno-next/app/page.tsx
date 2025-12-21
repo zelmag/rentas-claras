@@ -127,8 +127,8 @@ export default function Home() {
         {/* Footer */}
         <footer id="footer" className="py-16 px-6 border-t border-white/5 bg-obsidian-900/50">
           <div className="max-w-6xl mx-auto">
-            {/* Top section - 4 columns */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-12 text-center md:text-left">
+            {/* Top section - 2 columns on mobile, 4 on desktop */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-10 mb-12 text-center md:text-left">
               {/* Brand column */}
               <div className="md:col-span-1">
                 <div className="flex items-center justify-center md:justify-start gap-2 mb-4">
