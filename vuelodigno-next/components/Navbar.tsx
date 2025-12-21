@@ -1,12 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const pathname = usePathname();
+  const router = useRouter();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -23,13 +26,21 @@ export default function Navbar() {
     { href: "#footer", label: "Contacto" },
   ];
 
-  const scrollToSection = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+  const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
     e.preventDefault();
+    setMobileMenuOpen(false);
+    
+    // If we're not on the home page, navigate there first with the hash
+    if (pathname !== "/") {
+      router.push("/" + href);
+      return;
+    }
+    
+    // If we're on the home page, just scroll
     const element = document.querySelector(href);
     if (element) {
       element.scrollIntoView({ behavior: "smooth" });
     }
-    setMobileMenuOpen(false);
   };
 
   return (
@@ -60,7 +71,7 @@ export default function Navbar() {
                 <a
                   key={link.href}
                   href={link.href}
-                  onClick={(e) => scrollToSection(e, link.href)}
+                  onClick={(e) => handleNavClick(e, link.href)}
                   className="text-neutral-400 hover:text-white transition-colors text-sm font-medium"
                 >
                   {link.label}
@@ -130,13 +141,13 @@ export default function Navbar() {
                   <a
                     key={link.href}
                     href={link.href}
-                    onClick={(e) => scrollToSection(e, link.href)}
+                    onClick={(e) => handleNavClick(e, link.href)}
                     className="block text-neutral-300 hover:text-white transition-colors py-2"
                   >
                     {link.label}
                   </a>
                 ))}
-                <Link href="/reclamar" className="block w-full mt-4">
+                <Link href="/reclamar" className="block w-full mt-4" onClick={() => setMobileMenuOpen(false)}>
                   <button className="w-full px-5 py-3 bg-white text-obsidian-900 rounded-full font-semibold text-sm">
                     Ver cuánto me deben →
                   </button>

@@ -347,12 +347,17 @@ function ReclamarContent() {
                     </label>
                     <div className="relative">
                       <span className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400">$</span>
-                      <input
+                    <input
                         type="number"
                         value={ticketPrice}
                         onChange={(e) => {
                           setTicketPrice(e.target.value);
                           setErrors({ ...errors, ticketPrice: "" });
+                        }}
+                        onFocus={(e) => {
+                          setTimeout(() => {
+                            e.target.scrollIntoView({ behavior: "smooth", block: "center" });
+                          }, 300);
                         }}
                         placeholder="2,500"
                         className="w-full bg-white/5 border-2 border-white/10 rounded-xl py-3 pl-8 pr-16 text-white
@@ -378,6 +383,11 @@ function ReclamarContent() {
                           setFlightNumber(e.target.value.toUpperCase());
                           setErrors({ ...errors, flightNumber: "" });
                         }}
+                        onFocus={(e) => {
+                          setTimeout(() => {
+                            e.target.scrollIntoView({ behavior: "smooth", block: "center" });
+                          }, 300);
+                        }}
                         placeholder="VB 2847"
                         className="w-full bg-white/5 border-2 border-white/10 rounded-xl py-3 px-4 text-white
                                  placeholder:text-neutral-500 focus:border-accent-500 focus:outline-none transition-colors"
@@ -395,6 +405,11 @@ function ReclamarContent() {
                         type="text"
                         value={reservationCode}
                         onChange={(e) => setReservationCode(e.target.value.toUpperCase())}
+                        onFocus={(e) => {
+                          setTimeout(() => {
+                            e.target.scrollIntoView({ behavior: "smooth", block: "center" });
+                          }, 300);
+                        }}
                         placeholder="ABC123"
                         className="w-full bg-white/5 border-2 border-white/10 rounded-xl py-3 px-4 text-white
                                  placeholder:text-neutral-500 focus:border-accent-500 focus:outline-none transition-colors"

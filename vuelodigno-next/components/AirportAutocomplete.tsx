@@ -17,6 +17,7 @@ interface AirportAutocompleteProps {
   label: string;
   required?: boolean;
   error?: string;
+  onInputFocus?: (e: React.FocusEvent<HTMLInputElement>) => void;
 }
 
 const airports: Airport[] = airportsData.airports;
@@ -151,7 +152,13 @@ export default function AirportAutocomplete({
           type="text"
           value={query}
           onChange={handleInputChange}
-          onFocus={() => setIsOpen(true)}
+          onFocus={(e) => {
+            setIsOpen(true);
+            // Mobile keyboard autoscroll
+            setTimeout(() => {
+              e.target.scrollIntoView({ behavior: "smooth", block: "center" });
+            }, 300);
+          }}
           onBlur={() => {
             // Delay to allow click on dropdown
             setTimeout(() => setIsOpen(false), 150);
