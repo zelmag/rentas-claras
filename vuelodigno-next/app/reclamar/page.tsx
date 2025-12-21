@@ -268,7 +268,7 @@ function ReclamarContent() {
                           }`}
                         >
                           <span className="text-2xl block mb-1">{a.emoji}</span>
-                          <span className="font-medium text-white text-xs sm:text-sm truncate block">{a.label}</span>
+                          <span className="font-medium text-white text-xs sm:text-sm leading-tight block break-words hyphens-auto">{a.label}</span>
                         </button>
                       ))}
                     </div>

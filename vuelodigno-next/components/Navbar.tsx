@@ -30,9 +30,17 @@ export default function Navbar() {
     e.preventDefault();
     setMobileMenuOpen(false);
     
-    // If we're not on the home page, navigate there first with the hash
+    // If we're not on the home page, navigate there first then scroll
     if (pathname !== "/") {
-      router.push("/" + href);
+      // Navigate to home page, then scroll after a delay
+      router.push("/");
+      // Wait for navigation, then scroll to section
+      setTimeout(() => {
+        const element = document.querySelector(href);
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth" });
+        }
+      }, 100);
       return;
     }
     
@@ -42,6 +50,18 @@ export default function Navbar() {
       element.scrollIntoView({ behavior: "smooth" });
     }
   };
+
+  // Handle hash scrolling when landing on page with hash
+  useEffect(() => {
+    if (pathname === "/" && window.location.hash) {
+      const element = document.querySelector(window.location.hash);
+      if (element) {
+        setTimeout(() => {
+          element.scrollIntoView({ behavior: "smooth" });
+        }, 100);
+      }
+    }
+  }, [pathname]);
 
   return (
     <>
