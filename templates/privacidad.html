@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Política de Privacidad - VueloDigno</title>
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #006847 0%, #ffffff 50%, #CE1126 100%);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 40px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+        }
+
+        h1 {
+            color: #2c3e50;
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        h2 {
+            color: #006847;
+            font-size: 1.5em;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+
+        .last-updated {
+            color: #7f8c8d;
+            font-size: 0.9em;
+            margin-bottom: 30px;
+        }
+
+        p {
+            margin-bottom: 15px;
+        }
+
+        ul {
+            margin-bottom: 15px;
+            padding-left: 20px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #006847;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        strong {
+            color: #2c3e50;
+        }
+
+        .highlight {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #ffc107;
+            margin: 20px 0;
+        }
+
+        .contact {
+            background: #f0fdf4;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #006847;
+            margin-top: 30px;
+        }
+
+        .flow-box {
+            background: #e0f2fe;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #0284c7;
+            margin: 20px 0;
+            font-size: 0.95em;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <a href="/" class="back-link">← Volver a VueloDigno</a>
+
+        <h1>Política de Privacidad</h1>
+        <p class="last-updated"><strong>Última actualización:</strong> 14 de noviembre de 2025</p>
+
+        <div class="highlight">
+            <p style="margin: 0;"><strong>📌 En resumen:</strong> Recopilamos tus datos SOLO para generar y enviar tu reclamo. NO almacenamos tu información permanentemente. NO vendemos tus datos. Punto.</p>
+        </div>
+
+        <h2>¿Qué datos recopilamos?</h2>
+        <p>Para generar tu carta de reclamación, recopilamos <strong>temporalmente</strong>:</p>
+        <ul>
+            <li><strong>Información personal:</strong> Nombre completo, email</li>
+            <li><strong>Detalles del vuelo:</strong> Aerolínea, número de vuelo, fecha, origen, destino, horas de retraso</li>
+            <li><strong>Información del boleto:</strong> Precio del boleto, número de pasajeros</li>
+            <li><strong>Código de reserva:</strong> Opcional, si decides proporcionarlo</li>
+        </ul>
+
+        <h2>¿Cómo usamos tus datos?</h2>
+        <p>Usamos tu información <strong>exclusivamente</strong> para:</p>
+        <ul>
+            <li>Generar tu carta de reclamación personalizada</li>
+            <li>Calcular la compensación que te corresponde según la ley</li>
+            <li>Enviar el email de reclamo a la aerolínea</li>
+            <li>Enviarte una copia del email para tus registros</li>
+        </ul>
+
+        <h2>¿Cómo funciona el envío del reclamo?</h2>
+        <div class="flow-box">
+            <p><strong>VueloDigno envía el email de reclamación EN TU NOMBRE:</strong></p>
+            <ul style="margin: 10px 0 0 0;">
+                <li><strong>DESDE:</strong> reclamos@vuelodigno.com (nuestro servidor)</li>
+                <li><strong>PARA:</strong> La aerolínea que seleccionaste</li>
+                <li><strong>CC (Copia):</strong> Tu email personal</li>
+                <li><strong>REPLY-TO:</strong> Tu email personal (las respuestas van directamente a ti)</li>
+            </ul>
+        </div>
+        <p><strong>Esto significa:</strong></p>
+        <ul>
+            <li>La aerolínea recibe el reclamo desde VueloDigno (más presión, más profesional)</li>
+            <li>TÚ recibes una copia del email enviado en tu bandeja de entrada</li>
+            <li>Cuando la aerolínea responda, <strong>la respuesta va DIRECTAMENTE a tu email</strong></li>
+            <li>VueloDigno <strong>NO intercepta ni lee</strong> las respuestas de las aerolíneas</li>
+        </ul>
+
+        <h2>¿Guardamos tus datos?</h2>
+        <div class="highlight">
+            <p style="margin: 0;"><strong>NO.</strong> Tus datos se procesan en tiempo real y <strong>NO se almacenan en una base de datos permanente</strong>.</p>
+        </div>
+        <p><strong>Excepción:</strong> Logs del servidor (información técnica anónima como IP, timestamp, errores) se guardan temporalmente para debugging y seguridad. Estos logs se eliminan automáticamente después de 30 días.</p>
+
+        <h2>¿Compartimos tus datos con terceros?</h2>
+        <p><strong>NO</strong> vendemos, alquilamos ni compartimos tu información personal con terceros para fines comerciales.</p>
+        <p>Tu información <strong>solo</strong> se envía a:</p>
+        <ul>
+            <li>La aerolínea que TÚ seleccionaste (para procesar tu reclamo)</li>
+            <li>Tu propio email (copia de confirmación)</li>
+        </ul>
+        <p><strong>Servicios técnicos que usamos:</strong></p>
+        <ul>
+            <li><strong>Resend:</strong> Servicio de envío de emails (procesan el envío pero no almacenan tu información)</li>
+            <li><strong>Google Analytics:</strong> Estadísticas anónimas de uso del sitio (puedes bloquear con AdBlock)</li>
+            <li><strong>Vercel/Railway:</strong> Hosting del servidor (no acceden a tus datos)</li>
+        </ul>
+
+        <h2>Cookies y Tecnologías de Rastreo</h2>
+        <p>Usamos <strong>Google Analytics</strong> para entender cómo se usa el sitio web (páginas visitadas, tiempo de uso, etc.). Esta información es <strong>100% anónima</strong> y no se vincula a tu identidad personal.</p>
+        <p>Puedes bloquear cookies en la configuración de tu navegador o usando extensiones como uBlock Origin.</p>
+
+        <h2>Seguridad de tus Datos</h2>
+        <p>Tomamos medidas de seguridad para proteger tu información:</p>
+        <ul>
+            <li><strong>HTTPS:</strong> Toda la comunicación está encriptada (SSL/TLS)</li>
+            <li><strong>Sin almacenamiento:</strong> Al no guardar tus datos permanentemente, no hay riesgo de filtraciones</li>
+            <li><strong>Código abierto:</strong> Puedes revisar nuestro código en GitHub</li>
+        </ul>
+        <p><strong>Importante:</strong> Ningún sistema es 100% seguro. Si bien tomamos precauciones razonables, no podemos garantizar seguridad absoluta contra ataques cibernéticos.</p>
+
+        <h2>Tus Derechos (Cumplimiento LFPDPPP)</h2>
+        <p>Según la <strong>Ley Federal de Protección de Datos Personales en Posesión de Particulares</strong>, tienes derecho a:</p>
+        <ul>
+            <li><strong>Acceso:</strong> Saber qué datos tenemos (spoiler: ninguno permanente)</li>
+            <li><strong>Rectificación:</strong> Corregir datos incorrectos</li>
+            <li><strong>Cancelación:</strong> Solicitar eliminación de datos</li>
+            <li><strong>Oposición:</strong> Oponerte al tratamiento de tus datos</li>
+        </ul>
+        <p>Para ejercer estos derechos (ARCO), escríbenos a <a href="mailto:hola@vuelodigno.com" style="color: #006847; font-weight: 600;">hola@vuelodigno.com</a></p>
+
+        <h2>Menores de Edad</h2>
+        <p>VueloDigno no está diseñado para menores de 18 años. Si eres menor, pide a un adulto que use el servicio en tu nombre.</p>
+
+        <h2>Cambios a esta Política</h2>
+        <p>Podemos actualizar esta política ocasionalmente. Te notificaremos cambios significativos mediante:</p>
+        <ul>
+            <li>Aviso en la página principal del sitio</li>
+            <li>Actualización de la fecha "Última actualización" arriba</li>
+        </ul>
+        <p>El uso continuado del servicio después de cambios constituye aceptación de la nueva política.</p>
+
+        <h2>Transferencias Internacionales</h2>
+        <p>Algunos de nuestros servicios técnicos (Resend, Vercel) pueden estar ubicados fuera de México. Al usar VueloDigno, aceptas que tu información pueda ser procesada en servidores internacionales que cumplen con estándares de seguridad equivalentes.</p>
+
+        <div class="contact">
+            <h2 style="margin-top: 0;">Contacto</h2>
+            <p><strong>Responsable de Datos:</strong> Zelma Garza Salinas<br>
+            <strong>Email:</strong> <a href="mailto:hola@vuelodigno.com" style="color: #006847;">hola@vuelodigno.com</a><br>
+            <strong>LinkedIn:</strong> <a href="https://www.linkedin.com/in/zelmag/" target="_blank" style="color: #006847;">linkedin.com/in/zelmag</a></p>
+            <p style="margin-bottom: 0; font-size: 0.9em; color: #666;">Si tienes preguntas sobre esta política o cómo manejamos tus datos, no dudes en contactarnos. Respondemos en menos de 24 horas.</p>
+        </div>
+    </div>
+</body>
+
+</html>

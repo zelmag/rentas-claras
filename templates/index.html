@@ -9,578 +9,12 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Shared theme - Single Source of Truth -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='theme.css') }}">
+    <!-- Page-specific styles -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
     <style>
-        .progress-bar-section {
-            padding: 0 0 4px 0;
-            margin-bottom: 4px;
-        }
-
-        @media (min-width: 768px) {
-            .progress-bar-section {
-                padding: 0 0 6px 0;
-                margin-bottom: 6px;
-            }
-        }
-
-        @media (min-width: 1024px) {
-            .progress-bar-section {
-                padding: 0 0 8px 0;
-                margin-bottom: 8px;
-            }
-        }
-
-        @keyframes compensationUpdate {
-            0% {
-                transform: scale(1);
-                color: inherit;
-            }
-            50% {
-                transform: scale(1.15);
-                color: #10b981;
-                text-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
-            }
-            100% {
-                transform: scale(1);
-                color: inherit;
-            }
-        }
-
-        .compensation-updated {
-            animation: compensationUpdate 0.5s ease-in-out;
-        }
-
-        body {
-            font-family: 'Montserrat', sans-serif;
-            max-width: 640px;
-            margin: 0 auto;
-            padding: 4px 24px 24px 24px;
-            background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%);
-            min-height: 100vh;
-            transition: background 0.3s ease;
-        }
-
-        /* Responsive width */
-        @media (min-width: 768px) {
-            body {
-                max-width: 720px;
-                padding: 8px 32px 32px 32px;
-            }
-        }
-
-        @media (min-width: 1024px) {
-            body {
-                max-width: 880px;
-                padding: 16px 48px 48px 48px;
-            }
-        }
-
-        @media (min-width: 1440px) {
-            body {
-                max-width: 980px;
-            }
-        }
-
-        .container {
-            background: rgba(255, 255, 255, 0.90);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            padding: 0px 24px 32px 24px;
-            border-radius: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
-            transition: all 0.3s ease;
-        }
-
-        @media (min-width: 768px) {
-            .container {
-                padding: 2px 40px 48px 40px;
-            }
-        }
-
-        @media (min-width: 1024px) {
-            .container {
-                padding: 4px 48px 56px 48px;
-            }
-        }
-
-        /* About section card styling */
-        .about-card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border-radius: 20px;
-            padding: 24px;
-            margin-top: 20px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-        }
-
-        @media (min-width: 768px) {
-            .about-card {
-                padding: 32px;
-            }
-        }
-
-        @media (min-width: 1024px) {
-            .about-card {
-                padding: 40px;
-            }
-        }
-
-        h1 {
-            color: #2c3e50;
-            text-align: center;
-            margin-bottom: 12px;
-            font-size: 1.75rem;
-            font-weight: 700;
-            line-height: 1.2;
-        }
-
-        @media (min-width: 768px) {
-            h1 {
-                font-size: 2rem;
-                margin-bottom: 16px;
-            }
-        }
-
-        h2 {
-            color: #2c3e50;
-            text-align: center;
-            margin-bottom: 16px;
-            line-height: 1.3;
-            font-size: 1.4rem;
-            font-weight: 600;
-        }
-
-        @media (min-width: 768px) {
-            h2 {
-                font-size: 1.6rem;
-                margin-bottom: 20px;
-            }
-        }
-
-        h3 {
-            color: #2c3e50;
-            margin-bottom: 16px;
-            font-size: 1.15rem;
-            font-weight: 600;
-        }
-
-        @media (min-width: 768px) {
-            h3 {
-                font-size: 1.25rem;
-                margin-bottom: 20px;
-            }
-        }
-
-        .form-group {
-            margin-bottom: 16px;
-            position: relative;
-        }
-
-        @media (min-width: 768px) {
-            .form-group {
-                margin-bottom: 20px;
-            }
-        }
-
-        label {
-            display: block;
-            margin-bottom: 6px;
-            font-weight: 600;
-            color: #2c3e50;
-            font-size: 0.9375rem;
-            line-height: 1.4;
-        }
-
-        @media (min-width: 768px) {
-            label {
-                font-size: 1rem;
-                margin-bottom: 8px;
-            }
-        }
-
-        input,
-        select {
-            width: 100%;
-            padding: 16px 18px;
-            padding-right: 50px;
-            border: 2px solid #e1e8ed;
-            border-radius: 12px;
-            box-sizing: border-box;
-            transition: all 0.3s ease;
-            font-size: 16px;
-            font-family: 'Montserrat', sans-serif;
-            background-color: #ffffff;
-            min-height: 56px;
-        }
-
-        @media (min-width: 768px) {
-
-            input,
-            select {
-                padding: 18px 20px;
-                padding-right: 54px;
-                font-size: 17px;
-                min-height: 60px;
-            }
-        }
-
-        input:focus,
-        select:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.12);
-            background-color: #ffffff;
-        }
-
-        input.valid,
-        select.valid {
-            border-color: #10b981;
-            background-color: #f0fdf4;
-        }
-
-        input.invalid,
-        select.invalid {
-            border-color: #ef4444;
-        }
-
-        .input-checkmark {
-            position: absolute;
-            right: 18px;
-            top: 55px; /* label(21px) + margin(6px) + input-center(28px) */
-            color: #10b981;
-            font-size: 1.4em;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            pointer-events: none;
-            /* Remove transform to avoid positioning issues */
-        }
-
-        @media (min-width: 768px) {
-            .input-checkmark {
-                right: 20px;
-                top: 60px; /* label(22px) + margin(8px) + input-center(30px) */
-                font-size: 1.5em;
-            }
-        }
-
-        .input-checkmark.show {
-            opacity: 1;
-        }
-
-        .btn-group {
-            display: flex;
-            justify-content: space-between;
-            gap: 14px;
-            margin-top: 36px;
-        }
-
-        @media (min-width: 768px) {
-            .btn-group {
-                gap: 16px;
-                margin-top: 40px;
-            }
-        }
-
-        .btn-group button {
-            width: auto;
-            flex-grow: 1;
-            padding: 18px 28px;
-            border: none;
-            border-radius: 12px;
-            font-size: 17px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            min-height: 56px;
-        }
-
-        @media (min-width: 768px) {
-            .btn-group button {
-                padding: 20px 32px;
-                font-size: 18px;
-                border-radius: 14px;
-                min-height: 60px;
-            }
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            color: white;
-            box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
-            transition: all 0.3s ease;
-            font-weight: 700;
-        }
-
-        .btn-primary:hover {
-            background: linear-gradient(135deg, #059669 0%, #047857 100%);
-            box-shadow: 0 6px 24px rgba(16, 185, 129, 0.4);
-            transform: translateY(-2px);
-        }
-
-        .btn-primary:active {
-            transform: translateY(0);
-            box-shadow: 0 2px 12px rgba(16, 185, 129, 0.3);
-        }
-
-        .btn-secondary {
-            background-color: #f9fafb;
-            color: #6b7280;
-            border: 2px solid #e5e7eb;
-            font-weight: 600;
-        }
-
-        .btn-secondary:hover {
-            background-color: #f3f4f6;
-            border-color: #d1d5db;
-            color: #4b5563;
-        }
-
-        .page {
-            display: none;
-        }
-
-        .page.active {
-            display: block;
-        }
-
-        label::after {
-            content: " *";
-            color: red;
-            margin-left: 4px;
-            font-weight: bold;
-        }
-
-        label.optional::after {
-            content: none;
-        }
-
-        .trust-indicators {
-            background-color: #e8f4f8;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            font-size: 0.9em;
-            line-height: 1.8;
-        }
-
-        .trust-indicators div {
-            margin-bottom: 5px;
-        }
-
-        .value-prop {
-            background-color: #fff3cd;
-            border-left: 4px solid #ffc107;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-        }
-
-        .value-prop strong {
-            color: #856404;
-        }
-
-        .progress-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin: 10px 0 24px 0;
-            position: relative;
-        }
-
-        .progress-line {
-            position: absolute;
-            top: 50%;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background-color: #e5e7eb;
-            z-index: 1;
-            transform: translateY(-50%);
-        }
-
-        .progress-line-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #006847 0%, #CE1126 100%);
-            transition: width 0.4s ease;
-            width: 0%;
-        }
-
-        .milestone {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            z-index: 2;
-            position: relative;
-            transition: transform 0.2s ease;
-        }
-
-        .milestone.completed {
-            cursor: pointer;
-        }
-
-        .milestone.completed:hover {
-            transform: scale(1.05);
-        }
-
-        .milestone-circle {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background-color: #e5e7eb;
-            border: 4px solid #e5e7eb;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 16px;
-            transition: all 0.3s ease;
-            color: #9ca3af;
-        }
-
-        .milestone.completed .milestone-circle {
-            background: linear-gradient(135deg, #006847 0%, #059669 100%);
-            border-color: #006847;
-            color: white;
-        }
-
-        .milestone.active .milestone-circle {
-            background: linear-gradient(135deg, #CE1126 0%, #ef4444 100%);
-            border-color: #CE1126;
-            color: white;
-            box-shadow: 0 0 0 4px rgba(206, 17, 38, 0.2);
-        }
-
-        .milestone-label {
-            margin-top: 8px;
-            font-size: 0.75em;
-            color: #6b7280;
-            font-weight: 500;
-            text-align: center;
-            max-width: 80px;
-        }
-
-        .milestone.completed .milestone-label,
-        .milestone.active .milestone-label {
-            color: #2c3e50;
-            font-weight: 600;
-        }
-
-        .progress-steps {
-            font-size: 0.85em;
-            color: #6b7280;
-            margin-top: 8px;
-        }
-
-        .delay-buttons {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            margin-top: 16px;
-        }
-
-        @media (min-width: 768px) {
-            .delay-buttons {
-                gap: 18px;
-                margin-top: 18px;
-            }
-        }
-
-        .delay-option {
-            padding: 20px 22px;
-            border: 2px solid #e5e7eb;
-            border-radius: 14px;
-            background-color: white;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-align: left;
-            font-size: 15px;
-            min-height: 72px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-
-        @media (min-width: 768px) {
-            .delay-option {
-                padding: 22px 24px;
-                font-size: 16px;
-                border-radius: 16px;
-                min-height: 76px;
-            }
-        }
-
-        .delay-option:hover {
-            border-color: #667eea;
-            background-color: #f9fafb;
-            transform: translateX(4px);
-            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
-        }
-
-        .delay-option.selected {
-            border-color: #667eea;
-            background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
-            font-weight: 600;
-            color: #4338ca;
-            position: relative;
-            box-shadow: 0 2px 12px rgba(102, 126, 234, 0.2);
-        }
-
-        .delay-option.selected::after {
-            content: '✓';
-            position: absolute;
-            right: 22px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #10b981;
-            font-size: 1.8em;
-            font-weight: bold;
-        }
-
-        @media (min-width: 768px) {
-            .delay-option.selected::after {
-                right: 24px;
-                font-size: 2em;
-            }
-        }
-
-        .page-subtitle {
-            color: #7f8c8d;
-            font-size: 0.9em;
-            margin-top: 5px;
-            font-weight: normal;
-        }
-
-        .airline-option {
-            background-repeat: no-repeat;
-            background-position: 10px center;
-            background-size: 24px;
-            padding-left: 45px !important;
-            min-height: 40px;
-            display: flex;
-            align-items: center;
-        }
-
-        select#airline {
-            background-repeat: no-repeat;
-            background-position: 10px center;
-            background-size: 30px;
-            padding-left: 50px;
-            appearance: none;
-            -webkit-appearance: none;
-            -moz-appearance: none;
-            cursor: pointer;
-        }
-
-        select#airline option {
-            padding: 12px 12px 12px 50px;
-            min-height: 45px;
-            background-repeat: no-repeat;
-            background-position: 10px center;
-            background-size: 30px;
-        }
-
+        /* Jinja2-dependent airline logo styles */
         select#airline option[value="Volaris"] {
             background-image: url('{{ url_for('static', filename='volaris.png') }}');
         }
@@ -593,7 +27,6 @@
             background-image: url('{{ url_for('static', filename='aeromexico.png') }}');
         }
 
-        /* Update select background based on selection */
         select#airline.volaris-selected {
             background-image: url('{{ url_for('static', filename='volaris.png') }}');
         }
@@ -604,144 +37,6 @@
 
         select#airline.aeromexico-selected {
             background-image: url('{{ url_for('static', filename='aeromexico.png') }}');
-        }
-
-        .error-message {
-            color: #ef4444;
-            font-size: 0.875rem;
-            margin-top: 8px;
-            display: none;
-            font-weight: 500;
-            line-height: 1.4;
-        }
-
-        .error-message.show {
-            display: block;
-        }
-
-        small {
-            font-size: 0.875rem;
-            line-height: 1.4;
-        }
-
-        @media (min-width: 768px) {
-            small {
-                font-size: 0.9375rem;
-            }
-        }
-
-        /* FAQ Section Styles */
-        .faq-section {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 24px;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-        }
-
-        @media (min-width: 768px) {
-            .faq-section {
-                padding: 28px;
-                margin-bottom: 32px;
-            }
-        }
-
-        .faq-title {
-            text-align: center;
-            color: #2c3e50;
-            font-size: 1.2em;
-            font-weight: 700;
-            margin-bottom: 16px;
-        }
-
-        @media (min-width: 768px) {
-            .faq-title {
-                font-size: 1.35em;
-                margin-bottom: 20px;
-            }
-        }
-
-        .faq-item {
-            border-bottom: 1px solid #e5e7eb;
-            padding: 16px 0;
-        }
-
-        .faq-item:last-child {
-            border-bottom: none;
-        }
-
-        .faq-question {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            cursor: pointer;
-            font-weight: 600;
-            color: #2c3e50;
-            font-size: 0.95em;
-            padding: 8px 0;
-            transition: color 0.2s ease;
-        }
-
-        @media (min-width: 768px) {
-            .faq-question {
-                font-size: 1.05em;
-            }
-        }
-
-        .faq-question:hover {
-            color: #667eea;
-        }
-
-        .faq-question-text {
-            flex: 1;
-            padding-right: 12px;
-        }
-
-        .faq-icon {
-            font-size: 1.2em;
-            transition: transform 0.3s ease;
-            color: #667eea;
-            font-weight: bold;
-        }
-
-        .faq-item.active .faq-icon {
-            transform: rotate(180deg);
-        }
-
-        .faq-answer {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease, padding 0.3s ease;
-            color: #4b5563;
-            font-size: 0.9em;
-            line-height: 1.6;
-        }
-
-        @media (min-width: 768px) {
-            .faq-answer {
-                font-size: 0.95em;
-            }
-        }
-
-        .faq-item.active .faq-answer {
-            max-height: 500px;
-            padding-top: 12px;
-        }
-
-        .faq-answer strong {
-            color: #2c3e50;
-        }
-
-        .faq-answer a {
-            color: #667eea;
-            text-decoration: underline;
-        }
-
-        .faq-answer a:hover {
-            color: #4338ca;
         }
     </style>
 
@@ -784,36 +79,12 @@
 
         <!-- Hero Section -->
         <div id="hero-section" style="text-align: center; margin-bottom: 8px;">
-            <h1 style="font-size: 1.5em; margin-bottom: 2px; color: #2c3e50; line-height: 1.1;">
-                ✈️ ¿Tu vuelo fue retrasado o cancelado?
+            <h1 style="font-size: 1.6em; margin-bottom: 8px; color: var(--text-primary); line-height: 1.2; font-weight: 700;">
+                ✈️ ¿Tu vuelo en México fue retrasado o cancelado?
             </h1>
-            <h2 style="font-size: 1.15em; color: #e74c3c; margin-bottom: 20px; font-weight: 700;">
-                Generamos un email para que la aerolínea te pague.
+            <h2 style="font-size: 1.05em; color: var(--text-secondary); margin-bottom: 24px; font-weight: 500; line-height: 1.5;">
+                Por ley te deben dinero. Recupéralo en 3 minutos.
             </h2>
-
-            <!-- Quick Expectations Banner -->
-            <div style="background: linear-gradient(135deg, #059669 0%, #10b981 100%); color: white; padding: 16px 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);">
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; text-align: center;">
-                    <div>
-                        <div style="font-size: 1.5em; margin-bottom: 4px;">💰</div>
-                        <div style="font-size: 0.75em; opacity: 0.9; margin-bottom: 2px;">Compensación</div>
-                        <div style="font-weight: 700; font-size: 0.9em;">$50 hasta 125%</div>
-                        <div style="font-size: 0.7em; opacity: 0.85;">del boleto</div>
-                    </div>
-                    <div>
-                        <div style="font-size: 1.5em; margin-bottom: 4px;">⏰</div>
-                        <div style="font-size: 0.75em; opacity: 0.9; margin-bottom: 2px;">Plazo legal</div>
-                        <div style="font-weight: 700; font-size: 0.9em;">10 días</div>
-                        <div style="font-size: 0.7em; opacity: 0.85;">para respuesta</div>
-                    </div>
-                    <div>
-                        <div style="font-size: 1.5em; margin-bottom: 4px;">✅</div>
-                        <div style="font-size: 0.75em; opacity: 0.9; margin-bottom: 2px;">Costo</div>
-                        <div style="font-weight: 700; font-size: 0.9em;">100% gratis</div>
-                        <div style="font-size: 0.7em; opacity: 0.85;">sin comisión</div>
-                    </div>
-                </div>
-            </div>
         </div>
 
         <h2 id="page-title" style="display: none;">
@@ -831,124 +102,259 @@
         <form action="/preview" method="POST" id="multi-page-form">
 
             <div class="page active" data-page="1">
-                <!-- Origin and Destination Card -->
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
-                    <div class="form-group" style="margin-bottom: 0;">
-                        <label>Origen del vuelo:</label>
-                        <input type="text" name="origin" id="origin" list="origin-list" placeholder="Ej: MEX, GDL"
-                            pattern="[A-Za-z]{3}" maxlength="3" required style="text-transform: uppercase;"
-                            autocomplete="off">
-                        <datalist id="origin-list">
-                            <!-- ONLY Mexican airports (must depart from Mexico) -->
-                            <option value="MEX">🇲🇽 MEX - Ciudad de México</option>
-                            <option value="GDL">🇲🇽 GDL - Guadalajara</option>
-                            <option value="MTY">🇲🇽 MTY - Monterrey</option>
-                            <option value="CUN">🇲🇽 CUN - Cancún</option>
-                            <option value="TIJ">🇲🇽 TIJ - Tijuana</option>
-                            <option value="BJX">🇲🇽 BJX - León/Guanajuato</option>
-                            <option value="PVR">🇲🇽 PVR - Puerto Vallarta</option>
-                            <option value="SJD">🇲🇽 SJD - Los Cabos</option>
-                            <option value="MZT">🇲🇽 MZT - Mazatlán</option>
-                            <option value="QRO">🇲🇽 QRO - Querétaro</option>
-                            <option value="AGU">🇲🇽 AGU - Aguascalientes</option>
-                            <option value="CUL">🇲🇽 CUL - Culiacán</option>
-                            <option value="HMO">🇲🇽 HMO - Hermosillo</option>
-                            <option value="MID">🇲🇽 MID - Mérida</option>
-                            <option value="OAX">🇲🇽 OAX - Oaxaca</option>
-                            <option value="TAM">🇲🇽 TAM - Tampico</option>
-                            <option value="VER">🇲🇽 VER - Veracruz</option>
-                            <option value="ZCL">🇲🇽 ZCL - Zacatecas</option>
-                            <option value="CJS">🇲🇽 CJS - Ciudad Juárez</option>
-                            <option value="CUU">🇲🇽 CUU - Chihuahua</option>
-                            <option value="CTM">🇲🇽 CTM - Chetumal</option>
-                            <option value="CZM">🇲🇽 CZM - Cozumel</option>
-                            <option value="HUX">🇲🇽 HUX - Huatulco</option>
-                            <option value="LAP">🇲🇽 LAP - La Paz</option>
-                            <option value="MLM">🇲🇽 MLM - Morelia</option>
-                            <option value="PBC">🇲🇽 PBC - Puebla</option>
-                            <option value="REX">🇲🇽 REX - Reynosa</option>
-                            <option value="SLP">🇲🇽 SLP - San Luis Potosí</option>
-                            <option value="TAP">🇲🇽 TAP - Tapachula</option>
-                            <option value="TGZ">🇲🇽 TGZ - Tuxtla Gutiérrez</option>
-                            <option value="TLC">🇲🇽 TLC - Toluca</option>
-                            <option value="TRC">🇲🇽 TRC - Torreón</option>
-                            <option value="VSA">🇲🇽 VSA - Villahermosa</option>
-                            <option value="ZIH">🇲🇽 ZIH - Zihuatanejo</option>
-                        </datalist>
-                        <span class="input-checkmark">✓</span>
-                        <div class="error-message" id="origin_error">Debe ser un aeropuerto mexicano</div>
+                <!-- STEP 1: Airline Selection (Big Logo Buttons) -->
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 12px; font-weight: 600; font-size: 1.1em; text-align: center;">¿Con qué aerolínea volaste?</label>
+
+                    <!-- Hidden input to store airline value -->
+                    <input type="hidden" name="airline" id="airline" required>
+
+                    <!-- Mexican Airlines - Big Buttons -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+                        <button type="button" class="airline-btn" data-airline="Volaris" data-mexican="true" onclick="selectAirline(this)" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 16px 8px; border: 2px solid var(--border-strong); border-radius: 12px; background: var(--bg-secondary); cursor: pointer; transition: all 0.2s; color: var(--text-primary);">
+                            <span style="font-size: 1.8em; margin-bottom: 4px;">🟣</span>
+                            <span style="font-weight: 600; font-size: 0.85em;">Volaris</span>
+                        </button>
+                        <button type="button" class="airline-btn" data-airline="Aeromexico" data-mexican="true" onclick="selectAirline(this)" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 16px 8px; border: 2px solid var(--border-strong); border-radius: 12px; background: var(--bg-secondary); cursor: pointer; transition: all 0.2s; color: var(--text-primary);">
+                            <span style="font-size: 1.8em; margin-bottom: 4px;">🔵</span>
+                            <span style="font-weight: 600; font-size: 0.85em;">Aeroméxico</span>
+                        </button>
+                        <button type="button" class="airline-btn" data-airline="VivaAerobus" data-mexican="true" onclick="selectAirline(this)" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 16px 8px; border: 2px solid var(--border-strong); border-radius: 12px; background: var(--bg-secondary); cursor: pointer; transition: all 0.2s; color: var(--text-primary);">
+                            <span style="font-size: 1.8em; margin-bottom: 4px;">🟡</span>
+                            <span style="font-weight: 600; font-size: 0.85em;">VivaAerobus</span>
+                        </button>
                     </div>
 
-                    <div class="form-group" style="margin-bottom: 0;">
-                        <label>Destino del vuelo:</label>
-                        <input type="text" name="destination" id="destination" list="destination-list"
-                            placeholder="Ej: CUN, LAX" pattern="[A-Za-z]{3}" maxlength="3" required
-                            style="text-transform: uppercase;" autocomplete="off">
-                        <datalist id="destination-list">
-                            <!-- Mexican airports -->
-                            <option value="MEX">🇲🇽 MEX - Ciudad de México</option>
-                            <option value="GDL">🇲🇽 GDL - Guadalajara</option>
-                            <option value="MTY">🇲🇽 MTY - Monterrey</option>
-                            <option value="CUN">🇲🇽 CUN - Cancún</option>
-                            <option value="TIJ">🇲🇽 TIJ - Tijuana</option>
-                            <option value="BJX">🇲🇽 BJX - León/Guanajuato</option>
-                            <option value="PVR">🇲🇽 PVR - Puerto Vallarta</option>
-                            <option value="SJD">🇲🇽 SJD - Los Cabos</option>
-                            <option value="MZT">🇲🇽 MZT - Mazatlán</option>
-                            <option value="QRO">🇲🇽 QRO - Querétaro</option>
-                            <option value="AGU">🇲🇽 AGU - Aguascalientes</option>
-                            <option value="CUL">🇲🇽 CUL - Culiacán</option>
-                            <option value="HMO">🇲🇽 HMO - Hermosillo</option>
-                            <option value="MID">🇲🇽 MID - Mérida</option>
-                            <option value="OAX">🇲🇽 OAX - Oaxaca</option>
-                            <option value="TAM">🇲🇽 TAM - Tampico</option>
-                            <option value="VER">🇲🇽 VER - Veracruz</option>
-                            <option value="ZCL">🇲🇽 ZCL - Zacatecas</option>
-                            <option value="CJS">🇲🇽 CJS - Ciudad Juárez</option>
-                            <option value="CUU">🇲🇽 CUU - Chihuahua</option>
-                            <option value="CTM">🇲🇽 CTM - Chetumal</option>
-                            <option value="CZM">🇲🇽 CZM - Cozumel</option>
-                            <option value="HUX">🇲🇽 HUX - Huatulco</option>
-                            <option value="LAP">🇲🇽 LAP - La Paz</option>
-                            <option value="MLM">🇲🇽 MLM - Morelia</option>
-                            <option value="PBC">🇲🇽 PBC - Puebla</option>
-                            <option value="REX">🇲🇽 REX - Reynosa</option>
-                            <option value="SLP">🇲🇽 SLP - San Luis Potosí</option>
-                            <option value="TAP">🇲🇽 TAP - Tapachula</option>
-                            <option value="TGZ">🇲🇽 TGZ - Tuxtla Gutiérrez</option>
-                            <option value="TLC">🇲🇽 TLC - Toluca</option>
-                            <option value="TRC">🇲🇽 TRC - Torreón</option>
-                            <option value="VSA">🇲🇽 VSA - Villahermosa</option>
-                            <option value="ZIH">🇲🇽 ZIH - Zihuatanejo</option>
-                            <!-- Common international destinations -->
-                            <option value="LAX">🇺🇸 LAX - Los Angeles</option>
-                            <option value="JFK">🇺🇸 JFK - New York</option>
-                            <option value="MIA">🇺🇸 MIA - Miami</option>
-                            <option value="IAH">🇺🇸 IAH - Houston</option>
-                            <option value="DFW">🇺🇸 DFW - Dallas</option>
-                            <option value="ORD">🇺🇸 ORD - Chicago</option>
-                            <option value="MAD">🇪🇸 MAD - Madrid</option>
-                            <option value="BCN">🇪🇸 BCN - Barcelona</option>
-                            <option value="CDG">🇫🇷 CDG - Paris</option>
-                            <option value="LHR">🇬🇧 LHR - London</option>
-                        </datalist>
-                        <span class="input-checkmark">✓</span>
-                        <div class="error-message" id="destination_error">Código inválido</div>
+                    <!-- Other Airlines Button -->
+                    <button type="button" class="airline-btn" data-airline="other" data-mexican="false" onclick="selectAirline(this)" style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 14px; border: 2px solid var(--border-strong); border-radius: 12px; background: var(--bg-secondary); cursor: pointer; transition: all 0.2s; color: var(--text-primary);">
+                        <span style="font-size: 1.3em;">✈️</span>
+                        <span style="font-weight: 500;">Otra aerolínea (American, United, Delta, etc.)</span>
+                    </button>
+
+                    <div class="error-message" id="airline_error" style="margin-top: 8px;">Por favor selecciona una aerolínea</div>
+                </div>
+
+                <!-- Conditional: Foreign airline origin question -->
+                <div id="foreign-airline-question" style="display: none; margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 12px; font-weight: 600; font-size: 1.05em; text-align: center;">¿Tu vuelo salió de México?</label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <button type="button" class="origin-btn" data-from-mexico="true" onclick="selectOriginType(this)" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 16px; border: 2px solid var(--border-strong); border-radius: 12px; background: var(--bg-secondary); cursor: pointer; transition: all 0.2s; color: var(--text-primary);">
+                            <span style="font-size: 1.5em; margin-bottom: 4px;">🇲🇽</span>
+                            <span style="font-weight: 600;">Sí, salió de México</span>
+                        </button>
+                        <button type="button" class="origin-btn" data-from-mexico="false" onclick="selectOriginType(this)" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 16px; border: 2px solid var(--border-strong); border-radius: 12px; background: var(--bg-secondary); cursor: pointer; transition: all 0.2s; color: var(--text-primary);">
+                            <span style="font-size: 1.5em; margin-bottom: 4px;">🌎</span>
+                            <span style="font-weight: 600;">No, salió del extranjero</span>
+                        </button>
                     </div>
                 </div>
-                <small style="color: #666; font-size: 0.8em; display: block; margin: 0 0 20px 0;">
-                    💡 Escribe para filtrar resultados (ej: "can" muestra Cancún)
-                </small>
 
-                <div class="btn-group" style="margin-bottom: 32px;">
-                    <button type="button" class="btn-primary" id="next-1" onclick="nextPage()">Calcular cuánto me deben →</button>
+                <!-- Law doesn't apply message -->
+                <div id="law-not-applicable" style="display: none; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); padding: 20px; border-radius: 12px; margin-bottom: 20px; text-align: center;">
+                    <span style="font-size: 2em; display: block; margin-bottom: 8px;">😔</span>
+                    <h3 style="color: #ef4444; margin: 0 0 8px 0; font-size: 1.1em;">La ley mexicana no aplica a tu vuelo</h3>
+                    <p style="color: var(--text-secondary); margin: 0; font-size: 0.9em; line-height: 1.5;">
+                        La Ley de Aviación Civil Mexicana solo protege vuelos que <strong style="color: var(--text-primary);">salen de México</strong> o vuelos operados por <strong style="color: var(--text-primary);">aerolíneas mexicanas</strong> (Volaris, Aeroméxico, VivaAerobus).
+                    </p>
+                    <button type="button" onclick="resetAirlineSelection()" style="margin-top: 16px; padding: 10px 20px; background: var(--bg-elevated); border: 1px solid var(--border-strong); border-radius: 8px; cursor: pointer; font-weight: 500; color: var(--text-primary);">
+                        ← Cambiar mi selección
+                    </button>
+                </div>
+
+                <!-- Origin/Destination (shown after airline selection) -->
+                <div id="origin-destination-section" style="display: none;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>Origen:</label>
+                            <select name="origin" id="origin" required style="width: 100%; padding: 12px; border: 2px solid var(--border-strong); border-radius: 8px; font-size: 1em; background: var(--bg-secondary); color: var(--text-primary);">
+                                <option value="">Selecciona...</option>
+                                <optgroup label="🇲🇽 México" id="origin-mexico-group">
+                                    <option value="MEX">MEX - Ciudad de México</option>
+                                    <option value="GDL">GDL - Guadalajara</option>
+                                    <option value="MTY">MTY - Monterrey</option>
+                                    <option value="CUN">CUN - Cancún</option>
+                                    <option value="TIJ">TIJ - Tijuana</option>
+                                    <option value="BJX">BJX - León/Guanajuato</option>
+                                    <option value="PVR">PVR - Puerto Vallarta</option>
+                                    <option value="SJD">SJD - Los Cabos</option>
+                                    <option value="MZT">MZT - Mazatlán</option>
+                                    <option value="QRO">QRO - Querétaro</option>
+                                    <option value="MID">MID - Mérida</option>
+                                    <option value="OAX">OAX - Oaxaca</option>
+                                    <option value="CUU">CUU - Chihuahua</option>
+                                    <option value="HMO">HMO - Hermosillo</option>
+                                    <option value="VER">VER - Veracruz</option>
+                                    <option value="ZIH">ZIH - Zihuatanejo</option>
+                                    <option value="HUX">HUX - Huatulco</option>
+                                    <option value="MLM">MLM - Morelia</option>
+                                    <option value="AGU">AGU - Aguascalientes</option>
+                                    <option value="CUL">CUL - Culiacán</option>
+                                    <option value="SLP">SLP - San Luis Potosí</option>
+                                    <option value="TRC">TRC - Torreón</option>
+                                    <option value="VSA">VSA - Villahermosa</option>
+                                    <option value="LAP">LAP - La Paz</option>
+                                    <option value="TGZ">TGZ - Tuxtla Gutiérrez</option>
+                                    <option value="CZM">CZM - Cozumel</option>
+                                    <option value="ZCL">ZCL - Zacatecas</option>
+                                    <option value="PBC">PBC - Puebla</option>
+                                    <option value="REX">REX - Reynosa</option>
+                                    <option value="CJS">CJS - Ciudad Juárez</option>
+                                    <option value="TAM">TAM - Tampico</option>
+                                    <option value="CTM">CTM - Chetumal</option>
+                                    <option value="TAP">TAP - Tapachula</option>
+                                    <option value="TLC">TLC - Toluca</option>
+                                </optgroup>
+                                <optgroup label="🇺🇸 Estados Unidos" id="origin-usa-group">
+                                    <option value="LAX">LAX - Los Angeles</option>
+                                    <option value="JFK">JFK - New York JFK</option>
+                                    <option value="MIA">MIA - Miami</option>
+                                    <option value="IAH">IAH - Houston</option>
+                                    <option value="DFW">DFW - Dallas</option>
+                                    <option value="ORD">ORD - Chicago</option>
+                                    <option value="SFO">SFO - San Francisco</option>
+                                    <option value="LAS">LAS - Las Vegas</option>
+                                    <option value="PHX">PHX - Phoenix</option>
+                                    <option value="DEN">DEN - Denver</option>
+                                    <option value="ATL">ATL - Atlanta</option>
+                                    <option value="EWR">EWR - Newark</option>
+                                    <option value="SAN">SAN - San Diego</option>
+                                    <option value="MCO">MCO - Orlando</option>
+                                </optgroup>
+                                <optgroup label="🌎 Centroamérica y Caribe" id="origin-central-group">
+                                    <option value="SJO">SJO - San José, Costa Rica</option>
+                                    <option value="PTY">PTY - Panamá City</option>
+                                    <option value="GUA">GUA - Guatemala City</option>
+                                    <option value="SAL">SAL - San Salvador</option>
+                                    <option value="HAV">HAV - La Habana</option>
+                                    <option value="SDQ">SDQ - Santo Domingo</option>
+                                    <option value="PUJ">PUJ - Punta Cana</option>
+                                    <option value="SJU">SJU - San Juan, PR</option>
+                                </optgroup>
+                                <optgroup label="🌎 Sudamérica" id="origin-south-group">
+                                    <option value="BOG">BOG - Bogotá</option>
+                                    <option value="LIM">LIM - Lima</option>
+                                    <option value="SCL">SCL - Santiago</option>
+                                    <option value="EZE">EZE - Buenos Aires</option>
+                                    <option value="GRU">GRU - São Paulo</option>
+                                </optgroup>
+                                <optgroup label="🌍 Europa" id="origin-europe-group">
+                                    <option value="MAD">MAD - Madrid</option>
+                                    <option value="BCN">BCN - Barcelona</option>
+                                    <option value="CDG">CDG - París</option>
+                                    <option value="LHR">LHR - Londres</option>
+                                    <option value="AMS">AMS - Ámsterdam</option>
+                                    <option value="FRA">FRA - Frankfurt</option>
+                                </optgroup>
+                            </select>
+                            <span class="input-checkmark">✓</span>
+                            <div class="error-message" id="origin_error">Selecciona el origen</div>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>Destino:</label>
+                            <select name="destination" id="destination" required style="width: 100%; padding: 12px; border: 2px solid var(--border-strong); border-radius: 8px; font-size: 1em; background: var(--bg-secondary); color: var(--text-primary);">
+                                <option value="">Selecciona...</option>
+                                <optgroup label="🇲🇽 México">
+                                    <option value="MEX">MEX - Ciudad de México</option>
+                                    <option value="GDL">GDL - Guadalajara</option>
+                                    <option value="MTY">MTY - Monterrey</option>
+                                    <option value="CUN">CUN - Cancún</option>
+                                    <option value="TIJ">TIJ - Tijuana</option>
+                                    <option value="BJX">BJX - León/Guanajuato</option>
+                                    <option value="PVR">PVR - Puerto Vallarta</option>
+                                    <option value="SJD">SJD - Los Cabos</option>
+                                    <option value="MZT">MZT - Mazatlán</option>
+                                    <option value="QRO">QRO - Querétaro</option>
+                                    <option value="MID">MID - Mérida</option>
+                                    <option value="OAX">OAX - Oaxaca</option>
+                                    <option value="CUU">CUU - Chihuahua</option>
+                                    <option value="HMO">HMO - Hermosillo</option>
+                                    <option value="VER">VER - Veracruz</option>
+                                    <option value="ZIH">ZIH - Zihuatanejo</option>
+                                    <option value="HUX">HUX - Huatulco</option>
+                                    <option value="MLM">MLM - Morelia</option>
+                                    <option value="AGU">AGU - Aguascalientes</option>
+                                    <option value="CUL">CUL - Culiacán</option>
+                                    <option value="SLP">SLP - San Luis Potosí</option>
+                                    <option value="TRC">TRC - Torreón</option>
+                                    <option value="VSA">VSA - Villahermosa</option>
+                                    <option value="LAP">LAP - La Paz</option>
+                                    <option value="TGZ">TGZ - Tuxtla Gutiérrez</option>
+                                    <option value="CZM">CZM - Cozumel</option>
+                                    <option value="ZCL">ZCL - Zacatecas</option>
+                                    <option value="PBC">PBC - Puebla</option>
+                                    <option value="REX">REX - Reynosa</option>
+                                    <option value="CJS">CJS - Ciudad Juárez</option>
+                                    <option value="TAM">TAM - Tampico</option>
+                                    <option value="CTM">CTM - Chetumal</option>
+                                    <option value="TAP">TAP - Tapachula</option>
+                                    <option value="TLC">TLC - Toluca</option>
+                                </optgroup>
+                                <optgroup label="🇺🇸 Estados Unidos">
+                                    <option value="LAX">LAX - Los Angeles</option>
+                                    <option value="JFK">JFK - New York</option>
+                                    <option value="MIA">MIA - Miami</option>
+                                    <option value="IAH">IAH - Houston</option>
+                                    <option value="DFW">DFW - Dallas</option>
+                                    <option value="ORD">ORD - Chicago</option>
+                                    <option value="SFO">SFO - San Francisco</option>
+                                    <option value="LAS">LAS - Las Vegas</option>
+                                    <option value="PHX">PHX - Phoenix</option>
+                                    <option value="DEN">DEN - Denver</option>
+                                    <option value="ATL">ATL - Atlanta</option>
+                                </optgroup>
+                                <optgroup label="🌎 Centroamérica y Caribe">
+                                    <option value="SJO">SJO - San José, Costa Rica</option>
+                                    <option value="PTY">PTY - Panamá City</option>
+                                    <option value="GUA">GUA - Guatemala City</option>
+                                    <option value="SAL">SAL - San Salvador</option>
+                                    <option value="HAV">HAV - La Habana</option>
+                                    <option value="SDQ">SDQ - Santo Domingo</option>
+                                    <option value="PUJ">PUJ - Punta Cana</option>
+                                </optgroup>
+                                <optgroup label="🌍 Europa">
+                                    <option value="MAD">MAD - Madrid</option>
+                                    <option value="BCN">BCN - Barcelona</option>
+                                    <option value="CDG">CDG - París</option>
+                                    <option value="LHR">LHR - Londres</option>
+                                </optgroup>
+                            </select>
+                            <span class="input-checkmark">✓</span>
+                            <div class="error-message" id="destination_error">Selecciona el destino</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Expectations Banner - Dark theme -->
+                <div style="background: var(--bg-elevated); border: 1px solid var(--border-subtle); padding: 16px 20px; border-radius: 16px; margin-bottom: 24px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; text-align: center;">
+                        <div>
+                            <div style="font-size: 1.4em; margin-bottom: 4px;">💰</div>
+                            <div style="font-size: 0.7em; color: var(--text-muted); margin-bottom: 2px;">Compensación</div>
+                            <div style="font-weight: 700; font-size: 0.9em; color: var(--gold-500);">Hasta 125%</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 1.4em; margin-bottom: 4px;">⚡</div>
+                            <div style="font-size: 0.7em; color: var(--text-muted); margin-bottom: 2px;">Tiempo</div>
+                            <div style="font-weight: 700; font-size: 0.9em; color: var(--text-primary);">3 minutos</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 1.4em; margin-bottom: 4px;">✨</div>
+                            <div style="font-size: 0.7em; color: var(--text-muted); margin-bottom: 2px;">Costo</div>
+                            <div style="font-weight: 700; font-size: 0.9em; color: var(--success-500);">Gratis</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="btn-group" style="margin-bottom: 24px;">
+                    <button type="button" class="btn-primary" id="next-1" onclick="nextPage()">Ver mi compensación →</button>
                 </div>
 
                 <!-- Trust Badge -->
                 <div id="trust-badge-section"
-                    style="background: #f0fdf4; padding: 10px 14px; border-radius: 8px; margin-bottom: 20px; text-align: center; border: 1px solid #10b981;">
-                    <p style="margin: 0; font-weight: 700; color: #006847; font-size: 0.85em; line-height: 1.4;">
-                        ⚡ GRATIS • 3 min • Basado en la Ley de Aviación Civil
+                    style="background: transparent; padding: 12px 16px; border-radius: 10px; margin-bottom: 20px; text-align: center;">
+                    <p style="margin: 0; font-weight: 500; color: var(--text-muted); font-size: 0.85em; line-height: 1.4;">
+                        📜 Basado en la <a href="https://www.profeco.gob.mx/politicasaviacion/pdf/DERECHOS%20Y%20OBLIGACIONES%20VIAJAR%20EN%20AVI%C3%93N%20QR%20(vf).pdf" target="_blank" style="color: var(--accent-500); text-decoration: underline;">Ley de Aviación Civil</a> de México
                     </p>
                 </div>
 
@@ -1050,26 +456,25 @@
                 </div>
 
                 <div
-                    style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 12px 15px; border-radius: 5px; margin-top: 15px; font-size: 0.9em; line-height: 1.5;">
-                    <strong>⏰ Importante:</strong> La Ley de Aviación Civil en México te permite reclamar tu
-                    compensación hasta un año después del vuelo
+                    style="background: var(--bg-elevated); border-left: 4px solid var(--gold-500); padding: 12px 15px; border-radius: 8px; margin-top: 15px; font-size: 0.9em; line-height: 1.5; color: var(--text-secondary);">
+                    <strong style="color: var(--gold-500);">⏰ Importante:</strong> <span style="color: var(--text-secondary);">La ley te permite reclamar hasta un año después del vuelo</span>
                 </div>
             </div>
 
             <div class="page" data-page="2">
                 <!-- Eligibility Info Banner -->
                 <div id="eligibility-message-box"
-                    style="display:none; margin: 20px 0; padding: 15px; border-radius: 8px; background-color: #f0fdf4; border-left: 5px solid #006847;">
+                    style="display:none; margin: 20px 0; padding: 15px; border-radius: 8px; background-color: var(--bg-elevated); border-left: 5px solid var(--success-500);">
                     <div id="claim-result" style="margin-bottom: 10px;"></div>
                 </div>
 
                 <!-- Compensation Preview for Page 2 -->
-                <div id="page-2-preview" style="display: none; background: #e0f2fe; border-left: 4px solid #0284c7; padding: 16px; border-radius: 8px; margin-bottom: 20px;">
+                <div id="page-2-preview" style="display: none; background: var(--bg-elevated); border-left: 4px solid var(--accent-500); padding: 16px; border-radius: 8px; margin-bottom: 20px;">
                     <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
                         <span style="font-size: 1.5em;">💰</span>
-                        <strong style="color: #0369a1; font-size: 1.05em;">Tu compensación estimada</strong>
+                        <strong style="color: var(--text-primary); font-size: 1.05em;">Tu compensación estimada</strong>
                     </div>
-                    <p id="page-2-preview-text" style="margin: 0; color: #0c4a6e; font-size: 0.95em; line-height: 1.5; white-space: pre-line;"></p>
+                    <p id="page-2-preview-text" style="margin: 0; color: var(--text-secondary); font-size: 0.95em; line-height: 1.5; white-space: pre-line;"></p>
                 </div>
 
                 <label style="margin-top: 20px;">¿De cuánto fue el retraso del vuelo?
@@ -1077,17 +482,17 @@
                 <div class="delay-buttons">
                     <button type="button" class="delay-option" data-value="1">
                         <strong>1-2 horas</strong><br>
-                        <span style="font-size: 0.85em; color: #7f8c8d; font-weight: normal;">$50-75 MXN o 5% del boleto
+                        <span style="font-size: 0.85em; color: var(--text-muted); font-weight: normal;">$50-75 MXN o 5% del boleto
                             según aerolínea</span>
                     </button>
                     <button type="button" class="delay-option" data-value="2">
                         <strong>2-4 horas</strong><br>
-                        <span style="font-size: 0.85em; color: #7f8c8d; font-weight: normal;">Mínimo 7.5% del boleto por
+                        <span style="font-size: 0.85em; color: var(--text-muted); font-weight: normal;">Mínimo 7.5% del boleto por
                             ley</span>
                     </button>
                     <button type="button" class="delay-option" data-value="3">
                         <strong>Más de 4 horas o Cancelación</strong><br>
-                        <span style="font-size: 0.85em; color: #7f8c8d; font-weight: normal;">125% del boleto por
+                        <span style="font-size: 0.85em; color: var(--text-muted); font-weight: normal;">125% del boleto por
                             ley</span>
                     </button>
                 </div>
@@ -1102,12 +507,12 @@
 
             <div class="page" data-page="3">
                 <!-- Compensation Preview for Page 3 -->
-                <div id="page-3-preview" style="display: none; background: #e0f2fe; border-left: 4px solid #0284c7; padding: 16px; border-radius: 8px; margin-bottom: 20px;">
+                <div id="page-3-preview" style="display: none; background: var(--bg-elevated); border-left: 4px solid var(--accent-500); padding: 16px; border-radius: 8px; margin-bottom: 20px;">
                     <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
                         <span style="font-size: 1.5em;">💰</span>
-                        <strong style="color: #0369a1; font-size: 1.05em;">Tu compensación estimada</strong>
+                        <strong style="color: var(--text-primary); font-size: 1.05em;">Tu compensación estimada</strong>
                     </div>
-                    <p id="page-3-preview-text" style="margin: 0; color: #0c4a6e; font-size: 0.95em; line-height: 1.5; white-space: pre-line;"></p>
+                    <p id="page-3-preview-text" style="margin: 0; color: var(--text-secondary); font-size: 0.95em; line-height: 1.5; white-space: pre-line;"></p>
                 </div>
 
                 <div class="form-group" style="margin-top: 20px;">
@@ -1119,19 +524,6 @@
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label>Aerolínea:</label>
-                    <select name="airline" id="airline" required>
-                        <option value="">Selecciona...</option>
-                        <option value="Volaris">Volaris</option>
-                        <option value="VivaAerobus">VivaAerobus</option>
-                        <option value="Aeromexico">Aeroméxico</option>
-                        <option value="Demo">Demo (Prueba)</option>
-                    </select>
-                    <span class="input-checkmark">✓</span>
-                    <div class="error-message" id="airline_error">Por favor selecciona una aerolínea</div>
-                </div>
-
                 <div class="btn-group">
                     <button type="button" class="btn-secondary" id="back-3" onclick="prevPage()">← Regresar</button>
                     <button type="button" class="btn-primary" id="next-3" onclick="nextPage()">¿Cuánto me deben? →</button>
@@ -1140,7 +532,7 @@
 
             <div class="page" data-page="4">
                 <!-- Banner for page 5 -->
-                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px 18px; border-radius: 12px; margin-bottom: 20px; text-align: center; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);">
+                <div style="background: linear-gradient(135deg, var(--accent-500) 0%, var(--accent-600) 100%); color: white; padding: 14px 18px; border-radius: 12px; margin-bottom: 20px; text-align: center; box-shadow: 0 4px 12px var(--accent-glow);">
                     <strong style="font-size: 1.05em; display: block; margin-bottom: 4px;">✍️ Contesta estas 4 preguntas</strong>
                     <span style="font-size: 0.9em; opacity: 0.95;">para generar tu email de reclamo</span>
                 </div>
@@ -1158,7 +550,7 @@
                     <label for="reservation_code" class="optional">Clave de reserva (opcional):</label>
                     <input type="text" id="reservation_code" name="reservation_code" pattern="[A-Za-z0-9]+">
                     <span class="input-checkmark">✓</span>
-                    <small style="color: #666; font-size: 0.85em; display: block; margin-top: 5px;">
+                    <small style="color: var(--text-muted); font-size: 0.85em; display: block; margin-top: 5px;">
                         💡 Ayuda pero no es obligatorio. Lo encuentras en tu email de confirmación
                     </small>
                     <div class="error-message" id="reservation_code_error">Por favor ingresa una clave de reserva válida
@@ -1176,12 +568,12 @@
                 <hr>
 
                 <div class="form-group">
-                    <label>¿Cuántos pasajeros viajaron? <span style="color: #999; font-size: 0.85em;">(cada uno tiene
+                    <label>¿Cuántos pasajeros viajaron? <span style="color: var(--text-muted); font-size: 0.85em;">(cada uno tiene
                             derecho a compensación)</span></label>
                     <input type="number" name="passenger_count" id="passenger_count" min="1" max="10" value="1" required
                         style="width: 100px; text-align: center; font-size: 1.2em; font-weight: bold;">
                     <span class="input-checkmark">✓</span>
-                    <small style="color: #006847; font-size: 0.85em; display: block; margin-top: 5px;">
+                    <small style="color: var(--success-500); font-size: 0.85em; display: block; margin-top: 5px;">
                         💡 Si viajaron 4 personas, ¡la compensación se multiplica por 4!
                     </small>
                     <div class="error-message" id="passenger_count_error">Por favor ingresa un número válido (1-10)
@@ -1192,7 +584,7 @@
                 <div class="form-group" id="compensation-choice-section" style="display: none;">
                     <hr style="margin: 20px 0;">
                     <label>¿Qué compensación prefieres solicitar? <span style="color: red;">*</span></label>
-                    <small style="color: #666; font-size: 0.85em; display: block; margin-bottom: 12px;">
+                    <small style="color: var(--text-muted); font-size: 0.85em; display: block; margin-bottom: 12px;">
                         Por ley, tienes derecho a elegir entre estas dos opciones:
                     </small>
 
@@ -1200,7 +592,7 @@
                         <button type="button" class="delay-option compensation-option"
                             data-value="transporte_sustituto">
                             <strong>Transporte sustituto en el primer vuelo disponible</strong><br>
-                            <span style="font-size: 0.85em; color: #7f8c8d; font-weight: normal;">
+                            <span style="font-size: 0.85em; color: var(--text-muted); font-weight: normal;">
                                 + Llamadas, correos, alimentos, alojamiento y transporte terrestre sin cargo (si es
                                 necesaria pernocta)
                             </span>
@@ -1209,7 +601,7 @@
                         <button type="button" class="delay-option compensation-option"
                             data-value="reembolso_indemnizacion">
                             <strong>Reembolso completo (100%) + 25% de indemnización</strong><br>
-                            <span style="font-size: 0.85em; color: #7f8c8d; font-weight: normal;">
+                            <span style="font-size: 0.85em; color: var(--text-muted); font-weight: normal;">
                                 Solicitar el dinero en efectivo o transferencia bancaria
                             </span>
                         </button>
@@ -1228,7 +620,7 @@
     </div>
 
     <!-- About Section with Heading -->
-    <h3 id="about-heading" style="display: none; text-align: center; color: #2c3e50; font-size: 1.3em; margin-top: 32px; margin-bottom: 16px; font-weight: 600;">Quiénes somos y por qué es gratis</h3>
+    <h3 id="about-heading" style="display: none; text-align: center; color: var(--text-primary); font-size: 1.3em; margin-top: 32px; margin-bottom: 16px; font-weight: 600;">Quiénes somos y por qué es gratis</h3>
 
     <!-- About Section Card (hidden, info now in FAQ) -->
     <div class="about-card" id="about-section" style="display: none;">
@@ -1243,1051 +635,41 @@
                     </svg>
                 </a>
             </div>
-            <p style="margin: 0 0 0 0; color: #2c3e50; line-height: 1.5;">
+            <p style="margin: 0 0 0 0; color: var(--text-primary); line-height: 1.5;">
                 Ingeniera de software mexicana. Cuando les cancelaron a mis papás su vuelo a último minuto y ya no iban a poder verme correr un maratón en Islandia, investigué la ley, llamé a la aerolínea (no contestaron), mandé mensajes, tuiteé, hasta que nos dieron un vuelo sustituto.
                 <br>Hice VueloDigno para ayudar a que no tengas que pasar horas investigando para recibir tu compensación.
-            <p style="margin: 12px 0 0 0; color: #2c3e50; line-height: 1.5;">
+            <p style="margin: 12px 0 0 0; color: var(--text-primary); line-height: 1.5;">
                 <strong>Es gratis</strong> porque las aerolíneas te deben este dinero por ley y me da coraje que no respondan.
             </p>
         </div>
     </div>
 
+    <!-- Form JavaScript -->
+    <script src="{{ url_for('static', filename='js/form.js') }}"></script>
     <script>
-        const max = (a, b) => (a > b ? a : b);
-        const LACM_URL = "https://www.profeco.gob.mx/politicasaviacion/pdf/DERECHOS%20Y%20OBLIGACIONES%20VIAJAR%20EN%20AVI%C3%93N%20QR%20(vf).pdf";
-        const airlinePolicyUrls = {
-            'Volaris': 'https://cms.volaris.com/globalassets/pdfs/esp/politicas-de-compensacion.pdf',
-            'VivaAerobus': 'https://www.vivaaerobus.com/es-mx/legal/politica-de-compensacion',
-            'Aeromexico': 'https://www.profeco.gob.mx/politicasaviacion/pdf/Aerom%C3%A9xico.pdf'
-        };
-        const airlineEmojis = {
-            'Volaris': '🟣',
-            'VivaAerobus': '🟢',
-            'Aeromexico': '🔵'
-        };
-        const delayMap = {
-            '1': { value: 1.5, text: '1-2 horas' },
-            '2': { value: 3.0, text: '2-4 horas' },
-            '3': { value: 5.0, text: 'Más de 4 horas o Cancelación' }
-        };
-
-        let currentPage = 1;
-        const totalPages = 4;
-        let calculatedCompensation = 0;
-        let selectedAirline = '';
-
-        // Define progress steps (3 conceptual steps for 2 pages)
-        const progressSteps = [
-            'Calcular compensación',
-            'Datos para generar reclamo',
-            'Revisar reclamo y enviar'
-        ];
-
-        const formatter = new Intl.NumberFormat('es-MX', {
-            style: 'currency',
-            currency: 'MXN',
-            minimumFractionDigits: 2
-        });
-
-        // FAQ TOGGLE FUNCTIONALITY
-        function toggleFaq(questionElement) {
-            const faqItem = questionElement.parentElement;
-            const wasActive = faqItem.classList.contains('active');
-
-            // Close all other FAQ items
-            document.querySelectorAll('.faq-item').forEach(item => {
-                item.classList.remove('active');
-            });
-
-            // Toggle current item (close if it was already open)
-            if (!wasActive) {
-                faqItem.classList.add('active');
-            }
-        }
-
-        // MULTIPAGE LOGIC
-        function showPage(pageNumber) {
-            const pages = document.querySelectorAll('.page');
-            pages.forEach(page => {
-                page.classList.remove('active');
-            });
-            document.querySelector(`.page[data-page="${pageNumber}"]`).classList.add('active');
-            currentPage = pageNumber;
-
-            // Show/hide FAQ section based on page
-            const faqSection = document.getElementById('faq-section');
-
-            if (pageNumber === 1) {
-                if (faqSection) faqSection.style.display = 'block';
-                // Reset compensation when going back to page 1
-                calculatedCompensation = 0;
-                selectedAirline = '';
-            } else {
-                if (faqSection) faqSection.style.display = 'none';
-            }
-
-            updateProgress();
-            updatePageTitles();
-            updateCompensationPreviews();
-
-            // Scroll to top of page on navigation
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        function goToPageIfBackwards(targetPage) {
-            // Only allow navigation if target page is before current page
-            if (targetPage < currentPage) {
-                showPage(targetPage);
-            }
-        }
-
-        function updatePageTitles() {
-            const titleElement = document.getElementById('page-title-text');
-            const emojiElement = document.getElementById('page-title-emoji');
-            const subtitleElement = document.getElementById('page-subtitle');
-            const descriptionElement = document.getElementById('page-description');
-            const pageTitleContainer = document.getElementById('page-title');
-            const heroSection = document.getElementById('hero-section');
-            const trustBadgeSection = document.getElementById('trust-badge-section');
-            const faqSection = document.getElementById('faq-section');
-
-            if (currentPage === 4 && calculatedCompensation > 0 && selectedAirline) {
-                // Hide hero, trust-badge, and FAQ on page 4
-                heroSection.style.display = 'none';
-                trustBadgeSection.style.display = 'none';
-                if (faqSection) faqSection.style.display = 'none';
-
-                // Show the title elements on page 4
-                pageTitleContainer.style.display = 'block';
-                subtitleElement.style.display = 'block';
-                descriptionElement.style.display = 'block';
-
-                const policyUrl = airlinePolicyUrls[selectedAirline] || '#';
-                const airlineEmoji = airlineEmojis[selectedAirline] || '✈️';
-                const passengerCount = parseInt(document.getElementById('passenger_count')?.value || 1);
-                const totalCompensation = calculatedCompensation * passengerCount;
-
-                emojiElement.textContent = "🎉";
-
-                if (passengerCount > 1) {
-                    titleElement.innerHTML = `¡Felicidades! Te toca una compensación de <span style="color: #e74c3c; font-weight: bold;">${formatter.format(totalCompensation)} MXN</span><br><small style="color: #666; font-size: 0.7em;">(${formatter.format(calculatedCompensation)} × ${passengerCount} pasajeros)</small>`;
-                } else {
-                    titleElement.innerHTML = `¡Felicidades! Te toca una compensación de <span style="color: #e74c3c; font-weight: bold;">${formatter.format(totalCompensation)} MXN</span>`;
-                }
-
-                subtitleElement.textContent = "";
-                descriptionElement.innerHTML = "";
-            } else if (currentPage === 1) {
-                // Show hero, trust-badge, and FAQ on page 1
-                heroSection.style.display = 'block';
-                trustBadgeSection.style.display = 'block';
-                if (faqSection) faqSection.style.display = 'block';
-
-                // Hide title elements on page 1 (we have the hero section instead)
-                pageTitleContainer.style.display = 'none';
-                subtitleElement.style.display = 'none';
-                descriptionElement.style.display = 'none';
-            } else {
-                // Pages 2, 3, 4: Hide everything
-                heroSection.style.display = 'none';
-                trustBadgeSection.style.display = 'none';
-                if (faqSection) faqSection.style.display = 'none';
-                pageTitleContainer.style.display = 'none';
-                subtitleElement.style.display = 'none';
-                descriptionElement.style.display = 'none';
-            }
-        }
-
-        function validateField(fieldId) {
-            const field = document.getElementById(fieldId);
-            const errorElement = document.getElementById(fieldId + '_error');
-            const checkmark = field?.parentElement.querySelector('.input-checkmark');
-
-            if (!field) return true;
-
-            let isValid = true;
-
-            // Special validation for passenger names - must match passenger count
-            if (fieldId === 'passenger_name') {
-                const passengerCount = parseInt(document.getElementById('passenger_count')?.value || 1);
-                const names = field.value.trim();
-
-                if (!names) {
-                    isValid = false;
-                } else {
-                    // Count names by splitting on commas
-                    const nameList = names.split(',').map(n => n.trim()).filter(n => n.length > 0);
-                    const nameCount = nameList.length;
-
-                    if (nameCount !== passengerCount) {
-                        isValid = false;
-                        if (errorElement) {
-                            errorElement.textContent = `Por favor ingresa ${passengerCount} nombre(s). Tienes ${nameCount}.`;
-                        }
-                    }
-                }
-            } else if (field.type === 'email') {
-                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                isValid = emailRegex.test(field.value);
-            } else if (field.type === 'number') {
-                isValid = field.value && parseFloat(field.value) > 0;
-            } else if (field.hasAttribute('pattern')) {
-                const pattern = new RegExp(field.getAttribute('pattern'));
-                isValid = pattern.test(field.value);
-            } else {
-                isValid = field.value && field.value.trim() !== '';
-            }
-
-            // Update visual states
-            if (errorElement) {
-                if (!isValid) {
-                    errorElement.classList.add('show');
-                    field.classList.remove('valid');
-                    field.classList.add('invalid');
-                    if (checkmark) checkmark.classList.remove('show');
-                } else {
-                    errorElement.classList.remove('show');
-                    field.classList.remove('invalid');
-                    field.classList.add('valid');
-                    if (checkmark) checkmark.classList.add('show');
-                }
-            }
-
-            return isValid;
-        }
-
-        function validatePage(pageNumber) {
-            if (pageNumber === 1) {
-                const originValid = validateField('origin');
-                const destValid = validateField('destination');
-
-                if (!originValid || !destValid) {
-                    alert('Por favor, completa todos los campos correctamente antes de continuar.');
-                }
-
-                return originValid && destValid;
-            }
-
-            if (pageNumber === 2) {
-                const delayHours = document.getElementById('delay_hours').value;
-                if (!delayHours || delayHours === '' || parseInt(delayHours) === 0) {
-                    alert('Por favor, selecciona cuánto fue el retraso del vuelo.');
-                    return false;
-                }
-                return true;
-            }
-
-            if (pageNumber === 3) {
-                const ticketPriceValid = validateField('ticket_price');
-                if (!ticketPriceValid) {
-                    alert('Por favor, ingresa el precio del boleto correctamente.');
-                    return false;
-                }
-                return true;
-            }
-
-            if (pageNumber === 4) {
-                const airlineValid = validateField('airline');
-                if (!airlineValid) {
-                    alert('Por favor, selecciona una aerolínea.');
-                    return false;
-                }
-                return true;
-            }
-
-            if (pageNumber === 4) {
-                const currentPageElement = document.querySelector(`.page[data-page="${pageNumber}"]`);
-                const requiredFields = currentPageElement.querySelectorAll('[required]');
-                let isValid = true;
-
-                requiredFields.forEach(field => {
-                    if (field.type === 'hidden') {
-                        return;
-                    }
-                    if (!validateField(field.id)) {
-                        isValid = false;
-                    }
-                });
-
-                if (!isValid) {
-                    alert('Por favor, completa todos los campos correctamente antes de continuar.');
-                }
-                return isValid;
-            }
-
-            return true;
-        }
-
-        function nextPage() {
-            if (validatePage(currentPage) && currentPage < totalPages) {
-                showPage(currentPage + 1);
-                // Calculate compensation preview as user progresses through pages 2, 3, 4
-                if (currentPage >= 2 && currentPage <= 4) {
-                    calculateCompensationPreview();
-                }
-                // Calculate full compensation when reaching page 4
-                if (currentPage === 4) {
-                    calculateCompensation();
-                    updatePageTitles();
-                    updateCompensationChoiceVisibility();
-                }
-            }
-        }
-
-        function prevPage() {
-            if (currentPage > 1) {
-                showPage(currentPage - 1);
-            }
-        }
-
-        // PROGRESS & VISUALS
-        function updateProgress() {
-            const progressLineFill = document.getElementById('progress-line-fill');
-            const compensationDisplay = document.getElementById('compensation-display');
-            const page2Subtitle = document.getElementById('page2-subtitle');
-
-            // Calculate percentage based on 5 pages mapped to 3 milestones
-            // Page 1 = 0% (milestone 1 active)
-            // Pages 2-4 = 25%, 50%, 75% (milestone 2 active, progressing towards milestone 2)
-            // Page 5 = 100% (milestone 2 active, ready for milestone 3)
-            let percentage = 0;
-            if (currentPage === 1) {
-                percentage = 0;
-            } else if (currentPage === 2) {
-                percentage = 33;
-            } else if (currentPage === 3) {
-                percentage = 66;
-            } else if (currentPage === 4) {
-                percentage = 100;
-            }
-
-            // Update milestone states
-            const milestone1 = document.getElementById('milestone-1');
-            const milestone2 = document.getElementById('milestone-2');
-            const milestone3 = document.getElementById('milestone-3');
-
-            // Reset all milestones
-            [milestone1, milestone2, milestone3].forEach(m => {
-                m.classList.remove('active', 'completed');
-            });
-
-            // Set states based on current page
-            if (currentPage === 1) {
-                milestone1.classList.add('active');
-            } else if (currentPage >= 2 && currentPage <= 4) {
-                milestone1.classList.add('completed');
-                milestone2.classList.add('active');
-            }
-
-            // Update progress line
-            if (progressLineFill) {
-                progressLineFill.style.width = percentage + '%';
-            }
-
-            // Display compensation amount - visible on all pages after calculation, but hide on page 1
-            if (currentPage === 1) {
-                // Clear compensation on page 1
-                if (compensationDisplay) {
-                    compensationDisplay.style.display = 'none';
-                    compensationDisplay.textContent = '';
-                }
-            } else if (calculatedCompensation > 0 && compensationDisplay) {
-                const oldText = compensationDisplay.textContent;
-                const newText = `💰 ${formatter.format(calculatedCompensation)}`;
-
-                compensationDisplay.textContent = newText;
-                compensationDisplay.style.display = 'inline';
-
-                // Add animation if compensation changed (including first time)
-                if (oldText !== newText) {
-                    compensationDisplay.classList.remove('compensation-updated');
-                    // Force reflow to restart animation
-                    void compensationDisplay.offsetWidth;
-                    compensationDisplay.classList.add('compensation-updated');
-
-                    // Remove animation class after it completes
-                    setTimeout(() => {
-                        compensationDisplay.classList.remove('compensation-updated');
-                    }, 500);
-                }
-            } else if (compensationDisplay) {
-                compensationDisplay.style.display = 'none';
-            }
-
-            // Show page 2 subtitle when on page 2+ with valid compensation
-            if (page2Subtitle) {
-                if (currentPage >= 2 && calculatedCompensation > 0 && selectedAirline) {
-                    page2Subtitle.style.display = 'block';
-                } else {
-                    page2Subtitle.style.display = 'none';
-                }
-            }
-
-            // Show/hide back button
-            const backButton = document.getElementById(`back-${currentPage}`);
-            if (backButton) {
-                backButton.style.visibility = currentPage === 1 ? 'hidden' : 'visible';
-            }
-
-            // Update page titles to reflect airline selection
-            updatePageTitles();
-        }
-
-        // COMPENSATION CALCULATION
-        function formatCurrency(input) {
-            // Remove all non-numeric characters except decimal point
-            let value = input.value.replace(/[^\d.]/g, '');
-
-            // Ensure only one decimal point
-            const parts = value.split('.');
-            if (parts.length > 2) {
-                value = parts[0] + '.' + parts.slice(1).join('');
-            }
-
-            // Limit to 2 decimal places
-            if (parts[1] && parts[1].length > 2) {
-                value = parseFloat(value).toFixed(2);
-            }
-
-            // Format with commas
-            if (value) {
-                const [integer, decimal] = value.split('.');
-                const formattedInteger = integer.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-                input.value = decimal !== undefined ? `${formattedInteger}.${decimal}` : formattedInteger;
-            }
-        }
-
-        function getNumericValue(formattedValue) {
-            // Remove commas and parse as float
-            return parseFloat(formattedValue.replace(/,/g, '')) || 0;
-        }
-
-        function calculateCompensationPreview() {
-            // Calculate compensation on page 1 just to show running man and money bag
-            // This must match the backend logic in email_generator_simple.py
-            const delayValue = document.getElementById('delay_hours').value;
-            const delayHours = parseFloat(delayValue);
-            const ticketPriceInput = document.getElementById('ticket_price').value;
-            const ticketPrice = parseFloat(ticketPriceInput) || 0;
-            const airline = document.getElementById('airline').value;
-
-            if (!delayValue || isNaN(delayHours) || !airline || ticketPrice <= 0) {
-                calculatedCompensation = 0;
-                selectedAirline = '';
-                updateProgress();
-                return;
-            }
-
-            selectedAirline = airline;
-            const airlineKey = airline.toLowerCase().replace(/\s/g, '');
-
-            // Match backend logic exactly from email_generator_simple.py
-            if (delayHours === 5.0) {
-                // Tier 3: >4 hours - 125% of ticket price
-                calculatedCompensation = ticketPrice * 1.25;
-            } else if (delayHours === 1.5) {
-                // Tier 1: 1-2 hours - FLAT amounts
-                if (airlineKey === 'volaris') {
-                    calculatedCompensation = 50.00;
-                } else if (airlineKey === 'vivaaerobus') {
-                    calculatedCompensation = 75.00;
-                } else {
-                    // Aeromexico and others: 5%
-                    calculatedCompensation = ticketPrice * 0.05;
-                }
-            } else if (delayHours === 3.0) {
-                // Tier 2: 2-4 hours - percentages with minimums
-                let bestAmount = ticketPrice * 0.075; // Law minimum 7.5%
-
-                if (airlineKey === 'volaris') {
-                    // Volaris: max(250, 7.5%)
-                    bestAmount = Math.max(250.00, ticketPrice * 0.075);
-                } else if (airlineKey === 'vivaaerobus') {
-                    // VivaAerobus: 8% (better than 7.5% law minimum)
-                    const vivaOffer = ticketPrice * 0.08;
-                    if (vivaOffer > bestAmount) {
-                        bestAmount = vivaOffer;
-                    }
-                }
-                // Aeromexico: uses 7.5% (same as law minimum)
-
-                calculatedCompensation = bestAmount;
-            } else {
-                calculatedCompensation = 0;
-            }
-
-            updateProgress();
-        }
-
-        function updateCompensationPreviews() {
-            // Update preview boxes on pages 2 and 3 based on available data
-            const page2Preview = document.getElementById('page-2-preview');
-            const page2PreviewText = document.getElementById('page-2-preview-text');
-            const page3Preview = document.getElementById('page-3-preview');
-            const page3PreviewText = document.getElementById('page-3-preview-text');
-
-            const delayValue = document.getElementById('delay_hours').value;
-            const delayHours = parseFloat(delayValue);
-            const ticketPrice = parseFloat(document.getElementById('ticket_price')?.value || 0);
-            const airline = document.getElementById('airline')?.value || '';
-
-            // Page 2: Show preview when delay is selected
-            if (currentPage === 2 && delayValue && !isNaN(delayHours)) {
-                let previewText = '';
-
-                if (delayHours === 1.5) {
-                    previewText = 'Retraso de 1-2 horas: Entre $50-75 MXN o 5% del boleto según aerolínea.\nIngresa el precio del boleto para calcular tu compensación exacta.';
-                } else if (delayHours === 3.0) {
-                    previewText = 'Retraso de 2-4 horas: Mínimo 7.5% del precio del boleto por ley. Algunas aerolíneas ofrecen más.\nIngresa el precio del boleto para ver tu compensación.';
-                } else if (delayHours === 5.0) {
-                    previewText = 'Retraso de +4 horas o cancelación: 125% del precio del boleto garantizado por ley.\nIngresa el precio para calcular tu compensación exacta.';
-                }
-
-                if (page2PreviewText) page2PreviewText.textContent = previewText;
-                if (page2Preview) page2Preview.style.display = 'block';
-            } else if (page2Preview) {
-                page2Preview.style.display = 'none';
-            }
-
-            // Page 3: Show preview when delay is selected - update based on available info
-            if (currentPage === 3 && delayValue && !isNaN(delayHours)) {
-                let previewText = '';
-
-                // If ticket price is entered, show detailed calculation
-                if (ticketPrice > 0) {
-                    if (delayHours === 1.5) {
-                        const minComp = ticketPrice * 0.05;
-                        previewText = `Con tu boleto de ${formatter.format(ticketPrice)}, tu compensación será entre $50-75 MXN o ${formatter.format(minComp)} (5% del boleto), dependiendo de la aerolínea que selecciones.`;
-                    } else if (delayHours === 3.0) {
-                        const minComp = ticketPrice * 0.075;
-                        previewText = `Con tu boleto de ${formatter.format(ticketPrice)}, tu compensación mínima es ${formatter.format(minComp)} (7.5% por ley). Algunas aerolíneas ofrecen más. ¡Selecciona tu aerolínea para ver el monto exacto!`;
-                    } else if (delayHours === 5.0) {
-                        const comp = ticketPrice * 1.25;
-                        previewText = `Con tu boleto de ${formatter.format(ticketPrice)}, tu compensación garantizada es ${formatter.format(comp)} (125% del boleto). ¡Selecciona tu aerolínea para continuar!`;
-                    }
-                } else {
-                    // If ticket price not entered yet, show basic info
-                    if (delayHours === 1.5) {
-                        previewText = 'Con el retraso de 1-2 horas, tu compensación será entre $50-75 MXN o 5% del boleto según aerolínea.';
-                    } else if (delayHours === 3.0) {
-                        previewText = 'Con el retraso de 2-4 horas, te corresponde mínimo 7.5% del precio del boleto. ¡Ingresa el precio para ver tu compensación exacta!';
-                    } else if (delayHours === 5.0) {
-                        previewText = 'Con el retraso de +4 horas o cancelación, te corresponde el 125% del precio del boleto. ¡Ingresa el precio para calcular cuánto te deben!';
-                    }
-                }
-
-                if (page3PreviewText) page3PreviewText.textContent = previewText;
-                if (page3Preview) page3Preview.style.display = 'block';
-            } else if (page3Preview) {
-                page3Preview.style.display = 'none';
-            }
-        }
-
-        function calculateCompensation() {
-            const delayValue = document.getElementById('delay_hours').value;
-            const delayHours = parseFloat(delayValue);
-
-            if (!delayValue || isNaN(delayHours)) {
-                document.getElementById('eligibility-message-box').style.display = 'none';
-                return;
-            }
-
-            const ticketPriceInput = document.getElementById('ticket_price').value;
-            const ticketPrice = parseFloat(ticketPriceInput) || 0;
-            const airline = document.getElementById('airline').value;
-            selectedAirline = airline;
-
-            const resultElement = document.getElementById('claim-result');
-            const msgBox = document.getElementById('eligibility-message-box');
-
-            msgBox.style.display = 'block';
-
-            // TIER 1: 1-2 HOURS
-            if (delayHours === 1.5) {
-                if (!airline) {
-                    resultElement.innerHTML = `
-                        ✅ <strong>COMPENSACIÓN GARANTIZADA POR LEY</strong>
-                        <br><br>
-                        Por un retraso de 1-2 horas, las aerolíneas ofrecen:
-                        <br>• <strong>Volaris:</strong> Voucher de $50 MXN
-                        <br>• <strong>VivaAerobus:</strong> Cupón o Viva Cash de $75 MXN
-                        <br>• <strong>Aeroméxico:</strong> Cupón del 5% del precio del boleto
-                        <br><br>
-                        Selecciona tu aerolínea abajo para ver tu compensación exacta.
-                        <br><br>
-                        <span style="font-size: 0.85em; color: #7f8c8d;">Fuente: <a href="${LACM_URL}" target="_blank">Ley de Aviación Civil (Art. 47 Bis)</a></span>
-                    `;
-                    calculatedCompensation = 0;
-                    return;
-                }
-
-                const airlineKey = airline.toLowerCase().replace(/\s/g, '');
-                let compensationAmount = 0;
-                let compensationForm = '';
-                let policyUrl = airlinePolicyUrls[airline] || LACM_URL;
-
-                // FLAT amounts for 1-2 hours
-                if (airlineKey === 'volaris') {
-                    compensationAmount = 50.00;
-                    compensationForm = 'Voucher Electrónico';
-                } else if (airlineKey === 'vivaaerobus') {
-                    compensationAmount = 75.00;
-                    compensationForm = 'Cupón de descuento o Viva Cash';
-                } else {
-                    // Aeromexico and others: 5%
-                    compensationAmount = ticketPrice * 0.05;
-                    compensationForm = 'Cupón de descuento';
-                }
-
-                calculatedCompensation = compensationAmount;
-
-                resultElement.innerHTML = `
-                    <p style="margin: 0; font-size: 1em; color: #2c3e50;">
-                        <strong>Compensación mínima:</strong> ${formatter.format(compensationAmount)}<br>
-                        <strong>Forma:</strong> ${compensationForm}
-                    </p>
-                    <p style="margin-top: 10px; font-size: 0.85em; color: #7f8c8d;">
-                        Fuente: <a href="${policyUrl}" target="_blank">${airlineKey === 'volaris' || airlineKey === 'vivaaerobus' ? `Política de ${airline}` : 'Política de Aeroméxico'}</a>
-                    </p>
-                `;
-                updateProgress();
-                return;
-            }
-
-            // TIER 2: 2-4 HOURS
-            if (delayHours === 3.0) {
-                if (!ticketPriceInput && !airline) {
-                    resultElement.innerHTML = `
-                        ✅ <strong>COMPENSACIÓN GARANTIZADA POR LEY</strong>
-                        <br><br>
-                        Por un retraso de 2-4 horas, la ley mexicana garantiza:
-                        <br>• <strong>Mínimo 7.5% del precio del boleto</strong>
-                        <br><br>
-                        Algunas aerolíneas ofrecen más:
-                        <br>• Volaris: mínimo 7.5% o $250 (lo que sea mayor)
-                        <br>• VivaAerobus: 8% del boleto
-                        <br><br>
-                        Ingresa el precio del boleto y aerolínea abajo para calcular tu compensación exacta.
-                        <br><br>
-                        <span style="font-size: 0.85em; color: #7f8c8d;">Fuente: <a href="${LACM_URL}" target="_blank">Ley de Aviación Civil (Art. 47 Bis)</a></span>
-                    `;
-                    calculatedCompensation = 0;
-                    return;
-                }
-
-                if (ticketPrice > 0 && !airline) {
-                    const minCompensation = ticketPrice * 0.075;
-                    calculatedCompensation = minCompensation;
-                    resultElement.innerHTML = `
-                        ✅ <strong>COMPENSACIÓN GARANTIZADA POR LEY</strong>
-                        <br><br>
-                        Por ley, te deben <strong>mínimo:</strong>
-                        <br><br>
-                        La compensación exacta depende de la aerolínea. Selecciónala abajo:
-                        <br>• Volaris: mínimo 7.5% o $250 (lo que sea mayor)
-                        <br>• VivaAerobus: 8% del boleto
-                        <br>• Aeroméxico: 7.5% mínimo
-                        <br><br>
-                        <span style="font-size: 0.85em; color: #7f8c8d;">Fuente: <a href="${LACM_URL}" target="_blank">Ley de Aviación Civil (Art. 47 Bis)</a></span>
-                    `;
-                    updateProgress();
-                    return;
-                }
-
-                if (ticketPrice > 0 && airline) {
-                    let bestAmount = ticketPrice * 0.075; // Law minimum 7.5%
-                    let source = `<a href="${LACM_URL}" target="_blank">Ley de Aviación Civil (Art. 47 Bis)</a>`;
-                    let compensationForm = 'Cupón de descuento o servicios';
-
-                    const airlineKey = airline.toLowerCase().replace(/\s/g, '');
-                    const policyUrl = airlinePolicyUrls[airline] || '#';
-
-                    // Check airline policies for better offers (take MAX of airline vs law)
-                    if (airlineKey === 'volaris') {
-                        bestAmount = Math.max(250.00, ticketPrice * 0.075);
-                        source = `<a href="${policyUrl}" target="_blank">Política de Volaris</a>`;
-                        compensationForm = 'Voucher electrónico';
-                    } else if (airlineKey === 'vivaaerobus') {
-                        const vivaOffer = ticketPrice * 0.08;
-                        if (vivaOffer > bestAmount) {
-                            bestAmount = vivaOffer;
-                            source = `<a href="${policyUrl}" target="_blank">Política de VivaAerobus</a>`;
-                            compensationForm = 'Cupón de descuento o Viva Cash';
-                        }
-                    }
-                    // Aeromexico: uses 7.5% (same as law minimum)
-
-                    calculatedCompensation = bestAmount;
-
-                    resultElement.innerHTML = `
-                        <p style="margin: 0; font-size: 1em; color: #2c3e50;">
-                            <strong>Compensación mínima:</strong> ${formatter.format(bestAmount)}<br>
-                            <strong>Forma:</strong> ${compensationForm}
-                        </p>
-                        <p style="margin-top: 10px; font-size: 0.85em; color: #7f8c8d;">
-                            Fuente: ${source}
-                        </p>
-                    `;
-                    updateProgress();
-                    return;
-                }
-            }
-
-            // TIER 3: +4 HOURS OR CANCELLATION
-            if (delayHours === 5.0) {
-                if (!ticketPriceInput && !airline) {
-                    resultElement.innerHTML = `
-                        ✅ <strong>¡COMPENSACIÓN MÁXIMA GARANTIZADA!</strong>
-                        <br><br>
-                        Por un retraso de +4 horas o cancelación, la ley garantiza:
-                        <br>• <strong>125% del precio del boleto</strong>
-                        <br><br>
-                        Ingresa el precio del boleto abajo para calcular tu compensación exacta.
-                        <br><br>
-                        <span style="font-size: 0.85em; color: #7f8c8d;">Fuente: <a href="${LACM_URL}" target="_blank">Ley de Aviación Civil (Art. 47 Bis)</a></span>
-                    `;
-                    calculatedCompensation = 0;
-                    return;
-                }
-
-                if (ticketPrice > 0 && !airline) {
-                    const compensation = ticketPrice * 1.25;
-                    calculatedCompensation = compensation;
-                    resultElement.innerHTML = `
-                        ✅ <strong>¡COMPENSACIÓN MÁXIMA GARANTIZADA!</strong>
-                        <br><br>
-                        Por ley, te deben:
-                        <br><br>
-                        Selecciona tu aerolínea abajo para generar tu email de reclamación.
-                        <br><br>
-                        <span style="font-size: 0.85em; color: #7f8c8d;">Fuente: <a href="${LACM_URL}" target="_blank">Ley de Aviación Civil (Art. 47 Bis)</a></span>
-                    `;
-                    updateProgress();
-                    return;
-                }
-
-                if (ticketPrice > 0 && airline) {
-                    const bestAmount = ticketPrice * 1.25;
-                    calculatedCompensation = bestAmount;
-                    const source = `<a href="${LACM_URL}" target="_blank">Ley de Aviación Civil (Art. 47 Bis)</a>`;
-
-                    resultElement.innerHTML = `
-                        <p style="margin: 0; font-size: 1em; color: #2c3e50;">
-                            <strong>Compensación mínima:</strong> ${formatter.format(bestAmount)}<br>
-                            <strong>Forma:</strong> Transferencia bancaria / Efectivo (derecho del pasajero a elegir)
-                        </p>
-                        <p style="margin-top: 10px; font-size: 0.85em; color: #7f8c8d;">
-                            Fuente: ${source}
-                        </p>
-                    `;
-                    updateProgress();
-                    return;
-                }
-            }
-        }
-
-        // Show/hide compensation choice section based on delay hours
-        function updateCompensationChoiceVisibility() {
-            const delayHours = parseFloat(document.getElementById('delay_hours').value);
-            const compensationSection = document.getElementById('compensation-choice-section');
-            const compensationHiddenInput = document.getElementById('compensation_choice');
-
-            if (delayHours === 5.0) {
-                // Show section for 4+ hour delays or cancellations
-                compensationSection.style.display = 'block';
-                compensationHiddenInput.required = true;
-            } else {
-                // Hide section for shorter delays
-                compensationSection.style.display = 'none';
-                compensationHiddenInput.required = false;
-                compensationHiddenInput.value = ''; // Clear when hidden
-                // Remove selected state from buttons
-                document.querySelectorAll('.compensation-option').forEach(btn => {
-                    btn.classList.remove('selected');
-                });
-            }
-        }
-
-        // JURISDICTION VALIDATION
-        const MEXICO_AIRPORTS = new Set(['AGU', 'BJX', 'CEN', 'CJS', 'CME', 'CPE', 'CTM', 'CUL', 'CUN', 'CUU', 'CVM', 'CZM', 'DGO', 'GDL', 'GYM', 'HMO', 'HUX', 'IZT', 'JAL', 'LAP', 'LMM', 'LTO', 'MAM', 'MEX', 'MID', 'MLM', 'MTY', 'MZT', 'NLD', 'NOG', 'OAX', 'PAZ', 'PBC', 'PPE', 'PVR', 'PXM', 'QRO', 'REX', 'SJD', 'SLP', 'TAM', 'TAP', 'TGZ', 'TIJ', 'TLC', 'TRC', 'TSL', 'VER', 'VSA', 'ZCL', 'ZIH', 'ZLO']);
-
-        const EU_AIRPORTS = new Set(['MAD', 'BCN', 'AGP', 'PMI', 'ALC', 'SVQ', 'VLC', 'BIO', 'IBZ', 'FUE', 'TFS', 'ACE', 'CDG', 'ORY', 'NCE', 'LYS', 'MRS', 'TLS', 'BOD', 'NTE', 'BSL', 'FRA', 'MUC', 'TXL', 'DUS', 'HAM', 'CGN', 'STR', 'BER', 'NUE', 'LHR', 'LGW', 'MAN', 'STN', 'EDI', 'BHX', 'GLA', 'LTN', 'BRS', 'FCO', 'MXP', 'LIN', 'VCE', 'NAP', 'BGY', 'BLQ', 'PSA', 'CAG', 'AMS', 'EIN', 'RTM', 'LIS', 'OPO', 'FAO', 'BRU', 'VIE', 'ZRH', 'GVA', 'ARN', 'CPH', 'OSL', 'HEL', 'DUB', 'ATH', 'PRG', 'WAW', 'BUD', 'OTP', 'SOF', 'RIX', 'TLL', 'VNO']);
-
-        const EUROPEAN_AIRLINES = new Set(['Lufthansa', 'Air France', 'KLM', 'British Airways', 'Iberia', 'Ryanair', 'EasyJet', 'Vueling', 'Wizz Air', 'Norwegian', 'TAP Portugal', 'Alitalia', 'ITA Airways', 'Swiss', 'Austrian Airlines', 'Brussels Airlines', 'Finnair', 'SAS', 'Aegean Airlines', 'Air Europa', 'Eurowings', 'Condor', 'Transavia', 'LOT Polish']);
-
-        // EVENT LISTENERS
+        // Initialize the form when DOM is ready
         document.addEventListener('DOMContentLoaded', () => {
-            const priceInput = document.getElementById('ticket_price');
-            const airlineSelect = document.getElementById('airline');
-
-            document.querySelectorAll('.delay-option:not(.compensation-option)').forEach(button => {
-                button.addEventListener('click', function () {
-                    document.querySelectorAll('.delay-option:not(.compensation-option)').forEach(btn => {
-                        btn.classList.remove('selected');
-                    });
-
-                    this.classList.add('selected');
-                    document.getElementById('delay_hours').value = delayMap[this.dataset.value].value;
-
-                    // Calculate compensation preview when delay is selected
-                    calculateCompensationPreview();
-
-                    // Update compensation previews on page
-                    updateCompensationPreviews();
-
-                    // Update compensation choice visibility
-                    updateCompensationChoiceVisibility();
-                });
-            });
-
-            // Compensation choice buttons
-            document.querySelectorAll('.compensation-option').forEach(button => {
-                button.addEventListener('click', function () {
-                    document.querySelectorAll('.compensation-option').forEach(btn => {
-                        btn.classList.remove('selected');
-                    });
-
-                    this.classList.add('selected');
-                    document.getElementById('compensation_choice').value = this.dataset.value;
-                });
-            });
-
-            if (priceInput) {
-                priceInput.addEventListener('input', (e) => {
-                    // Only allow numbers and decimal point
-                    let value = e.target.value;
-                    // Remove any character that's not a digit or decimal point
-                    value = value.replace(/[^\d.]/g, '');
-                    // Ensure only one decimal point
-                    const parts = value.split('.');
-                    if (parts.length > 2) {
-                        value = parts[0] + '.' + parts.slice(1).join('');
-                    }
-                    e.target.value = value;
-
-                    // Calculate compensation preview when ticket price is entered
-                    calculateCompensationPreview();
-                });
-                priceInput.addEventListener('blur', () => {
-                    validateField('ticket_price');
-                });
-            }
-            if (airlineSelect) {
-                // Function to update airline logo in select
-                function updateAirlineLogo() {
-                    const selectedValue = airlineSelect.value;
-                    // Remove all airline classes
-                    airlineSelect.classList.remove('volaris-selected', 'vivaaerobus-selected', 'aeromexico-selected');
-                    // Add the appropriate class based on selection
-                    if (selectedValue === 'Volaris') {
-                        airlineSelect.classList.add('volaris-selected');
-                    } else if (selectedValue === 'VivaAerobus') {
-                        airlineSelect.classList.add('vivaaerobus-selected');
-                    } else if (selectedValue === 'Aeromexico') {
-                        airlineSelect.classList.add('aeromexico-selected');
-                    }
-                }
-
-                airlineSelect.addEventListener('input', () => {
-                    updateAirlineLogo();
-                    // Calculate compensation preview when airline is selected
-                    calculateCompensationPreview();
-                    validateField('airline');
-                });
-                airlineSelect.addEventListener('change', () => {
-                    updateAirlineLogo();
-                    // Calculate compensation preview when airline is selected
-                    calculateCompensationPreview();
-                    validateField('airline');
-                });
-            }
-
-            // Add event listeners for origin and destination on page 1
-            const originInput = document.getElementById('origin');
-            const destInput = document.getElementById('destination');
-
-            if (originInput) {
-                originInput.addEventListener('input', () => {
-                    validateField('origin');
-                });
-                originInput.addEventListener('blur', () => {
-                    validateField('origin');
-                });
-            }
-
-            if (destInput) {
-                destInput.addEventListener('input', () => {
-                    validateField('destination');
-                });
-                destInput.addEventListener('blur', () => {
-                    validateField('destination');
-                });
-            }
-
-            // Add validation on blur for all inputs
-            document.querySelectorAll('input[required], select[required]').forEach(field => {
-                // Validate on blur
-                field.addEventListener('blur', () => {
-                    if (field.id) {
-                        validateField(field.id);
-                    }
-                });
-
-                // Real-time validation as user types
-                field.addEventListener('input', () => {
-                    if (field.id && field.value) {
-                        validateField(field.id);
-                    }
-                });
-            });
-
-            // Update compensation display when passenger count changes
-            const passengerCountInput = document.getElementById('passenger_count');
-            const passengerNameHint = document.getElementById('passenger_name_hint');
-            if (passengerCountInput) {
-                function updatePassengerNameHint() {
-                    const count = parseInt(passengerCountInput.value || 1);
-                    if (count > 1 && passengerNameHint) {
-                        passengerNameHint.innerHTML = `💡 Debes ingresar <strong>${count} nombres</strong> separados por comas`;
-                        passengerNameHint.style.color = '#006847';
-                    } else if (passengerNameHint) {
-                        passengerNameHint.innerHTML = 'Ingresa el nombre completo del pasajero';
-                        passengerNameHint.style.color = '#666';
-                    }
-                }
-
-                passengerCountInput.addEventListener('input', () => {
-                    updatePageTitles();
-                    updatePassengerNameHint();
-                    // Re-validate passenger names when count changes
-                    const passengerNameField = document.getElementById('passenger_name');
-                    if (passengerNameField && passengerNameField.value) {
-                        validateField('passenger_name');
-                    }
-                });
-                passengerCountInput.addEventListener('change', () => {
-                    updatePageTitles();
-                    updatePassengerNameHint();
-                    // Re-validate passenger names when count changes
-                    const passengerNameField = document.getElementById('passenger_name');
-                    if (passengerNameField && passengerNameField.value) {
-                        validateField('passenger_name');
-                    }
-                });
-
-                // Initialize hint on page load
-                updatePassengerNameHint();
-            }
-
-            // Check if coming back from preview page with pre-filled data
             {% if back_data %}
-            const backData = {{ back_data | tojson
-        }};
-
-        // Pre-fill all form fields
-        document.getElementById('origin').value = backData.origin;
-        document.getElementById('destination').value = backData.destination;
-        document.getElementById('delay_hours').value = backData.delay_hours;
-        document.getElementById('ticket_price').value = backData.ticket_price;
-        document.getElementById('airline').value = backData.airline;
-        document.getElementById('flight_number').value = backData.flight_number;
-        document.getElementById('reservation_code').value = backData.reservation_code;
-        document.getElementById('date').value = backData.date;
-        document.getElementById('passenger_name').value = backData.passenger_name;
-        document.getElementById('passenger_email').value = backData.passenger_email;
-        document.getElementById('passenger_count').value = backData.passenger_count || '1';
-
-        // Mark the correct delay option as selected
-        const delayHoursFloat = parseFloat(backData.delay_hours);
-        let delayDataValue = '1';
-        if (delayHoursFloat === 1.5) delayDataValue = '1';
-        else if (delayHoursFloat === 3.0) delayDataValue = '2';
-        else if (delayHoursFloat === 5.0) delayDataValue = '3';
-
-        document.querySelectorAll('.delay-option').forEach(btn => {
-            if (btn.dataset.value === delayDataValue) {
-                btn.classList.add('selected');
-            }
-        });
-
-        // Set airline and trigger validation
-        selectedAirline = backData.airline;
-
-        // Update airline logo
-        if (airlineSelect) {
-            const selectedValue = airlineSelect.value;
-            airlineSelect.classList.remove('volaris-selected', 'vivaaerobus-selected', 'aeromexico-selected');
-            if (selectedValue === 'Volaris') {
-                airlineSelect.classList.add('volaris-selected');
-            } else if (selectedValue === 'VivaAerobus') {
-                airlineSelect.classList.add('vivaaerobus-selected');
-            } else if (selectedValue === 'Aeromexico') {
-                airlineSelect.classList.add('aeromexico-selected');
-            }
-        }
-
-        // Calculate compensation preview
-        calculateCompensationPreview();
-
-        // Restore compensation choice if present
-        if (backData.compensation_choice) {
-            const choiceButton = document.querySelector(`.compensation-option[data-value="${backData.compensation_choice}"]`);
-            if (choiceButton) {
-                choiceButton.classList.add('selected');
-                document.getElementById('compensation_choice').value = backData.compensation_choice;
-            }
-        }
-
-        // Update compensation choice visibility
-        updateCompensationChoiceVisibility();
-
-        // Mobile keyboard scroll fix - scroll input into view when focused or typing
-        const allInputs = document.querySelectorAll('input, select, textarea');
-
-        function scrollInputIntoView(element) {
-            // Scroll input to top of viewport with some padding
-            const inputRect = element.getBoundingClientRect();
-            const scrollOffset = inputRect.top + window.pageYOffset - 20; // 20px padding from top
-            window.scrollTo({
-                top: scrollOffset,
-                behavior: 'smooth'
-            });
-        }
-
-        allInputs.forEach(input => {
-            // Scroll on focus (when keyboard appears)
-            input.addEventListener('focus', function () {
-                // Longer delay to let keyboard fully appear
-                setTimeout(() => {
-                    scrollInputIntoView(this);
-                }, 400);
-            });
-
-            // Also scroll on input (as user types)
-            input.addEventListener('input', function () {
-                scrollInputIntoView(this);
-            });
-        });
-
-        // Show page 4 instead of page 1 when returning from preview
-        showPage(4);
-        {% else %}
-        showPage(1);
-        {% endif %}
+            // Coming back from preview page - pass the data to initialize
+            initializeForm({{ back_data | tojson }});
+            {% else %}
+            // Normal page load
+            initializeForm(null);
+            {% endif %}
         });
     </script>
 
     <!-- Footer with legal links -->
-    <footer style="text-align: center; padding: 30px 20px; margin-top: 40px; border-top: 1px solid rgba(255, 255, 255, 0.3);">
-        <p style="color: #2c3e50; font-size: 0.9em; margin-bottom: 15px;">
-            Creado con ❤️ por <a href="https://www.linkedin.com/in/zelmag/" target="_blank" style="color: #006847; text-decoration: none; font-weight: 600;">Zelma Garza Salinas</a>
+    <footer style="text-align: center; padding: 30px 20px; margin-top: 40px; border-top: 1px solid var(--border-subtle);">
+        <p style="color: var(--text-secondary); font-size: 0.9em; margin-bottom: 15px;">
+            Creado con ❤️ por <a href="https://www.linkedin.com/in/zelmag/" target="_blank" style="color: var(--accent-500); text-decoration: none; font-weight: 600;">Zelma Garza</a>
         </p>
-        <p style="color: #666; font-size: 0.85em; margin-bottom: 10px;">
-            <a href="/terminos" style="color: #006847; text-decoration: none; margin: 0 10px;">Términos y Condiciones</a> •
-            <a href="/privacidad" style="color: #006847; text-decoration: none; margin: 0 10px;">Política de Privacidad</a>
+        <p style="color: var(--text-muted); font-size: 0.85em; margin-bottom: 10px;">
+            <a href="/terminos" style="color: var(--text-muted); text-decoration: none; margin: 0 10px;">Términos</a> •
+            <a href="/privacidad" style="color: var(--text-muted); text-decoration: none; margin: 0 10px;">Privacidad</a>
         </p>
-        <p style="color: #999; font-size: 0.8em; margin: 0;">
-            VueloDigno © 2025 • Basado en la Ley de Aviación Civil de México
+        <p style="color: var(--text-muted); font-size: 0.75em; margin: 0; opacity: 0.7;">
+            VueloDigno © 2025
         </p>
     </footer>
 </body>

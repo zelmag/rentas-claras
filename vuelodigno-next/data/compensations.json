@@ -1,0 +1,26 @@
+{
+  "vivaaerobus": {
+    "tier1_fixed": 75,
+    "tier2_percent": 0.08,
+    "tier3_percent": 0.25,
+    "tier3_refund": 1.0
+  },
+  "aeromexico": {
+    "tier1_percent": 0.05,
+    "tier2_percent": 0.075,
+    "tier3_percent": 0.25,
+    "tier3_refund": 1.0
+  },
+  "volaris": {
+    "tier1_fixed": 50,
+    "tier2_fixed": 250,
+    "tier2_percent": 0.075,
+    "tier3_percent": 0.25,
+    "tier3_refund": 1.0
+  },
+  "mexican_law": {
+    "tier2_percent": 0.075,
+    "tier3_percent": 0.25,
+    "tier3_refund": 1.0
+  }
+}

@@ -2,8 +2,8 @@
 from flask import Flask, render_template, request, redirect, url_for, flash
 from email_generator_simple import generate_mexico_claim_letter, get_airline_email
 from email_sender import send_claim_email
+from utils import generate_tweet_text, convert_markdown_to_html, format_date_spanish
 from datetime import datetime, timedelta
-import re
 import os
 import locale
 
@@ -25,94 +25,18 @@ except ImportError:
     RESEND_AVAILABLE = False
     print("⚠️ Resend not available - install with: pip3 install resend")
 
-# Airline Twitter handles for social pressure feature
-AIRLINE_TWITTER_HANDLES = {
-    'Volaris': '@viajaVolaris',
-    'VivaAerobus': '@VivaTeEscucha',
-    'Aeromexico': '@Aeromexico'
-}
-
-def generate_tweet_text(flight_data, compensation_amount):
-    """Generate pre-filled tweet for social pressure"""
-    airline = flight_data['airline']
-    airline_handle = AIRLINE_TWITTER_HANDLES.get(airline, f'@{airline}')
-
-    # Format compensation amount
-    comp_text = f"${compensation_amount:,.0f} MXN" if compensation_amount > 0 else "compensación"
-
-    # Get delay hours text
-    delay_hours = flight_data['delay_hours']
-    if delay_hours == 1.5:
-        delay_text = "1-2 horas"
-    elif delay_hours == 3.0:
-        delay_text = "2-4 horas"
-    elif delay_hours == 5.0:
-        delay_text = "más de 4 horas"
-    else:
-        delay_text = f"{delay_hours} horas"
-
-    # Build angry tweet (no emojis)
-    tweet = f"""Según #VueloDigno, {airline_handle} me debe {comp_text} por retraso de {delay_text} en el vuelo {flight_data['flight_number']}.
-
-Reclamo enviado. Plazo legal: 10 días.
-
-Si no responden, presentaré queja con @Profeco
-
-#DerechosDelPasajero #PROFECO"""
-
-    return tweet
-
-def convert_markdown_to_html(text):
-    """Convert markdown formatting to HTML for the front-end preview."""
-    # Bold: **text**
-    text = re.sub(r'\*\*([^\*]+?)\*\*', r'<strong>\1</strong>', text)
-
-    # Bullet points: * item
-    text = re.sub(r'^\*\s+(.+)$', r'<li>\1</li>', text, flags=re.MULTILINE)
-    # Wrap consecutive list items in <ul>
-    text = re.sub(r'(<li>.+?</li>\n)+', lambda m: f'<ul>{m.group(0)}</ul>', text)
-
-    # Line breaks
-    text = text.replace('\n', '<br>\n')
-
-    return text
-
-def format_date_spanish(date_obj):
-    """Format date in Spanish: DD de MONTH de YYYY"""
-    months_spanish = {
-        'January': 'enero', 'February': 'febrero', 'March': 'marzo',
-        'April': 'abril', 'May': 'mayo', 'June': 'junio',
-        'July': 'julio', 'August': 'agosto', 'September': 'septiembre',
-        'October': 'octubre', 'November': 'noviembre', 'December': 'diciembre'
-    }
-
-    # Try using locale first
-    try:
-        date_str = date_obj.strftime('%d de %B de %Y')
-        # If month is in English, translate it
-        for eng, esp in months_spanish.items():
-            date_str = date_str.replace(eng, esp)
-        return date_str
-    except:
-        # Fallback to manual formatting
-        day = date_obj.day
-        month = months_spanish.get(date_obj.strftime('%B'), date_obj.strftime('%B'))
-        year = date_obj.year
-        return f"{day} de {month} de {year}"
-
 app = Flask(__name__)
-app.secret_key = 'una_clave_secreta_fuerte_aqui' # ⬅️ REQUIRED for flash messages
+app.secret_key = 'una_clave_secreta_fuerte_aqui'  # Required for flash messages
+
 
 @app.route('/')
 def index():
     """Home page with form"""
-    # 📆 Calculate the date 365 days ago for the MINimum date limit
+    # Calculate the date 365 days ago for the minimum date limit
     one_year_ago = datetime.now() - timedelta(days=365)
-
-    # Format it as a string: YYYY-MM-DD
     min_date_limit = one_year_ago.strftime('%Y-%m-%d')
 
-    # Also calculate today's date for the MAX date limit (no future claims)
+    # Calculate today's date for the max date limit (no future claims)
     today = datetime.now().strftime('%Y-%m-%d')
 
     # Check if user is coming back from preview page
@@ -134,15 +58,16 @@ def index():
         }
 
     return render_template('index.html',
-                           min_date=min_date_limit, # Pass the minimum date
-                           max_date=today,          # Pass today's date
-                           back_data=back_data)     # Pass back navigation data
+                           min_date=min_date_limit,
+                           max_date=today,
+                           back_data=back_data)
+
 
 @app.route('/preview', methods=['POST'])
 def preview():
     """Generate and show letter preview"""
 
-    # ⚠️ Input Validation and Data Gathering
+    # Input Validation and Data Gathering
     try:
         passenger_count = int(request.form.get('passenger_count', 1))
         if passenger_count < 1 or passenger_count > 10:
@@ -153,28 +78,25 @@ def preview():
             'destination': request.form.get('destination', '').upper().strip(),
             'airline': request.form['airline'],
             'flight_number': request.form['flight_number'],
-            'reservation_code': request.form.get('reservation_code', 'N/A'),  # Optional, defaults to N/A
+            'reservation_code': request.form.get('reservation_code', 'N/A'),
             'date': request.form['date'],
-            'delay_hours': float(request.form['delay_hours']), # Convert to float
-            'ticket_price': float(request.form['ticket_price']), # Convert to float
+            'delay_hours': float(request.form['delay_hours']),
+            'ticket_price': float(request.form['ticket_price']),
             'passenger_name': '',  # Will be filled on preview page
             'passenger_email': '',  # Will be filled on preview page
             'passenger_count': passenger_count,
-            'compensation_choice': request.form.get('compensation_choice', 'reembolso_indemnizacion')  # Only relevant for 4+ hour delays
+            'compensation_choice': request.form.get('compensation_choice', 'reembolso_indemnizacion')
         }
     except ValueError:
-        # Handle case where user inputs text for a number field (e.g., ticket_price)
         flash('Error: Asegúrate de que los campos de precio y horas de retraso sean números válidos.', 'error')
         return redirect(url_for('index'))
 
-
     # --- LEGAL VALIDATIONS ---
 
-    # 1. Date Validation: Max 1 Year Ago (As per your law requirement)
+    # 1. Date Validation: Max 1 Year Ago
     one_year_ago = datetime.now() - timedelta(days=365)
 
     try:
-        # Assuming date input format is 'YYYY-MM-DD'
         flight_date = datetime.strptime(flight_data['date'], '%Y-%m-%d')
     except ValueError:
         flash('Error: El formato de la fecha es inválido. Utiliza YYYY-MM-DD.', 'error')
@@ -184,8 +106,7 @@ def preview():
         flash('Error: La ley limita la compensación a vuelos que ocurrieron hace menos de un año.', 'error')
         return redirect(url_for('index'))
 
-    # 2. Delay Validation: Must be over 1 Hour (As per your policy requirement)
-    # Using '>= 1.0' for robustness, but flagging less than 1.0 as an error
+    # 2. Delay Validation: Must be at least 1 hour
     if flight_data['delay_hours'] < 1.0:
         flash('Error: El retraso debe ser de al menos 1.0 hora para que la reclamación sea válida.', 'error')
         return redirect(url_for('index'))
@@ -208,11 +129,24 @@ def preview():
         airline_email = "No encontrado - ingresa manualmente"
 
     return render_template('preview.html',
-                         letter=formatted_letter,
-                         flight_data=flight_data,
-                         airline_email=airline_email,
-                         compensation_amount=total_compensation,
-                         per_passenger_amount=per_passenger_amount)
+                           letter=formatted_letter,
+                           flight_data=flight_data,
+                           airline_email=airline_email,
+                           compensation_amount=total_compensation,
+                           per_passenger_amount=per_passenger_amount)
+
+
+@app.route('/terminos')
+def terminos():
+    """Terms and conditions page"""
+    return render_template('terminos.html')
+
+
+@app.route('/privacidad')
+def privacidad():
+    """Privacy policy page"""
+    return render_template('privacidad.html')
+
 
 @app.route('/send', methods=['POST'])
 def send():
@@ -262,9 +196,9 @@ def send():
 
         success = False
 
-        print("\n" + "="*50)
+        print("\n" + "=" * 50)
         print("📧 ATTEMPTING TO SEND EMAIL")
-        print("="*50)
+        print("=" * 50)
         print(f"To: {airline_email}")
         print(f"Passenger: {flight_data['passenger_email']}")
         print(f"Flight: {flight_data['flight_number']}")
@@ -288,9 +222,9 @@ def send():
             else:
                 print("❌ SMTP also failed")
 
-        print("="*50)
+        print("=" * 50)
         print(f"FINAL RESULT: {'SUCCESS' if success else 'FAILED'}")
-        print("="*50 + "\n")
+        print("=" * 50 + "\n")
 
         # Generate tweet text for social pressure
         tweet_text = generate_tweet_text(flight_data, compensation_amount)
@@ -316,6 +250,7 @@ def send():
                                reminder_date='',
                                profeco_deadline='',
                                tweet_text='')
+
 
 if __name__ == '__main__':
     # Use PORT from environment variable (for production) or default to 8080 (for local dev)

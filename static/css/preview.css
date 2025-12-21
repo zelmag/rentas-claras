@@ -1,0 +1,144 @@
+/* preview.css - Page-specific styles for the preview/email page */
+
+/* Body overrides */
+body {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 8px 24px 24px 24px;
+}
+
+@media (min-width: 768px) {
+    body {
+        max-width: 720px;
+        padding: 16px 32px 32px 32px;
+    }
+}
+
+@media (min-width: 1024px) {
+    body {
+        max-width: 880px;
+        padding: 32px 48px 48px 48px;
+    }
+}
+
+@media (min-width: 1440px) {
+    body {
+        max-width: 980px;
+    }
+}
+
+/* Container overrides */
+.container {
+    padding: 0px 24px 32px 24px;
+}
+
+@media (min-width: 768px) {
+    .container {
+        padding: 2px 40px 48px 40px;
+    }
+}
+
+@media (min-width: 1024px) {
+    .container {
+        padding: 4px 48px 56px 48px;
+    }
+}
+
+/* Border pulse animation for editor */
+@keyframes borderPulse {
+    0%, 100% {
+        border-color: #3498db;
+        box-shadow: 0 0 0 0 rgba(52, 152, 219, 0);
+    }
+    50% {
+        border-color: #e74c3c;
+        box-shadow: 0 0 20px 8px rgba(231, 76, 60, 0.5);
+    }
+}
+
+/* Airline email section */
+.airline-email {
+    background: var(--bg-elevated);
+    border-left: 4px solid var(--success-500);
+    padding: 12px 15px;
+    border-radius: 8px;
+    margin: 15px 0;
+}
+
+.airline-email input {
+    width: 100%;
+    padding: 12px 14px;
+    border: 2px solid var(--border-strong);
+    border-radius: 12px;
+    margin-top: 8px;
+    box-sizing: border-box;
+    font-size: 15px;
+    font-family: 'Montserrat', sans-serif;
+    min-height: 48px;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+@media (min-width: 768px) {
+    .airline-email {
+        padding: 15px;
+        margin: 20px 0;
+    }
+
+    .airline-email input {
+        padding: 14px 16px;
+        font-size: 16px;
+        min-height: 52px;
+    }
+}
+
+/* Button overrides for this page */
+button {
+    padding: 14px 20px;
+    background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    cursor: pointer;
+    margin-right: 10px;
+    box-shadow: 0 4px 16px rgba(79, 70, 229, 0.3);
+    transition: all 0.3s ease;
+    font-weight: 700;
+    min-height: 48px;
+}
+
+@media (min-width: 768px) {
+    button {
+        padding: 18px 28px;
+        font-size: 17px;
+        border-radius: 14px;
+        min-height: 56px;
+    }
+}
+
+button:hover {
+    background: linear-gradient(135deg, #4338ca 0%, #3730a3 100%);
+    box-shadow: 0 6px 24px rgba(79, 70, 229, 0.4);
+    transform: translateY(-2px);
+}
+
+button:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 12px rgba(79, 70, 229, 0.3);
+}
+
+/* Button group */
+.button-group {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+@media (min-width: 768px) {
+    .button-group {
+        gap: 14px;
+        margin-top: 28px;
+    }
+}

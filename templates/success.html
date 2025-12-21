@@ -9,207 +9,12 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Montserrat', sans-serif;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            background: linear-gradient(135deg, #006847 0%, #ffffff 50%, #CE1126 100%);
-            min-height: 100vh;
-        }
-
-        /* Responsive width */
-        @media (min-width: 768px) {
-            body {
-                max-width: 700px;
-                padding: 30px;
-            }
-        }
-
-        @media (min-width: 1024px) {
-            body {
-                max-width: 850px;
-                padding: 40px;
-            }
-        }
-
-        @media (min-width: 1440px) {
-            body {
-                max-width: 950px;
-            }
-        }
-
-        .container {
-            background: white;
-            padding: 30px;
-            border-radius: 16px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-            text-align: center;
-        }
-
-        @media (min-width: 768px) {
-            .container {
-                padding: 40px;
-            }
-        }
-
-        @media (min-width: 1024px) {
-            .container {
-                padding: 50px;
-            }
-        }
-
-        .success {
-            color: #27ae60;
-            font-size: 60px;
-            margin-bottom: 20px;
-        }
-
-        .error {
-            color: #e74c3c;
-            font-size: 60px;
-            margin-bottom: 20px;
-        }
-
-        h1 {
-            color: #2c3e50;
-        }
-
-        p {
-            color: #7f8c8d;
-            line-height: 1.6;
-        }
-
-        .btn-primary {
-            padding: 15px 30px;
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            cursor: pointer;
-            margin: 10px 5px;
-            box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
-            transition: all 0.3s ease;
-            font-weight: 600;
-        }
-
-        .btn-primary:hover {
-            background: linear-gradient(135deg, #059669 0%, #047857 100%);
-            box-shadow: 0 6px 24px rgba(16, 185, 129, 0.4);
-            transform: translateY(-2px);
-        }
-
-        .btn-primary:active {
-            transform: translateY(0);
-            box-shadow: 0 2px 12px rgba(16, 185, 129, 0.3);
-        }
-
-        .btn-new-claim {
-            /* Inherits btn-primary styles */
-        }
-
-        .progress-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin: 20px 0 30px 0;
-            position: relative;
-        }
-
-        .progress-line {
-            position: absolute;
-            top: 50%;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background-color: #e5e7eb;
-            z-index: 1;
-            transform: translateY(-50%);
-        }
-
-        .progress-line-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #006847 0%, #CE1126 100%);
-            width: 100%;
-        }
-
-        .milestone {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            z-index: 2;
-            position: relative;
-        }
-
-        .milestone-circle {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background-color: #e5e7eb;
-            border: 4px solid #e5e7eb;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 16px;
-            transition: all 0.3s ease;
-            color: #9ca3af;
-        }
-
-        .milestone.completed .milestone-circle {
-            background: linear-gradient(135deg, #006847 0%, #059669 100%);
-            border-color: #006847;
-            color: white;
-        }
-
-        .milestone-label {
-            margin-top: 8px;
-            font-size: 0.75em;
-            color: #6b7280;
-            font-weight: 500;
-            text-align: center;
-            max-width: 80px;
-        }
-
-        .milestone.completed .milestone-label {
-            color: #2c3e50;
-            font-weight: 600;
-        }
-
-        /* Essential for confetti to render over everything */
-        #confetti-canvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 1000;
-        }
-
-        /* Responsive iframe for Google Form */
-        .responsive-iframe {
-            width: 100%;
-            max-width: 100%;
-            border: none;
-            overflow: hidden;
-        }
-
-        /* Adjust iframe height for mobile */
-        @media (max-width: 767px) {
-            .responsive-iframe {
-                height: 1200px;
-            }
-        }
-
-        @media (min-width: 768px) {
-            .responsive-iframe {
-                height: 1374px;
-            }
-        }
-    </style>
+    <!-- Shared theme - Single Source of Truth -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='theme.css') }}">
+    <!-- Page-specific styles -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/success.css') }}">
+    <!-- Shared JavaScript -->
+    <script src="{{ url_for('static', filename='js/shared.js') }}"></script>
 
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-68JMDPRZY1"></script>
@@ -251,15 +56,15 @@
         <h1>¡Lo lograste! Reclamación enviada a <strong>{{ flight_data.airline }}</strong>.</h1>
 
         <div
-            style="background: #f0fdf4; border-left: 4px solid #006847; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: left;">
-            <h3 style="margin-top: 0; color: #2c3e50;">📋 Próximos Pasos:</h3>
-            <ol style="line-height: 2; color: #2c3e50;">
-                <li>Recibirás una copia del reclamo en tu email (<strong>{{ flight_data.passenger_email }}</strong>).</li>
-                <li>{{ flight_data.airline }} debe responder a más tardar el <strong>{{ profeco_deadline }}</strong> (10 días naturales según la Ley de Aviación Civil).</li>
-                <li>Si {{ flight_data.airline }} no responde antes del <strong>{{ profeco_deadline }}</strong>, presenta
+            style="background: var(--bg-elevated); border-left: 4px solid var(--success-500); padding: 20px; border-radius: 8px; margin: 20px 0; text-align: left;">
+            <h3 style="margin-top: 0; color: var(--text-primary);">📋 Próximos Pasos:</h3>
+            <ol style="line-height: 2; color: var(--text-secondary);">
+                <li>Recibirás una copia del reclamo en tu email (<strong style="color: var(--text-primary);">{{ flight_data.passenger_email }}</strong>).</li>
+                <li>{{ flight_data.airline }} debe responder a más tardar el <strong style="color: var(--text-primary);">{{ profeco_deadline }}</strong> (10 días naturales según la Ley de Aviación Civil).</li>
+                <li>Si {{ flight_data.airline }} no responde antes del <strong style="color: var(--text-primary);">{{ profeco_deadline }}</strong>, presenta
                     tu queja ante <a
                         href="https://consumidoras.profeco.gob.mx/conciliaexpress/solicitud.php"
-                        target="_blank" style="color: #006847; font-weight: bold;">PROFECO</a>.</li>
+                        target="_blank" style="color: var(--success-500); font-weight: bold;">PROFECO</a>.</li>
             </ol>
         </div>
 
@@ -269,23 +74,23 @@
             <h3 style="margin-top: 0; color: #ffffff; font-size: 1.3em;">💥 ¿No te contestan? Presiónalos públicamente en X</h3>
 
             <!-- Tweet Template Box -->
-            <div style="background: #ffffff; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
-                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #e1e8ed;">
+            <div style="background: var(--bg-elevated); border-radius: 8px; padding: 20px; margin-bottom: 20px; border: 1px solid var(--border-subtle);">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--border-strong);">
                     <div style="width: 40px; height: 40px; background: #000000; border-radius: 50%; display: flex; align-items: center; justify-content: center; overflow: hidden;">
                         <img src="{{ url_for('static', filename='twitter.png') }}" alt="X" style="width: 24px; height: 24px; object-fit: contain;">
                     </div>
                     <div>
-                        <div style="font-weight: bold; color: #14171a;">Tu reclamación pública</div>
-                        <div style="font-size: 0.85em; color: #657786;">Lista para compartir en X</div>
+                        <div style="font-weight: bold; color: var(--text-primary);">Tu reclamación pública</div>
+                        <div style="font-size: 0.85em; color: var(--text-muted);">Lista para compartir en X</div>
                     </div>
                 </div>
 
-                <div id="tweet-text" style="color: #14171a; line-height: 1.6; white-space: pre-wrap; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">{{ tweet_text }}</div>
+                <div id="tweet-text" style="color: var(--text-primary); line-height: 1.6; white-space: pre-wrap; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">{{ tweet_text }}</div>
 
-                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e1e8ed;">
+                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border-strong);">
                     <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                         <button onclick="copyTweet()" id="copy-btn"
-                            style="flex: 1; min-width: 140px; padding: 12px 20px; background: #ffffff; color: #000000; border: 2px solid #000000; border-radius: 9999px; font-size: 15px; font-weight: bold; cursor: pointer; transition: all 0.2s;">
+                            style="flex: 1; min-width: 140px; padding: 12px 20px; background: var(--bg-secondary); color: var(--text-primary); border: 2px solid var(--border-strong); border-radius: 9999px; font-size: 15px; font-weight: bold; cursor: pointer; transition: all 0.2s;">
                             📋 Copiar Texto
                         </button>
                         <button onclick="tweetNow()"
@@ -298,16 +103,16 @@
         </div>
 
         <div
-            style="background: #ffffff; border-left: 4px solid #CE1126; padding: 20px; border-radius: 8px; margin: 20px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-            <h3 style="margin-top: 0; color: #2c3e50;">💬 Ayúdanos a mejorar (1 minuto)</h3>
-            <p style="margin-bottom: 15px; color: #2c3e50;">Responde 3 preguntas rápidas para ayudarnos a hacer
+            style="background: var(--bg-elevated); border-left: 4px solid var(--accent-500); padding: 20px; border-radius: 8px; margin: 20px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">
+            <h3 style="margin-top: 0; color: var(--text-primary);">💬 Ayúdanos a mejorar (1 minuto)</h3>
+            <p style="margin-bottom: 15px; color: var(--text-secondary);">Responde 3 preguntas rápidas para ayudarnos a hacer
                 VueloDigno aún mejor:</p>
             <iframe
                 src="https://docs.google.com/forms/d/e/1FAIpQLSdcpq8h1YahgWGUivulhVnxDi8yGqrtClunlMu7SHYm48Ia4w/viewform?embedded=true"
                 class="responsive-iframe" frameborder="0" marginheight="0" marginwidth="0">Loading…</iframe>
             <div
-                style="background-color: #f0fdf4; border-left: 4px solid #006847; padding: 15px 20px; border-radius: 8px; margin-top: 20px; text-align: center;">
-                <p style="margin: 0; font-size: 1em; color: #065f46;">
+                style="background-color: rgba(16, 185, 129, 0.15); border-left: 4px solid var(--success-500); padding: 15px 20px; border-radius: 8px; margin-top: 20px; text-align: center;">
+                <p style="margin: 0; font-size: 1em; color: var(--success-500);">
                     🙌 ¡Gracias por ayudarnos a mejorar VueloDigno!
                 </p>
             </div>
@@ -373,9 +178,9 @@
                 // Reset after 2 seconds
                 setTimeout(() => {
                     btn.innerHTML = originalText;
-                    btn.style.background = '#ffffff';
-                    btn.style.color = '#000000';
-                    btn.style.borderColor = '#000000';
+                    btn.style.background = 'var(--bg-secondary)';
+                    btn.style.color = 'var(--text-primary)';
+                    btn.style.borderColor = 'var(--border-strong)';
                 }, 2000);
 
                 // Track analytics

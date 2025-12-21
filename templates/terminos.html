@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Términos y Condiciones - VueloDigno</title>
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #006847 0%, #ffffff 50%, #CE1126 100%);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 40px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+        }
+
+        h1 {
+            color: #2c3e50;
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        h2 {
+            color: #006847;
+            font-size: 1.5em;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+
+        .last-updated {
+            color: #7f8c8d;
+            font-size: 0.9em;
+            margin-bottom: 30px;
+        }
+
+        p {
+            margin-bottom: 15px;
+        }
+
+        ul {
+            margin-bottom: 15px;
+            padding-left: 20px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #006847;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        strong {
+            color: #2c3e50;
+        }
+
+        .contact {
+            background: #f0fdf4;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #006847;
+            margin-top: 30px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <a href="/" class="back-link">← Volver a VueloDigno</a>
+
+        <h1>Términos y Condiciones</h1>
+        <p class="last-updated"><strong>Última actualización:</strong> 14 de noviembre de 2025</p>
+
+        <h2>1. Aceptación de Términos</h2>
+        <p>Al usar VueloDigno, aceptas estos términos y condiciones. Si no estás de acuerdo, por favor no uses el servicio.</p>
+
+        <h2>2. Descripción del Servicio</h2>
+        <p>VueloDigno es una herramienta <strong>100% GRATUITA</strong> que genera cartas de reclamación basadas en la <strong>Ley de Aviación Civil de México (Artículo 47 Bis)</strong>. El servicio:</p>
+        <ul>
+            <li>Genera automáticamente cartas de reclamo profesionales</li>
+            <li>Envía el reclamo a la aerolínea en tu nombre</li>
+            <li>Te envía una copia del email para tus registros</li>
+            <li>Calcula la compensación según la ley mexicana</li>
+        </ul>
+        <p><strong>Importante:</strong> VueloDigno NO es un despacho de abogados. No proveemos asesoría legal, ni representamos legalmente a los usuarios. Solo facilitamos la generación y envío de reclamos.</p>
+
+        <h2>3. Limitación de Responsabilidad</h2>
+        <p>VueloDigno actúa como facilitador del proceso de reclamación. Por lo tanto:</p>
+        <ul>
+            <li><strong>NO garantizamos</strong> que las aerolíneas respondan a tu reclamo</li>
+            <li><strong>NO garantizamos</strong> que las aerolíneas paguen la compensación</li>
+            <li><strong>NO somos responsables</strong> de errores en la información que TÚ ingresas en el formulario</li>
+            <li><strong>NO procesamos pagos</strong> ni manejamos compensaciones monetarias</li>
+            <li><strong>NO somos responsables</strong> de retrasos en la respuesta de las aerolíneas</li>
+        </ul>
+        <p>El usuario es responsable de:</p>
+        <ul>
+            <li>Verificar la exactitud de la información ingresada</li>
+            <li>Conservar documentación de respaldo (pase de abordar, reserva, etc.)</li>
+            <li>Dar seguimiento a su reclamo directamente con la aerolínea</li>
+        </ul>
+
+        <h2>4. Uso del Servicio</h2>
+        <p><strong>Es completamente GRATIS:</strong></p>
+        <ul>
+            <li>No cobramos comisiones sobre compensaciones</li>
+            <li>No cobramos cuotas de suscripción</li>
+            <li>No hay costos ocultos de ningún tipo</li>
+        </ul>
+        <p><strong>Elegibilidad:</strong></p>
+        <ul>
+            <li>Solo para vuelos que <strong>salen de México</strong> (nacionales o internacionales)</li>
+            <li>Basado en información pública de la Ley de Aviación Civil de México</li>
+            <li>Aplicable a vuelos de los últimos 12 meses</li>
+        </ul>
+
+        <h2>5. Privacidad y Datos</h2>
+        <p>Lee nuestra <a href="/privacidad" style="color: #006847; font-weight: 600;">Política de Privacidad</a> para detalles completos. En resumen:</p>
+        <ul>
+            <li>No almacenamos tus datos personales permanentemente</li>
+            <li>No vendemos tu información</li>
+            <li>Solo usamos tus datos para generar y enviar tu reclamo</li>
+        </ul>
+
+        <h2>6. Propiedad Intelectual</h2>
+        <p>El código, diseño, marca y contenido de VueloDigno son propiedad de <strong>Zelma Garza Salinas</strong>. Todos los derechos reservados.</p>
+
+        <h2>7. Modificaciones</h2>
+        <p>Nos reservamos el derecho de modificar estos términos en cualquier momento. Los cambios significativos serán notificados a través del sitio web. El uso continuado del servicio después de cambios constituye aceptación de los nuevos términos.</p>
+
+        <h2>8. Ley Aplicable</h2>
+        <p>Estos términos se rigen por las leyes de los Estados Unidos Mexicanos. Cualquier disputa será resuelta bajo la jurisdicción de los tribunales de México.</p>
+
+        <div class="contact">
+            <h2 style="margin-top: 0;">9. Contacto</h2>
+            <p style="margin-bottom: 0;"><strong>Zelma Garza Salinas</strong><br>
+            Email: <a href="mailto:hola@vuelodigno.com" style="color: #006847;">hola@vuelodigno.com</a><br>
+            LinkedIn: <a href="https://www.linkedin.com/in/zelmag/" target="_blank" style="color: #006847;">linkedin.com/in/zelmag</a></p>
+        </div>
+    </div>
+</body>
+
+</html>

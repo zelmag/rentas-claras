@@ -21,6 +21,7 @@ def send_claim_email_resend(letter_html, flight_data, airline_email):
 
     # Get API key from environment variable
     resend.api_key = os.environ.get("RESEND_API_KEY")
+    from_email = os.environ.get("FROM_EMAIL", "reclamos@vuelodigno.com")
 
     if not resend.api_key:
         print("ERROR: RESEND_API_KEY not found in environment variables")
@@ -29,7 +30,7 @@ def send_claim_email_resend(letter_html, flight_data, airline_email):
     try:
         # Build email parameters
         params = {
-            "from": "noreply@vuelodigno.com",  # VueloDigno verified domain
+            "from": from_email,  # VueloDigno verified domain
             "to": [airline_email],
             "cc": [flight_data['passenger_email']],  # User gets a copy
             "reply_to": flight_data['passenger_email'],  # Airline replies go to user
@@ -63,6 +64,7 @@ def send_confirmation_to_user(flight_data, airline_email, compensation_amount, d
     """
 
     resend.api_key = os.environ.get("RESEND_API_KEY")
+    from_email = os.environ.get("FROM_EMAIL", "reclamos@vuelodigno.com")
 
     if not resend.api_key:
         return False
@@ -116,7 +118,7 @@ def send_confirmation_to_user(flight_data, airline_email, compensation_amount, d
         """
 
         params = {
-            "from": "noreply@vuelodigno.com",  # VueloDigno verified domain
+            "from": from_email,  # VueloDigno verified domain
             "to": [flight_data['passenger_email']],
             "subject": f"✅ Reclamación Enviada - Vuelo {flight_data['flight_number']}",
             "html": confirmation_html,

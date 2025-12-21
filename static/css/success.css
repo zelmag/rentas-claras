@@ -1,0 +1,76 @@
+/* success.css - Page-specific styles for the success page */
+
+/* Body overrides */
+body {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+@media (min-width: 768px) {
+    body {
+        max-width: 700px;
+        padding: 30px;
+    }
+}
+
+@media (min-width: 1024px) {
+    body {
+        max-width: 850px;
+        padding: 40px;
+    }
+}
+
+@media (min-width: 1440px) {
+    body {
+        max-width: 950px;
+    }
+}
+
+/* Container override - centered text */
+.container {
+    text-align: center;
+    padding: 30px;
+}
+
+@media (min-width: 768px) {
+    .container {
+        padding: 40px;
+    }
+}
+
+@media (min-width: 1024px) {
+    .container {
+        padding: 50px;
+    }
+}
+
+/* Success and error icons */
+.success-icon {
+    color: #27ae60;
+    font-size: 60px;
+    margin-bottom: 20px;
+}
+
+.error-icon {
+    color: #e74c3c;
+    font-size: 60px;
+    margin-bottom: 20px;
+}
+
+/* Progress container */
+.progress-container {
+    margin: 20px 0 30px 0;
+}
+
+/* Progress line fill for success page */
+.progress-line-fill {
+    width: 100%;
+}
+
+/* Button specific styles */
+.btn-new-claim {
+    padding: 15px 30px;
+    margin: 10px 5px;
+    font-size: 16px;
+}
