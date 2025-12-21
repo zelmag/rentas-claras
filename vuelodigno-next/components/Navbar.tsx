@@ -28,27 +28,31 @@ export default function Navbar() {
 
   const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
     e.preventDefault();
+    
+    // Close mobile menu first
     setMobileMenuOpen(false);
     
-    // If we're not on the home page, navigate there first then scroll
-    if (pathname !== "/") {
-      // Navigate to home page, then scroll after a delay
-      router.push("/");
-      // Wait for navigation, then scroll to section
-      setTimeout(() => {
-        const element = document.querySelector(href);
-        if (element) {
-          element.scrollIntoView({ behavior: "smooth" });
-        }
-      }, 100);
-      return;
-    }
-    
-    // If we're on the home page, just scroll
-    const element = document.querySelector(href);
-    if (element) {
-      element.scrollIntoView({ behavior: "smooth" });
-    }
+    // Small delay to let menu close animation complete
+    setTimeout(() => {
+      // If we're not on the home page, navigate there first then scroll
+      if (pathname !== "/") {
+        router.push("/");
+        // Wait for navigation, then scroll to section
+        setTimeout(() => {
+          const element = document.querySelector(href);
+          if (element) {
+            element.scrollIntoView({ behavior: "smooth" });
+          }
+        }, 300);
+        return;
+      }
+      
+      // If we're on the home page, just scroll
+      const element = document.querySelector(href);
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth" });
+      }
+    }, 150); // Wait for menu close animation
   };
 
   // Handle hash scrolling when landing on page with hash
