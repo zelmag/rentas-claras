@@ -2869,13 +2869,18 @@ HTML_TEMPLATE = """
         </div>
         {% endif %}
         
-        <!-- #8: FALTA COBRAR moved to TOP - Clean summary card -->
+        <!-- #8: FALTA COBRAR moved to TOP - Now shows TOTAL including late fees -->
         <div style="background: white; border: 4px solid #CC0000; padding: 20px; border-radius: 16px; margin-bottom: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
-                <div style="font-size: 1.1rem; font-weight: 700; color: #333;">Pendiente este mes:</div>
-                <div style="font-size: 1.8rem; font-weight: 800; color: #CC0000;" id="faltaCobrarTop">${{ "{:,.0f}".format(total_rent) }} MXN</div>
+                <div style="font-size: 1.1rem; font-weight: 700; color: #333;">TOTAL A COBRAR:</div>
+                <div style="font-size: 1.8rem; font-weight: 800; color: #CC0000;" id="faltaCobrarTop">${{ "{:,.0f}".format(total_owed) }} MXN</div>
             </div>
-            <div style="font-size: 1rem; margin-top: 8px; color: #666;" id="faltaPersonasTop">{{ total_tenants }} inquilinos por pagar</div>
+            {% if total_late_fees > 0 %}
+            <div style="font-size: 0.95rem; margin-top: 6px; color: #92400E; background: #FEF3C7; padding: 8px 12px; border-radius: 8px; display: inline-block;">
+                Incluye <strong>${{ "{:,.0f}".format(total_late_fees) }}</strong> en multas por atraso
+            </div>
+            {% endif %}
+            <div style="font-size: 1rem; margin-top: 8px; color: #666;" id="faltaPersonasTop">{{ unpaid_count }} inquilino{% if unpaid_count != 1 %}s{% endif %} pendiente{% if unpaid_count != 1 %}s{% endif %}</div>
         </div>
         
         {% if test_mode %}
@@ -3214,20 +3219,20 @@ HTML_TEMPLATE = """
                     
                     <!-- LATE FEE BREAKDOWN - Only shown for unpaid tenants with fees -->
                     {% if not tenant.paid and tenant.days_late >= 1 %}
-                    <div style="background: #FEF3C7; border: 2px solid #F59E0B; border-radius: 12px; padding: 14px 16px; margin-top: 8px;">
+                    <div style="{% if tenant.days_late >= 7 %}background: #FEE2E2; border: 2px solid #CC0000;{% else %}background: #FEF3C7; border: 2px solid #F59E0B;{% endif %} border-radius: 12px; padding: 14px 16px; margin-top: 8px;">
                         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
                             <div style="display: flex; align-items: center; gap: 8px;">
-                                <span style="font-size: 1.4rem;">⏰</span>
-                                <span style="font-weight: 700; color: #92400E; font-size: 1rem;">{{ tenant.days_late }} día{% if tenant.days_late > 1 %}s{% endif %} de atraso</span>
+                                <span style="font-size: 1.4rem;">{% if tenant.days_late >= 7 %}🚨{% else %}⏰{% endif %}</span>
+                                <span style="font-weight: 700; {% if tenant.days_late >= 7 %}color: #CC0000;{% else %}color: #92400E;{% endif %} font-size: 1rem;">{{ tenant.days_late }} día{% if tenant.days_late > 1 %}s{% endif %} de atraso{% if tenant.days_late >= 7 %} — CRÍTICO{% endif %}</span>
                             </div>
                             <div style="text-align: right;">
-                                <div style="font-size: 0.9rem; color: #92400E;">
+                                <div style="font-size: 0.9rem; {% if tenant.days_late >= 7 %}color: #991B1B;{% else %}color: #92400E;{% endif %}">
                                     Multa: $500{% if tenant.days_late > 1 %} + {{ tenant.days_late - 1 }}×$100{% endif %} = <strong>+${{ "{:,.0f}".format(tenant.late_fee) }}</strong>
                                 </div>
                             </div>
                         </div>
-                        <div style="margin-top: 10px; padding-top: 10px; border-top: 2px dashed #F59E0B; display: flex; justify-content: space-between; align-items: center;">
-                            <span style="font-weight: 800; color: #78350F; font-size: 1.1rem;">TOTAL A COBRAR:</span>
+                        <div style="margin-top: 10px; padding-top: 10px; border-top: 2px dashed {% if tenant.days_late >= 7 %}#CC0000{% else %}#F59E0B{% endif %}; display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-weight: 800; {% if tenant.days_late >= 7 %}color: #991B1B;{% else %}color: #78350F;{% endif %} font-size: 1.1rem;">TOTAL A COBRAR:</span>
                             <span style="font-weight: 800; color: #CC0000; font-size: 1.4rem;">${{ "{:,.0f}".format(tenant.total_owed) }}</span>
                         </div>
                     </div>
@@ -3308,8 +3313,8 @@ HTML_TEMPLATE = """
                             </td>
                             <td class="rent-cell" style="{% if not tenant.paid %}color: #CC0000;{% endif %}">${{ "{:,.0f}".format(tenant.rent) }}</td>
                             <!-- DÍAS SIN PAGAR column -->
-                            <td style="text-align: center; font-weight: 700; {% if not tenant.paid and tenant.days_late >= 7 %}background: #FEE2E2; color: #CC0000;{% elif not tenant.paid and tenant.days_late >= 2 %}background: #FEF3C7; color: #B45309;{% elif not tenant.paid and tenant.days_late >= 1 %}background: #FFF3CD; color: #856404;{% endif %}">
-                                {% if tenant.paid %}—{% elif tenant.days_late == 0 %}Hoy{% else %}{{ tenant.days_late }}{% endif %}
+                            <td style="text-align: center; font-weight: 700; {% if not tenant.paid and tenant.days_late >= 7 %}background: #FEE2E2; color: #CC0000;{% elif not tenant.paid and tenant.days_late >= 2 %}background: #FEF3C7; color: #B45309;{% elif not tenant.paid and tenant.days_late >= 1 %}background: #FFF3CD; color: #856404;{% elif not tenant.paid and tenant.days_late == 0 %}background: #DCFCE7; color: #0A7A0A;{% endif %}">
+                                {% if tenant.paid %}—{% elif tenant.days_late == 0 %}✓{% else %}{{ tenant.days_late }}{% endif %}
                             </td>
                             <!-- MULTA column -->
                             <td style="text-align: right; font-weight: 700; {% if tenant.late_fee > 0 %}color: #CC0000;{% else %}color: #666;{% endif %}">
@@ -3348,18 +3353,37 @@ HTML_TEMPLATE = """
             
             <!-- Grand Total Summary Section -->
             <div class="excel-property-section" style="margin-top: 24px; padding: 16px; background: #F5F5F5; border-radius: 8px;">
-                <table class="excel-table" style="max-width: 400px;">
+                <table class="excel-table" style="max-width: 500px;">
                     <tbody>
                         {% for property_name, tenants in tenants_by_property.items() %}
                         <tr>
                             <td style="padding: 8px 16px; border: none;">{{ property_name }}</td>
-                            <td style="padding: 8px 16px; border: none; text-align: right; font-weight: bold;">${{ "{:,.0f}".format(tenants|sum(attribute='rent')) }}</td>
+                            <td style="padding: 8px 16px; border: none; text-align: right;">${{ "{:,.0f}".format(tenants|sum(attribute='rent')) }}</td>
+                            <td style="padding: 8px 16px; border: none; text-align: right; color: #CC0000; font-size: 0.9rem;">
+                                {% if tenants|rejectattr('paid')|sum(attribute='late_fee') > 0 %}+${{ "{:,.0f}".format(tenants|rejectattr('paid')|sum(attribute='late_fee')) }}{% endif %}
+                            </td>
                         </tr>
                         {% endfor %}
-                        <tr style="border-top: 3px solid #333;">
-                            <td style="padding: 12px 16px; border: none; font-weight: 800; font-size: 1.2rem;">G total</td>
-                            <td style="padding: 12px 16px; border: none; text-align: right; font-weight: 800; font-size: 1.2rem; color: #0A7A0A;">
-                                ${{ "{:,.0f}".format(tenants_by_property.values()|map('sum', attribute='rent')|sum) }}
+                        <tr style="border-top: 2px solid #999;">
+                            <td style="padding: 10px 16px; border: none; font-weight: 700;">Subtotal renta:</td>
+                            <td style="padding: 10px 16px; border: none; text-align: right; font-weight: 700;">
+                                ${{ "{:,.0f}".format(total_rent) }}
+                            </td>
+                            <td style="padding: 10px 16px; border: none;"></td>
+                        </tr>
+                        {% if total_late_fees > 0 %}
+                        <tr>
+                            <td style="padding: 8px 16px; border: none; color: #CC0000;">Total multas:</td>
+                            <td style="padding: 8px 16px; border: none; text-align: right; color: #CC0000; font-weight: 700;">
+                                +${{ "{:,.0f}".format(total_late_fees) }}
+                            </td>
+                            <td style="padding: 8px 16px; border: none;"></td>
+                        </tr>
+                        {% endif %}
+                        <tr style="border-top: 3px solid #333; background: #FEE2E2;">
+                            <td style="padding: 12px 16px; border: none; font-weight: 800; font-size: 1.2rem; color: #991B1B;">GRAN TOTAL:</td>
+                            <td colspan="2" style="padding: 12px 16px; border: none; text-align: right; font-weight: 800; font-size: 1.3rem; color: #CC0000;">
+                                ${{ "{:,.0f}".format(total_owed) }}
                             </td>
                         </tr>
                     </tbody>
