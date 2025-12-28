@@ -123,9 +123,11 @@ def calculate_rentas_claras_balance(
         daily_penalties = DAILY_PENALTY_MXN * daily_penalty_days
     else:
         # Day 8+: Critical - termination warning
+        # Daily penalties continue accumulating (Day 3 onwards = current_day - 2)
         status = PaymentStatus.CRITICAL
         initial_penalty = INITIAL_PENALTY_MXN
-        daily_penalties = DAILY_PENALTY_MXN * MAX_DAILY_PENALTY_DAYS  # Cap at 5 days
+        daily_penalty_days = current_day - 2  # Days 3+ each add $100
+        daily_penalties = DAILY_PENALTY_MXN * daily_penalty_days
         warning_message = (
             "⚠️ AVISO: De acuerdo con su contrato de arrendamiento, "
             "el retraso de más de 7 días en el pago constituye causa de rescisión. "
