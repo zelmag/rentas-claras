@@ -3053,12 +3053,12 @@ HTML_TEMPLATE = """
         
         <!-- Property Filter Tabs with scroll indicator -->
         <div style="position: relative; margin-bottom: 24px;">
-            <div class="property-filter-tabs" id="propertyFilterTabs" style="display: flex; gap: 8px; overflow-x: auto; padding: 8px; -webkit-overflow-scrolling: touch; position: relative; z-index: 100; background: #F5F5F5; border-radius: 12px; scroll-behavior: smooth;">
-                <button type="button" class="property-filter-tab active" data-filter="all" onclick="filterByProperty('all', this)" style="flex-shrink: 0; padding: 14px 24px; border-radius: 8px; border: none; background: #0A7A0A; color: white; font-size: 1rem; font-weight: 700; cursor: pointer; transition: all 0.2s; min-height: 52px; white-space: nowrap; position: relative; z-index: 101;">
+            <div class="property-filter-tabs" id="propertyFilterTabs" style="display: flex; gap: 8px; overflow-x: auto; padding: 4px; -webkit-overflow-scrolling: touch; position: relative; z-index: 10; background: #F5F5F5; border-radius: 12px; scroll-behavior: smooth;">
+                <button type="button" class="property-filter-tab active" data-filter="all" onclick="filterByProperty('all', this)" style="flex-shrink: 0; padding: 12px 20px; border-radius: 8px; border: none; background: #0A7A0A; color: white; font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: all 0.2s; min-height: 48px; white-space: nowrap; position: relative; z-index: 11;">
                     Todas <span class="tab-count" id="tabCountAll" style="background: rgba(255,255,255,0.3); padding: 2px 10px; border-radius: 12px; margin-left: 6px;">{{ total_tenants }}</span>
                 </button>
                 {% for property_name, tenants in tenants_by_property.items() %}
-                <button type="button" class="property-filter-tab" data-filter="{{ property_name }}" onclick="filterByProperty('{{ property_name }}', this)" style="flex-shrink: 0; padding: 14px 24px; border-radius: 8px; border: none; background: transparent; color: #333333; font-size: 1rem; font-weight: 700; cursor: pointer; transition: all 0.2s; min-height: 52px; white-space: nowrap; position: relative; z-index: 101;">
+                <button type="button" class="property-filter-tab" data-filter="{{ property_name }}" onclick="filterByProperty('{{ property_name }}', this)" style="flex-shrink: 0; padding: 12px 20px; border-radius: 8px; border: none; background: transparent; color: #333333; font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: all 0.2s; min-height: 48px; white-space: nowrap; position: relative; z-index: 11;">
                     {{ property_name }} <span class="tab-count" data-tab-count="{{ property_name }}" style="background: rgba(0,0,0,0.1); padding: 2px 10px; border-radius: 12px; margin-left: 6px;">{{ tenants|length }}</span>
                 </button>
                 {% endfor %}
