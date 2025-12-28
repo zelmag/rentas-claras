@@ -1,0 +1,6828 @@
+"""
+RentasClaras MVP - Simple Bulk Sender
+======================================
+
+A minimal web interface for:
+1. Display list of tenants with checkboxes
+2. Uncheck those who already paid
+3. Click "Send" to message all checked tenants
+
+Tech Stack: Flask + Simple HTML (no frameworks)
+WhatsApp: WhatsApp Web click-to-chat links (manual but legal)
+Database: SQLite for persistence + historical records
+
+Author: RentasClaras Engineering
+Date: December 2024
+"""
+
+import locale
+import os
+import urllib.parse
+from dataclasses import dataclass
+from datetime import datetime
+from decimal import Decimal
+from functools import wraps
+from typing import Optional
+
+# Import database module
+from database import (
+    get_all_tenants,
+    get_available_months,
+    get_monthly_status,
+    get_tenants_by_property,
+    init_database,
+    seed_tenants,
+    Tenant,
+    update_payment_status,
+    update_renewal_status,
+    update_tenant_phone,
+)
+from flask import (
+    Flask,
+    jsonify,
+    redirect,
+    render_template_string,
+    request,
+    session,
+    url_for,
+)
+
+# Set Spanish locale for date formatting
+try:
+    locale.setlocale(locale.LC_TIME, "es_ES.UTF-8")
+except locale.Error:
+    try:
+        locale.setlocale(locale.LC_TIME, "es_MX.UTF-8")
+    except locale.Error:
+        pass  # Fall back to default if Spanish locale not available
+
+app = Flask(__name__)
+
+# =============================================================================
+# SECURITY: Secret key and PIN protection
+# =============================================================================
+app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-key-change-in-production")
+RENTASCLARAS_PIN = os.environ.get("RENTASCLARAS_PIN")
+if not RENTASCLARAS_PIN:
+    raise ValueError(
+        "RENTASCLARAS_PIN environment variable is required. See .env.example"
+    )
+
+
+def login_required(f):
+    """Decorator to require PIN authentication."""
+
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not session.get("authenticated"):
+            return redirect(url_for("login"))
+        return f(*args, **kwargs)
+
+    return decorated_function
+
+
+# Initialize database on startup
+init_database()
+seed_tenants()
+
+# For testing, use your own number
+TEST_MODE = True
+TEST_PHONE = "+447811782597"  # Zelma's UK number for testing
+
+
+# =============================================================================
+# MESSAGE GENERATION
+# =============================================================================
+
+# Common name abbreviations in Mexican Spanish
+NAME_ABBREVIATIONS = {
+    "J": "Juan",
+    "Ma": "María",
+    "Ma.": "María",
+    "Mª": "María",
+    "Fco": "Francisco",
+    "Fco.": "Francisco",
+    "Gpe": "Guadalupe",
+    "Gpe.": "Guadalupe",
+    "Jse": "José",
+    "Jse.": "José",
+}
+
+# Common second parts of compound first names in Mexican culture
+# These should be preserved when they appear as the second word
+COMPOUND_SECOND_NAMES = {
+    "Carlos",
+    "María",
+    "Luis",
+    "José",
+    "Antonio",
+    "Francisco",
+    "Elena",
+    "Isabel",
+    "Teresa",
+    "Carmen",
+    "Cristina",
+    "Fernanda",
+    "Alejandro",
+    "Manuel",
+    "Miguel",
+    "Angel",
+    "Guadalupe",
+    "Vanessa",  # Like "Gpe Vanessa" -> "Guadalupe Vanessa"
+    # Note: "Pablo" excluded - "José Pablo" should become "José"
+}
+
+# Well-known compound first names that should always be preserved as-is
+COMPOUND_FIRST_NAMES = {
+    "Juan Carlos",
+    "José Luis",
+    "María Elena",
+    "Ana María",
+    "María José",
+    "Luis Miguel",
+    "María Fernanda",
+    "María Guadalupe",
+    "José Antonio",
+    "María Isabel",
+    "Juan Manuel",
+    "José María",
+    "Ana Sofía",
+    "Guadalupe Vanessa",
+}
+
+
+def expand_abbreviated_name(name: str) -> str:
+    """
+    Expand common Mexican name abbreviations.
+
+    Examples:
+        "J Carlos" -> "Juan Carlos"
+        "Ma Elena" -> "María Elena"
+        "Gpe Vanessa" -> "Guadalupe Vanessa"
+        "Juan Carlos" -> "Juan Carlos" (preserves well-known compound first name)
+        "José Pablo" -> "José" (Pablo treated as middle/last name)
+    """
+    parts = name.split()
+    if not parts:
+        return name
+
+    first_part = parts[0]
+
+    # Check if first part is an abbreviation (single letter or known abbreviation)
+    if first_part in NAME_ABBREVIATIONS:
+        expanded = NAME_ABBREVIATIONS[first_part]
+        # If there are more parts, include the second part as compound first name
+        if len(parts) > 1:
+            return f"{expanded} {parts[1]}"
+        return expanded
+
+    # If first part is a single letter followed by more name parts, it's likely abbreviated
+    if len(first_part) == 1 and len(parts) > 1:
+        # Try to find in abbreviations, otherwise just use what we have
+        if first_part.upper() in NAME_ABBREVIATIONS:
+            return f"{NAME_ABBREVIATIONS[first_part.upper()]} {parts[1]}"
+
+    # Check if the full name (first two parts) is a well-known compound first name
+    if len(parts) >= 2:
+        potential_compound = f"{parts[0]} {parts[1]}"
+        if potential_compound in COMPOUND_FIRST_NAMES:
+            return potential_compound
+
+    # Check if we have a compound first name (e.g., "Juan Carlos")
+    # If exactly 2 parts and second part is a known compound name component
+    if len(parts) == 2 and parts[1] in COMPOUND_SECOND_NAMES:
+        return f"{parts[0]} {parts[1]}"
+
+    return parts[0]
+
+
+def extract_display_name(full_name: str) -> str:
+    """
+    Extract the display name for greeting a tenant.
+
+    Handles:
+    - Simple names: "María González" -> "María"
+    - Abbreviated names: "J Carlos y Raul" -> "Juan Carlos"
+    - Compound names: "Gpe Vanessa" -> "Guadalupe Vanessa"
+    - Multiple tenants: "Samantha Y Cecilia" -> "Samantha" (first person)
+
+    Note: For shared units (like "J Carlos y Raul"), only Matehuala B
+    requires messaging both tenants. The rest communicate with 1 person.
+    """
+    if not full_name:
+        return "Inquilino"
+
+    # Check for "y" or "Y" indicating multiple tenants - take first person only
+    # (except for Matehuala B which is handled separately)
+    name_lower = full_name.lower()
+    if " y " in name_lower:
+        # Split by " y " and take the first person
+        first_person = full_name.split(" y ")[0].split(" Y ")[0].strip()
+        return expand_abbreviated_name(first_person)
+
+    return expand_abbreviated_name(full_name)
+
+
+def generate_rent_reminder(tenant: Tenant, month_name: str) -> str:
+    """
+    Generate a rent reminder message in professional Regio Spanish.
+    Tone: amable, profesional, firme y directo. No harsh language.
+    Simple monthly reminder - no late fees.
+    """
+    # Extract proper display name
+    display_name = extract_display_name(tenant.name)
+
+    # Simple message without penalties
+    message = f"Buenos días {display_name}. Espero esté bien. Para recordarle por favor del pago de la renta de {month_name}. Total: ${tenant.rent:,.0f} MXN."
+
+    return message
+
+
+def create_whatsapp_link(phone: str, message: str) -> str:
+    """
+    Create a WhatsApp click-to-chat URL.
+    This opens WhatsApp with the message pre-filled.
+    """
+    # Remove + and spaces from phone
+    clean_phone = phone.replace("+", "").replace(" ", "").replace("-", "")
+
+    # URL encode the message
+    encoded_message = urllib.parse.quote(message)
+
+    return f"https://wa.me/{clean_phone}?text={encoded_message}"
+
+
+# =============================================================================
+# HTML TEMPLATE
+# =============================================================================
+
+HTML_TEMPLATE = """
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RentasClaras - Envío de Recordatorios</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        /* ===========================================
+           MOBILE-FIRST CSS: Base styles for mobile (320px+)
+           Breakpoints: 768px (tablet), 1024px (desktop)
+           =========================================== */
+        :root {
+            /* Color system */
+            --color-primary: #0A7A0A;
+            --color-primary-dark: #085A08;
+            --color-danger: #CC0000;
+            --color-danger-dark: #990000;
+            --color-neutral: #333333;
+            --color-neutral-light: #F5F5F5;
+            --color-border: #CCCCCC;
+            --color-white: #FFFFFF;
+            --color-black: #000000;
+            
+            /* Typography - Mobile first (16px minimum for accessibility) */
+            --font-size-xs: 0.875rem;   /* 14px */
+            --font-size-sm: 1rem;       /* 16px - minimum for body */
+            --font-size-base: 1.125rem; /* 18px */
+            --font-size-lg: 1.25rem;    /* 20px */
+            --font-size-xl: 1.5rem;     /* 24px */
+            --font-size-2xl: 1.875rem;  /* 30px */
+            --font-size-3xl: 2.25rem;   /* 36px */
+            
+            /* Spacing */
+            --space-xs: 4px;
+            --space-sm: 8px;
+            --space-md: 16px;
+            --space-lg: 24px;
+            --space-xl: 32px;
+            
+            /* Touch targets - 48px minimum for accessibility */
+            --touch-target-min: 48px;
+            --touch-target-lg: 56px;
+            --touch-target-xl: 72px;
+            
+            /* Border radius */
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-full: 9999px;
+            
+            /* Safe areas for notched phones */
+            --safe-area-top: env(safe-area-inset-top, 0px);
+            --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+            --safe-area-left: env(safe-area-inset-left, 0px);
+            --safe-area-right: env(safe-area-inset-right, 0px);
+        }
+        
+        /* ===========================================
+           UNIFIED STATUS PILL COMPONENT
+           Single source of truth for all status buttons/pills
+           Used by: pagos (tenant-status), contratos (renewal-btn)
+           =========================================== */
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-sm);
+            padding: var(--space-md) var(--space-lg);
+            border: 4px solid var(--color-border);
+            border-radius: var(--radius-md);
+            background: var(--color-white);
+            cursor: pointer;
+            font-size: var(--font-size-base);
+            font-weight: 800;
+            transition: all 0.2s;
+            min-height: var(--touch-target-lg);
+            user-select: none;
+        }
+        
+        @media (min-width: 768px) {
+            .status-pill {
+                min-height: var(--touch-target-xl);
+                font-size: var(--font-size-lg);
+            }
+        }
+        
+        .status-pill:hover {
+            background: var(--color-neutral-light);
+        }
+        
+        /* Paid / Success / Renovará state (green) */
+        .status-pill.status-success,
+        .status-pill.paid,
+        .status-pill.active-green {
+            background: var(--color-white);
+            border-color: var(--color-primary);
+            color: var(--color-primary);
+        }
+        
+        .status-pill.status-success:hover,
+        .status-pill.paid:hover,
+        .status-pill.active-green:hover {
+            background: var(--color-primary);
+            color: var(--color-white);
+        }
+        
+        /* Unpaid / Danger / No renovará state (red) */
+        .status-pill.status-danger,
+        .status-pill.unpaid,
+        .status-pill.active-red {
+            background: var(--color-white);
+            border-color: var(--color-danger);
+            color: var(--color-danger);
+        }
+        
+        .status-pill.status-danger:hover,
+        .status-pill.unpaid:hover,
+        .status-pill.active-red:hover {
+            background: var(--color-danger);
+            color: var(--color-white);
+        }
+        
+        /* Pending / Neutral / Pendiente state (gray) */
+        .status-pill.status-neutral,
+        .status-pill.pending,
+        .status-pill.active-yellow {
+            background: var(--color-neutral-light);
+            border-color: var(--color-neutral);
+            color: var(--color-neutral);
+        }
+        
+        .status-pill.status-neutral:hover,
+        .status-pill.pending:hover,
+        .status-pill.active-yellow:hover {
+            background: var(--color-neutral);
+            color: var(--color-white);
+        }
+        
+        /* Touch device adjustments - prevent hover on touch */
+        @media (hover: none) {
+            .status-pill.status-success:hover,
+            .status-pill.paid:hover,
+            .status-pill.active-green:hover {
+                background: var(--color-white);
+                color: var(--color-primary);
+            }
+            .status-pill.status-success:active,
+            .status-pill.paid:active,
+            .status-pill.active-green:active {
+                background: var(--color-primary);
+                color: var(--color-white);
+            }
+            
+            .status-pill.status-danger:hover,
+            .status-pill.unpaid:hover,
+            .status-pill.active-red:hover {
+                background: var(--color-white);
+                color: var(--color-danger);
+            }
+            .status-pill.status-danger:active,
+            .status-pill.unpaid:active,
+            .status-pill.active-red:active {
+                background: var(--color-danger);
+                color: var(--color-white);
+            }
+            
+            .status-pill.status-neutral:hover,
+            .status-pill.pending:hover,
+            .status-pill.active-yellow:hover {
+                background: var(--color-neutral-light);
+                color: var(--color-neutral);
+            }
+            .status-pill.status-neutral:active,
+            .status-pill.pending:active,
+            .status-pill.active-yellow:active {
+                background: var(--color-neutral);
+                color: var(--color-white);
+            }
+        }
+        
+        /* Full width variant for mobile */
+        .status-pill.status-pill--full-width {
+            width: 100%;
+        }
+        
+        @media (min-width: 768px) {
+            .status-pill.status-pill--full-width {
+                width: auto;
+                min-width: 160px;
+            }
+        }
+        
+        /* Small variant for table views */
+        .status-pill.status-pill--small {
+            padding: var(--space-sm) var(--space-md);
+            min-height: var(--touch-target-lg);
+            font-size: var(--font-size-sm);
+        }
+        
+        /* ===========================================
+           Mobile keyboard scroll fix
+           =========================================== */
+        @media (max-width: 768px) {
+            input:focus,
+            textarea:focus,
+            select:focus {
+                scroll-margin-bottom: 200px;
+            }
+        }
+        
+        /* Prevent zoom on input focus (iOS) */
+        @supports (-webkit-touch-callout: none) {
+            input, select, textarea {
+                font-size: 16px !important;
+            }
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--color-white);
+            min-height: 100vh;
+            min-height: -webkit-fill-available;
+            color: var(--color-black);
+            /* Mobile: tighter padding, account for bottom nav */
+            padding: var(--space-md);
+            padding-top: calc(var(--space-md) + var(--safe-area-top));
+            padding-bottom: calc(80px + var(--safe-area-bottom)); /* Space for bottom nav */
+            font-size: var(--font-size-base);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        
+        /* Tablet+ (768px): More padding, no bottom nav needed */
+        @media (min-width: 768px) {
+            body {
+                padding: var(--space-lg);
+                padding-bottom: var(--space-lg);
+            }
+        }
+        
+        /* Desktop (1024px): Even more spacious */
+        @media (min-width: 1024px) {
+            body {
+                padding: var(--space-xl);
+                font-size: 20px;
+            }
+        }
+        
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+        }
+        
+        @media (min-width: 768px) {
+            .container {
+                max-width: 720px;
+            }
+        }
+        
+        @media (min-width: 1024px) {
+            .container {
+                max-width: 900px;
+            }
+        }
+        
+        /* Header - mobile first */
+        header {
+            text-align: center;
+            margin-bottom: var(--space-lg);
+            background: var(--color-white);
+            padding: var(--space-md);
+            border-radius: var(--radius-lg);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        
+        @media (min-width: 768px) {
+            header {
+                padding: var(--space-lg);
+                margin-bottom: var(--space-xl);
+            }
+        }
+        
+        h1 {
+            font-size: var(--font-size-2xl);
+            margin-bottom: var(--space-sm);
+            color: var(--color-black);
+            font-weight: 800;
+        }
+        
+        @media (min-width: 768px) {
+            h1 {
+                font-size: var(--font-size-3xl);
+            }
+        }
+        
+        /* ===========================================
+           BOTTOM NAVIGATION - Mobile only
+           =========================================== */
+        .bottom-nav {
+            display: flex;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--color-white);
+            border-top: 2px solid var(--color-border);
+            padding: var(--space-sm);
+            padding-bottom: calc(var(--space-sm) + var(--safe-area-bottom));
+            z-index: 1000;
+            justify-content: space-around;
+            gap: var(--space-sm);
+            box-shadow: 0 -4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .bottom-nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            color: var(--color-neutral);
+            font-size: var(--font-size-xs);
+            font-weight: 700;
+            padding: var(--space-sm);
+            border-radius: var(--radius-sm);
+            min-width: 64px;
+            min-height: var(--touch-target-min);
+            transition: all 0.2s;
+        }
+        
+        .bottom-nav-item.active {
+            color: var(--color-primary);
+            background: rgba(10, 122, 10, 0.1);
+        }
+        
+        .bottom-nav-item:hover {
+            background: var(--color-neutral-light);
+        }
+        
+        .bottom-nav-icon {
+            font-size: 1.5rem;
+            margin-bottom: 2px;
+        }
+        
+        /* Hide bottom nav on tablet+ (use sidebar or top nav instead) */
+        @media (min-width: 768px) {
+            .bottom-nav {
+                display: none;
+            }
+        }
+        
+        /* ===========================================
+           TOP NAVBAR - Always visible, replaces big buttons
+           =========================================== */
+        .top-navbar {
+            display: flex;
+            gap: var(--space-sm);
+            justify-content: center;
+            margin: var(--space-md) 0;
+            padding: var(--space-sm);
+            background: var(--color-neutral-light);
+            border-radius: var(--radius-lg);
+        }
+        
+        .top-navbar-item {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-sm);
+            flex: 1;
+            padding: var(--space-md) var(--space-lg);
+            border-radius: var(--radius-md);
+            text-decoration: none;
+            font-size: var(--font-size-base);
+            font-weight: 800;
+            transition: all 0.2s;
+            min-height: var(--touch-target-min);
+            border: none;
+            cursor: pointer;
+        }
+        
+        .top-navbar-item.active {
+            background: var(--color-primary);
+            color: var(--color-white);
+            box-shadow: 0 2px 8px rgba(10, 122, 10, 0.3);
+        }
+
+        .top-navbar-item:not(.active) {
+            background: var(--color-white);
+            color: var(--color-neutral);
+        }
+        
+        .top-navbar-item:not(.active):hover {
+            background: var(--color-white);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .top-navbar-icon {
+            font-size: 1.3rem;
+        }
+        
+        @media (min-width: 768px) {
+            .top-navbar {
+                max-width: 500px;
+                margin: var(--space-lg) auto;
+            }
+            
+            .top-navbar-item {
+                font-size: var(--font-size-lg);
+                padding: var(--space-lg) var(--space-xl);
+            }
+            
+            .top-navbar-icon {
+                font-size: 1.5rem;
+            }
+        }
+        
+        /* Top Navigation (visible on tablet+) - LEGACY, can remove */
+        .nav-tabs {
+            display: none; /* Hidden on mobile - using bottom nav */
+            gap: var(--space-md);
+            justify-content: center;
+            margin-bottom: var(--space-lg);
+        }
+        
+        @media (min-width: 768px) {
+            .nav-tabs {
+                display: flex;
+            }
+        }
+        
+        .nav-tab {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-sm);
+            padding: var(--space-md) var(--space-lg);
+            border-radius: var(--radius-md);
+            text-decoration: none;
+            font-size: var(--font-size-lg);
+            font-weight: 800;
+            transition: all 0.2s;
+            min-height: var(--touch-target-xl);
+            border: 4px solid;
+        }
+        
+        .nav-tab.active {
+            background: var(--color-neutral);
+            color: var(--color-white);
+            border-color: var(--color-neutral);
+        }
+
+        .nav-tab:not(.active) {
+            background: var(--color-white);
+            color: var(--color-neutral);
+            border-color: var(--color-neutral);
+        }
+
+        .nav-tab:not(.active):hover {
+            background: var(--color-neutral-light);
+        }
+        
+        /* Subtitle - responsive */
+        .subtitle {
+            color: #4a4a4a;
+            font-size: var(--font-size-sm);
+        }
+        
+        @media (min-width: 768px) {
+            .subtitle {
+                font-size: var(--font-size-base);
+            }
+        }
+        
+        .date-badge {
+            display: inline-block;
+            background: var(--color-neutral);
+            color: var(--color-white);
+            padding: var(--space-md) var(--space-lg);
+            border-radius: var(--radius-full);
+            font-size: var(--font-size-base);
+            margin-top: var(--space-md);
+            font-weight: 700;
+        }
+            
+        .date-display {
+            margin-top: var(--space-lg);
+        }
+            
+        .date-month-year {
+            font-size: var(--font-size-xl);
+            font-weight: 700;
+            color: var(--color-neutral);
+            text-transform: capitalize;
+            margin-top: var(--space-xs);
+        }
+        
+        @media (min-width: 768px) {
+            .date-month-year {
+                font-size: var(--font-size-2xl);
+            }
+        }
+        
+        .controls {
+            display: flex;
+            flex-direction: column; /* Stack on mobile */
+            gap: var(--space-md);
+            margin-bottom: var(--space-lg);
+        }
+        
+        @media (min-width: 768px) {
+            .controls {
+                flex-direction: row;
+                flex-wrap: wrap;
+            }
+        }
+        
+        /* Buttons - Mobile first with proper touch targets */
+        button {
+            padding: var(--space-md) var(--space-lg);
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: var(--font-size-base);
+            cursor: pointer;
+            transition: all 0.2s;
+            min-height: var(--touch-target-lg);
+            font-weight: 700;
+            width: 100%; /* Full width on mobile */
+        }
+        
+        @media (min-width: 768px) {
+            button {
+                width: auto;
+                min-height: var(--touch-target-xl);
+                padding: var(--space-lg) var(--space-xl);
+                font-size: var(--font-size-lg);
+            }
+        }
+        
+        .btn-primary {
+            background: var(--color-primary);
+            color: var(--color-white);
+        }
+
+        .btn-primary:hover {
+            background: var(--color-primary-dark);
+            transform: translateY(-2px);
+        }
+        
+        /* Prevent transform on touch devices (causes issues) */
+        @media (hover: none) {
+            .btn-primary:hover {
+                transform: none;
+            }
+        }
+        
+        .btn-secondary {
+            background: var(--color-neutral-light);
+            color: var(--color-black);
+            border: 3px solid var(--color-border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--color-border);
+            color: var(--color-black);
+        }
+        
+        /* Property sections - responsive */
+        .property-section {
+            margin-bottom: var(--space-lg);
+            background: var(--color-white);
+            border-radius: var(--radius-lg);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+        
+        .property-header {
+            background: var(--color-neutral);
+            color: var(--color-white);
+            padding: var(--space-md);
+            font-weight: 800;
+            font-size: var(--font-size-base);
+            display: flex;
+            flex-direction: column; /* Stack on mobile */
+            gap: var(--space-sm);
+            text-align: center;
+        }
+        
+        @media (min-width: 768px) {
+            .property-header {
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+                padding: var(--space-lg) var(--space-xl);
+                font-size: var(--font-size-lg);
+                text-align: left;
+            }
+        }
+        
+        .property-stats {
+            display: flex;
+            gap: var(--space-sm);
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        @media (min-width: 768px) {
+            .property-stats {
+                justify-content: flex-end;
+            }
+        }
+        
+        .property-count {
+            background: rgba(255,255,255,0.25);
+            padding: var(--space-sm) var(--space-md);
+            border-radius: var(--radius-full);
+            font-size: var(--font-size-xs);
+        }
+        
+        @media (min-width: 768px) {
+            .property-count {
+                font-size: var(--font-size-sm);
+            }
+        }
+        
+        .property-paid-count {
+            background: var(--color-primary);
+            padding: var(--space-sm) var(--space-md);
+            border-radius: var(--radius-full);
+            font-size: var(--font-size-xs);
+            font-weight: 800;
+        }
+        
+        @media (min-width: 768px) {
+            .property-paid-count {
+                font-size: var(--font-size-sm);
+            }
+        }
+
+        .property-pending-count {
+            background: var(--color-danger);
+            padding: var(--space-sm) var(--space-md);
+            border-radius: var(--radius-full);
+            font-size: var(--font-size-xs);
+            font-weight: 800;
+        }
+        
+        @media (min-width: 768px) {
+            .property-pending-count {
+                font-size: var(--font-size-sm);
+            }
+        }
+        
+        .tenant-list {
+            background: var(--color-white);
+        }
+        
+        /* Tenant cards - Mobile first (card layout) */
+        .tenant-item {
+            display: flex;
+            flex-direction: column; /* Stack vertically on mobile */
+            align-items: stretch;
+            padding: var(--space-md);
+            border-bottom: 2px solid var(--color-border);
+            transition: all 0.3s;
+            background: var(--color-white);
+            border-left: 6px solid var(--color-danger);
+            gap: var(--space-md);
+        }
+        
+        @media (min-width: 768px) {
+            .tenant-item {
+                flex-direction: row;
+                flex-wrap: wrap;
+                align-items: center;
+                padding: var(--space-lg) var(--space-xl);
+                border-left-width: 10px;
+            }
+        }
+
+        .tenant-item.paid {
+            background: var(--color-white);
+            border-left-color: var(--color-primary);
+        }
+        
+        .tenant-item:hover {
+            background: #F5F5F5;  /* Light gray hover (same for both paid/unpaid) */
+        }
+
+        .tenant-item.paid:hover {
+            background: #F5F5F5;  /* Light gray hover (no color-coded hovers) */
+        }
+        
+        .tenant-item:last-child {
+            border-bottom: none;
+        }
+        
+        .tenant-checkbox {
+            display: none;
+        }
+        
+        /* Status + Amount row - horizontally aligned */
+        .status-amount-row {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+            gap: var(--space-md);
+            width: 100%;
+            order: 2;
+        }
+        
+        .status-amount-row .tenant-status-btn {
+            flex: 1;
+            order: unset;
+        }
+        
+        .status-amount-row .tenant-amount {
+            flex-shrink: 0;
+            order: unset;
+            text-align: right;
+        }
+        
+        @media (min-width: 768px) {
+            .status-amount-row {
+                order: 0;
+                width: auto;
+                flex: 0 0 auto;
+            }
+        }
+        
+        /* Tenant status button - Mobile first with full width on mobile */
+        .tenant-status-btn {
+            width: 100%; /* Full width on mobile */
+            min-height: var(--touch-target-lg);
+            padding: var(--space-md);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-size: var(--font-size-base);
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-sm);
+            border: 4px solid;
+            transition: all 0.2s;
+            user-select: none;
+            pointer-events: auto;
+            z-index: 10;
+            order: 2; /* After name on mobile */
+        }
+        
+        @media (min-width: 768px) {
+            .tenant-status-btn {
+                width: auto;
+                min-width: 160px;
+                min-height: var(--touch-target-xl);
+                padding: var(--space-md) var(--space-lg);
+                font-size: var(--font-size-lg);
+                order: 0;
+            }
+        }
+        
+        .tenant-status-btn.unpaid {
+            background: var(--color-white);
+            border-color: var(--color-danger);
+            color: var(--color-danger);
+        }
+
+        .tenant-status-btn.unpaid:hover {
+            background: var(--color-danger);
+            color: var(--color-white);
+        }
+        
+        /* Prevent hover effects on touch devices */
+        @media (hover: none) {
+            .tenant-status-btn.unpaid:hover {
+                background: var(--color-white);
+                color: var(--color-danger);
+            }
+            .tenant-status-btn.unpaid:active {
+                background: var(--color-danger);
+                color: var(--color-white);
+            }
+        }
+
+        .tenant-status-btn.paid {
+            background: var(--color-white);
+            border-color: var(--color-primary);
+            color: var(--color-primary);
+        }
+
+        .tenant-status-btn.paid:hover {
+            background: var(--color-primary);
+            color: var(--color-white);
+        }
+        
+        @media (hover: none) {
+            .tenant-status-btn.paid:hover {
+                background: var(--color-white);
+                color: var(--color-primary);
+            }
+            .tenant-status-btn.paid:active {
+                background: var(--color-primary);
+                color: var(--color-white);
+            }
+        }
+        
+        .tenant-status-btn .icon {
+            font-size: 1.4rem;
+        }
+        
+        .tenant-main-info {
+            flex: 1;
+            min-width: 100%;
+            order: 1; /* First on mobile */
+        }
+        
+        @media (min-width: 768px) {
+            .tenant-main-info {
+                min-width: 200px;
+                order: 0;
+            }
+        }
+        
+        /* Tenant name - responsive */
+        .tenant-name {
+            font-weight: 800;
+            font-size: var(--font-size-lg);
+            margin-bottom: var(--space-sm);
+            color: var(--color-black);
+            text-align: center;
+            width: 100%;
+        }
+        
+        @media (min-width: 768px) {
+            .tenant-name {
+                font-size: var(--font-size-xl);
+                text-align: left;
+            }
+        }
+        
+        /* Phone number - responsive */
+        .tenant-phone-inline {
+            font-size: var(--font-size-sm);
+            color: #4a4a4a;
+            margin-bottom: var(--space-xs);
+            text-align: center;
+        }
+        
+        @media (min-width: 768px) {
+            .tenant-phone-inline {
+                text-align: left;
+            }
+        }
+        
+        .tenant-phone-inline a {
+            color: #2563eb;
+            text-decoration: none;
+        }
+        
+        .tenant-phone-inline a:hover {
+            text-decoration: underline;
+        }
+        
+        /* Missing phone warning - mobile first */
+        .no-phone-warning {
+            display: block;
+            background: var(--color-danger);
+            color: var(--color-white);
+            padding: var(--space-md);
+            border-radius: var(--radius-sm);
+            font-weight: 800;
+            font-size: var(--font-size-sm);
+        }
+        
+        @media (min-width: 768px) {
+            .no-phone-warning {
+                font-size: var(--font-size-base);
+            }
+        }
+        
+        .no-phone-row {
+            background: #FEE2E2 !important;
+            border-left: 10px solid var(--color-danger) !important;
+        }
+        
+        .add-phone-btn {
+            background: var(--color-danger) !important;
+            color: var(--color-white) !important;
+            padding: var(--space-md) var(--space-lg) !important;
+            font-size: var(--font-size-sm) !important;
+            min-height: var(--touch-target-min) !important;
+            border-radius: var(--radius-md) !important;
+        }
+        
+        .add-phone-btn:hover {
+            background: #990000 !important;
+        }
+        
+        .edit-phone-btn, .add-phone-btn {
+            background: #333333;
+            color: white;
+            border: none;
+            padding: 14px 20px;  /* P2.5: Increased padding */
+            border-radius: 8px;
+            font-size: 1.1rem;  /* P2.5: Larger font */
+            font-weight: 700;
+            cursor: pointer;
+            margin-left: 8px;
+            min-height: 56px;  /* P2.5: Increased from 44px for 60+ users */
+        }
+        
+        .edit-phone-btn:hover {
+            background: #555555;
+        }
+          
+        /* Phone edit modal - Mobile first (bottom sheet on mobile) */
+        .phone-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+            align-items: flex-end; /* Bottom sheet on mobile */
+            justify-content: center;
+        }
+        
+        @media (min-width: 768px) {
+            .phone-modal {
+                align-items: center; /* Centered on tablet+ */
+            }
+        }
+          
+        .phone-modal.show {
+            display: flex;
+        }
+          
+        .phone-modal-content {
+            background: var(--color-white);
+            padding: var(--space-lg);
+            padding-bottom: calc(var(--space-lg) + var(--safe-area-bottom));
+            border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+            width: 100%;
+            max-width: 100%;
+            box-shadow: 0 -8px 32px rgba(0,0,0,0.3);
+            animation: slideUp 0.3s ease-out;
+        }
+        
+        @keyframes slideUp {
+            from {
+                transform: translateY(100%);
+            }
+            to {
+                transform: translateY(0);
+            }
+        }
+        
+        @media (min-width: 768px) {
+            .phone-modal-content {
+                max-width: 400px;
+                border-radius: var(--radius-lg);
+                padding-bottom: var(--space-lg);
+                animation: none;
+            }
+        }
+          
+        .phone-modal h3 {
+            font-size: var(--font-size-xl);
+            margin-bottom: var(--space-md);
+            text-align: center;
+        }
+          
+        .phone-modal input {
+            width: 100%;
+            padding: var(--space-md);
+            font-size: var(--font-size-lg);
+            border: 3px solid var(--color-neutral);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--space-md);
+        }
+        
+        .phone-modal input:focus {
+            outline: none;
+            border-color: var(--color-primary);
+        }
+          
+        .phone-modal-buttons {
+            display: flex;
+            flex-direction: column; /* Stacked on mobile */
+            gap: var(--space-md);
+        }
+        
+        @media (min-width: 768px) {
+            .phone-modal-buttons {
+                flex-direction: row;
+            }
+        }
+          
+        .phone-modal-buttons button {
+            flex: 1;
+            padding: var(--space-md);
+            font-size: var(--font-size-base);
+            min-height: var(--touch-target-lg);
+        }
+        
+        /* Inline WhatsApp button */
+        .whatsapp-inline-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 20px;
+            background: #0A7A0A;  /* P3.12: Standardized to system green */
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 700;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            min-height: 48px;
+        }
+        
+        .whatsapp-inline-btn:hover {
+            background: #085A08;  /* Darker green on hover */
+            transform: translateY(-2px);
+        }
+        
+        .whatsapp-inline-btn.disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+        
+        .tenant-unit {
+            color: #333333;  /* Changed from blue to black/gray - 3-color system */
+            font-weight: 700;
+        }
+        
+        /* ISSUE #2: Larger rent amount */
+        .tenant-amount {
+            text-align: right;
+        }
+        
+        /* Phase 1 Fix: VERY large rent amount - easy to see at arm's length */
+        .tenant-rent {
+            font-weight: 800;  /* Bolder from 700 */
+            font-size: 1.6rem;  /* Increased from 1.4rem */
+            color: #0A7A0A;  /* Dark green - better contrast than #16a34a */
+        }
+        
+        .tenant-details {
+            display: none;
+            width: 100%;
+            padding: 16px 20px;
+            background: #f9fafb;
+            border-top: 2px solid #e5e5e5;
+            font-size: 1rem;
+            line-height: 1.6;
+            color: #374151;
+        }
+        
+        .tenant-details.show {
+            display: block;
+        }
+        
+        .tenant-details p {
+            margin-bottom: 8px;
+        }
+        
+        .tenant-details strong {
+            color: #1a1a1a;
+        }
+        
+        /* Payment method - hidden by default, shown in details */
+        .payment-method-row {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #e5e5e5;
+        }
+        
+        .payment-method {
+            padding: 12px 16px;
+            border-radius: 8px;
+            border: 2px solid #d4d4d4;
+            background: white;
+            color: #1a1a1a;
+            font-size: 1rem;
+            cursor: pointer;
+            min-width: 180px;
+        }
+        
+        .payment-method:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: #e5e5e5;
+        }
+        
+        .payment-method:enabled {
+            border-color: #0A7A0A;  /* System green */
+            background: #f0fdf4;
+        }
+        
+        .send-section {
+            margin-top: 32px;
+            padding: 28px;
+            background: white;
+            border-radius: 16px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            position: relative;
+            z-index: 100;
+        }
+        
+        /* ISSUE #2: Larger send count text */
+        .send-count {
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            color: #1a1a1a;
+        }
+        
+        .send-count strong {
+            color: #0A7A0A;  /* System green */
+            font-size: 1.5rem;
+        }
+        
+        .whatsapp-links {
+            display: none;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 24px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .whatsapp-link {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #f0fdf4;
+            border: 2px solid #0A7A0A;  /* System green */
+            padding: 16px 20px;
+            border-radius: 12px;
+            text-decoration: none;
+            color: #1a1a1a;
+            transition: all 0.2s;
+            font-size: 1.1rem;
+        }
+        
+        .whatsapp-link:hover {
+            background: #0A7A0A;  /* System green */
+            color: white;
+        }
+        
+        .link-name {
+            font-weight: 600;
+        }
+        
+        .link-icon {
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+        
+        .test-mode-banner {
+            background: #F5F5F5;  /* P3.8: Changed from yellow to gray - 3-color system */
+            color: #333333;
+            padding: 16px 20px;
+            text-align: center;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            border: 3px solid #333333;
+        }
+        
+        /* =========================================== 
+           DEPRECATED: Summary cards removed - using top banner instead
+           Keeping CSS for backwards compatibility
+           =========================================== */
+        .summary {
+            display: none;  /* P2.4: Hidden - deprecated */
+        }
+            
+        .summary-card {
+            display: none;  /* P2.4: Hidden - deprecated */
+        }
+            
+        .summary-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #0A7A0A;  /* Changed from #16a34a */
+        }
+            
+        /* ISSUE #2: Larger summary label */
+        .summary-label {
+            color: #333333;  /* Changed from #4a4a4a */
+            font-size: 1rem;
+            margin-top: 8px;
+            font-weight: 600;
+        }
+            
+        /* =========================================== 
+           TOTALS SECTION
+           =========================================== */
+        .totals-section {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            padding: 24px;
+            margin-bottom: 32px;
+        }
+            
+        .totals-header {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+            
+        .property-subtotals {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+            
+        .property-subtotal-card {
+            background: #f9fafb;
+            border-radius: 12px;
+            padding: 16px;
+            border-left: 4px solid #333333;  /* Changed from blue to black/gray */
+        }
+            
+        .property-subtotal-name {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #333333;  /* Changed from blue to black/gray */
+            margin-bottom: 12px;
+        }
+            
+        .property-subtotal-stats {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+            
+        .property-subtotal-stat {
+            font-size: 0.9rem;
+            padding: 4px 10px;
+            border-radius: 8px;
+            background: white;
+        }
+            
+        .property-subtotal-stat.paid {
+            background: #dcfce7;
+            color: #0A7A0A;  /* Changed from #166534 to system green */
+        }
+            
+        .property-subtotal-stat.pending {
+            background: #FEE2E2;  /* Light red background */
+            color: #CC0000;  /* System red */
+        }
+            
+        .property-subtotal-amount {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #0A7A0A;  /* Changed from #16a34a to system green */
+        }
+            
+        .grand-total {
+            background: #0A7A0A;  /* Solid dark green (no gradient) */
+            color: white;
+            padding: 28px;  /* Increased padding */
+            border-radius: 12px;
+            text-align: center;
+        }
+            
+        .grand-total-label {
+            font-size: 1.1rem;
+            margin-bottom: 8px;
+            opacity: 0.9;
+        }
+            
+        .grand-total-amount {
+            font-size: 2.5rem;
+            font-weight: 800;
+        }
+        
+        /* Grand total breakdown */
+        .grand-total-breakdown {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        
+        .breakdown-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 16px;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.1);
+        }
+        
+        .breakdown-item.highlight-pending {
+            background: rgba(245, 158, 11, 0.3);
+            font-weight: 700;
+        }
+        
+        .breakdown-item.highlight-paid {
+            background: rgba(34, 197, 94, 0.3);
+        }
+        
+        .breakdown-label {
+            font-size: 1rem;
+        }
+        
+        .breakdown-value {
+            font-size: 1.3rem;
+            font-weight: 800;
+        }
+        
+        /* Offline banner */
+        .offline-banner {
+            background: #fef2f2;
+            color: #dc2626;
+            padding: 16px 20px;
+            text-align: center;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            border: 3px solid #dc2626;
+        }
+        
+        /* Undo toast - #1 PERSISTENT CONFIRMATION */
+        .undo-toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #0A7A0A;
+            color: white;
+            padding: 20px 32px;
+            border-radius: 16px;
+            font-size: 1.3rem;
+            font-weight: 800;
+            display: none;
+            z-index: 1000;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+            gap: 20px;
+            align-items: center;
+            border: 4px solid white;
+        }
+        
+        .undo-toast.show {
+            display: flex;
+        }
+        
+        .undo-toast button {
+            background: white;
+            color: #0A7A0A;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 800;
+            min-height: 56px;
+            font-size: 1.1rem;
+        }
+        
+        .undo-toast button:hover {
+            background: #E5E5E5;
+        }
+        
+        /* #11 CONFETTI CELEBRATION at 100% */
+        .confetti-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+            overflow: hidden;
+        }
+        
+        .confetti {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            opacity: 0;
+        }
+        
+        .celebration-banner {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #0A7A0A;
+            color: white;
+            padding: 40px 60px;
+            border-radius: 24px;
+            font-size: 2rem;
+            font-weight: 800;
+            z-index: 10000;
+            box-shadow: 0 12px 48px rgba(0,0,0,0.4);
+            text-align: center;
+            border: 6px solid white;
+        }
+        
+        .celebration-banner.show {
+            display: block;
+            animation: celebrationPop 0.5s ease-out;
+        }
+        
+        @keyframes celebrationPop {
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+            50% { transform: translate(-50%, -50%) scale(1.1); }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+            
+        .grand-total-stats {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin-top: 16px;
+            flex-wrap: wrap;
+        }
+            
+        .grand-total-stat {
+            background: rgba(255,255,255,0.2);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.95rem;
+        }
+        
+        /* Progress bar for collection rate - NOW AT TOP */
+        .progress-bar-container {
+            width: 100%;
+            max-width: 100%;
+            margin: 0 0 20px 0;
+            padding: 0 4px;
+        }
+        
+        .progress-bar-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+        
+        .progress-bar-track {
+            width: 100%;
+            height: 32px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .progress-bar-fill {
+            height: 100%;
+            background: #0A7A0A;  /* Solid dark green (no gradient) */
+            border-radius: 12px;
+            transition: width 0.5s ease-out;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 8px;
+            min-width: 0;
+        }
+
+        .progress-bar-fill.complete {
+            background: #0A7A0A;  /* Same solid dark green */
+        }
+        
+        .progress-bar-text {
+            font-size: 0.9rem;
+            font-weight: 800;
+            color: white;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+            white-space: nowrap;
+        }
+        
+        .message-preview {
+            background: #f9fafb;
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 24px;
+            text-align: left;
+            white-space: pre-wrap;
+            font-size: 1rem;
+            max-height: 200px;
+            overflow-y: auto;
+            border-left: 4px solid #0A7A0A;  /* Changed from #16a34a to system green */
+            color: #1a1a1a;
+        }
+
+        /* ===========================================
+           Phase 1 Fix: Excel-like TABLE VIEW for familiar interface
+           =========================================== */
+        .view-toggle {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin: 24px 0;
+        }
+
+        .view-toggle-btn {
+            padding: 16px 32px;
+            border-radius: 12px;
+            border: 4px solid #333333;  /* Changed from blue to black/gray */
+            background: white;
+            color: #333333;
+            font-size: 1.2rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.2s;
+            min-height: 72px;
+        }
+
+        .view-toggle-btn.active {
+            background: #333333;  /* Changed from blue to black/gray */
+            color: white;
+        }
+
+        .view-toggle-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Excel-style table */
+        .excel-view {
+            display: none;
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 32px;
+        }
+
+        .excel-view.active {
+            display: block;
+        }
+
+        .excel-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 1.1rem;
+        }
+
+        .excel-table th {
+            background: #E5E5E5;
+            color: #000000;
+            padding: 16px;
+            text-align: left;
+            font-weight: 800;
+            border: 2px solid #CCCCCC;
+            font-size: 1.2rem;
+        }
+
+        .excel-table td {
+            padding: 16px;
+            border: 2px solid #CCCCCC;
+            background: white;
+            color: #000000;
+            font-size: 1.1rem;
+        }
+
+        .excel-table tr:hover td {
+            background: #F5F5F5;
+        }
+
+        .excel-table .status-cell {
+            text-align: center;
+            font-weight: 800;
+            font-size: 1.4rem;
+        }
+
+        .excel-table .status-cell.unpaid {
+            color: #CC0000;
+        }
+
+        .excel-table .status-cell.paid {
+            color: #0A7A0A;
+        }
+
+        .excel-table .rent-cell {
+            text-align: right;
+            font-weight: 800;
+            font-size: 1.3rem;
+            color: #0A7A0A;
+        }
+
+        .excel-table .action-cell {
+            text-align: center;
+        }
+
+        .excel-table .action-cell button,
+        .tenant-status-btn-table {
+            min-height: 56px;
+            font-size: 1rem;
+            border: 4px solid;  /* P2.7: Added 4px border for consistency */
+        }
+
+        .tenant-status-btn-table.paid {
+            background: white;
+            border-color: #0A7A0A;
+            color: #0A7A0A;
+            border-width: 4px;  /* P2.7: Thicker border */
+        }
+
+        .tenant-status-btn-table.paid:hover {
+            background: #0A7A0A;
+            color: white;
+        }
+
+        .tenant-status-btn-table.unpaid {
+            background: white;
+            border-color: #CC0000;
+            color: #CC0000;
+            border-width: 4px;  /* P2.7: Thicker border */
+        }
+
+        .tenant-status-btn-table.unpaid:hover {
+            background: #CC0000;
+            color: white;
+        }
+
+        /* P1.3: WhatsApp button in table view */
+        .whatsapp-table-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 16px;
+            background: #0A7A0A;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 700;
+            text-decoration: none;
+            cursor: pointer;
+            min-height: 48px;
+        }
+
+        .whatsapp-table-btn:hover {
+            background: #085A08;
+        }
+
+        .whatsapp-table-btn.disabled {
+            background: #CCCCCC;
+            color: #666666;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        /* Hide card view when table is active */
+        .card-view.hidden {
+            display: none;
+        }
+
+        /* Hide excel view when card view is active */
+        .excel-view.hidden {
+            display: none;
+        }
+
+        /* ===========================================
+           LEGACY MOBILE OVERRIDES REMOVED
+           Now using mobile-first approach - base styles ARE mobile
+           Only tablet/desktop use @media (min-width: ...)
+           =========================================== */
+        
+        /* Tenant rent amount - responsive */
+        .tenant-rent {
+            font-size: var(--font-size-2xl);
+            background: #f0fdf4;
+            padding: var(--space-md) var(--space-lg);
+            border-radius: var(--radius-md);
+            display: inline-block;
+            border: 3px solid var(--color-primary);
+            text-align: center;
+            width: 100%;
+        }
+        
+        @media (min-width: 768px) {
+            .tenant-rent {
+                width: auto;
+                font-size: var(--font-size-xl);
+            }
+        }
+        
+        .tenant-amount {
+            text-align: center;
+            order: 3;
+        }
+        
+        @media (min-width: 768px) {
+            .tenant-amount {
+                text-align: right;
+                order: 0;
+            }
+        }
+        
+        .whatsapp-inline-btn {
+            width: 100%;
+            order: 4;
+        }
+        
+        @media (min-width: 768px) {
+            .whatsapp-inline-btn {
+                width: auto;
+                order: 0;
+            }
+        }
+        
+        .tenant-details {
+            order: 6;
+        }
+        
+        /* Summary cards - mobile first (stacked) */
+        .summary {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: var(--space-md);
+            margin-bottom: var(--space-xl);
+        }
+        
+        @media (min-width: 768px) {
+            .summary {
+                grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            }
+        }
+        
+        .summary-value {
+            font-size: var(--font-size-2xl);
+            font-weight: 800;
+        }
+        
+        @media (min-width: 768px) {
+            .summary-value {
+                font-size: var(--font-size-3xl);
+            }
+        }
+        
+        /* Grand total - responsive */
+        .grand-total-amount {
+            font-size: var(--font-size-2xl);
+        }
+        
+        @media (min-width: 768px) {
+            .grand-total-amount {
+                font-size: var(--font-size-3xl);
+            }
+        }
+        
+        .grand-total-stats {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-sm);
+            justify-content: center;
+            margin-top: var(--space-md);
+        }
+        
+        @media (min-width: 768px) {
+            .grand-total-stats {
+                flex-direction: row;
+                gap: var(--space-lg);
+                flex-wrap: wrap;
+            }
+        }
+        
+        /* ===========================================
+           Contract Renewal Tracking Styles
+           =========================================== */
+        .renewal-section {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 2px solid #e5e5e5;
+        }
+        
+        .renewal-buttons,
+        .payment-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin: 12px 0;
+        }
+        
+        /* UNIFIED BUTTON STYLES - payment-btn (Pagos) and renewal-btn (Contratos)
+           Both use identical styling for consistency across pages
+           Uses higher specificity to override .status-pill base styles */
+        .status-pill.payment-btn,
+        .status-pill.renewal-btn {
+            display: flex;
+            flex: 1;
+            padding: 14px 20px;
+            border: 3px solid #d4d4d4;
+            border-radius: 12px;
+            background: white;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: 700;
+            transition: all 0.2s;
+            min-height: 56px;
+            text-align: center;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .status-pill.payment-btn:hover,
+        .status-pill.renewal-btn:hover {
+            background: #f5f5f5;
+        }
+        
+        .status-pill.payment-btn.active-green,
+        .status-pill.renewal-btn.active-green {
+            background: #dcfce7;
+            border-color: #0A7A0A;
+            color: #0A7A0A;
+        }
+        
+        .status-pill.payment-btn.active-red,
+        .status-pill.renewal-btn.active-red {
+            background: #fee2e2;
+            border-color: #CC0000;
+            color: #CC0000;
+        }
+        
+        .status-pill.renewal-btn.active-yellow {
+            background: #F5F5F5;
+            border-color: #333333;
+            color: #333333;
+        }
+        
+        .contract-tracking {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin: 12px 0;
+        }
+        
+        .tracking-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        
+        .tracking-checkbox input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+        
+        .replacement-section {
+            margin-top: 12px;
+            padding: 12px;
+            background: #fef2f2;
+            border-radius: 8px;
+            border: 2px solid #fca5a5;
+        }
+        
+        .replacement-input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #d4d4d4;
+            border-radius: 8px;
+            font-size: 1rem;
+            margin-top: 8px;
+        }
+        
+        .replacement-input:focus {
+            outline: none;
+            border-color: #333333;
+        }
+        
+        /* ===========================================
+           CONFIRMATION MODAL (UX Improvement #1)
+           =========================================== */
+        .confirm-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.6);
+            z-index: 3000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .confirm-modal.show {
+            display: flex;
+        }
+        
+        .confirm-modal-content {
+            background: var(--color-white);
+            padding: var(--space-xl);
+            border-radius: var(--radius-lg);
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            animation: modalPop 0.2s ease-out;
+        }
+        
+        @keyframes modalPop {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        
+        .confirm-modal-icon {
+            font-size: 4rem;
+            margin-bottom: var(--space-md);
+        }
+        
+        .confirm-modal h3 {
+            font-size: var(--font-size-xl);
+            margin-bottom: var(--space-sm);
+            color: var(--color-black);
+        }
+        
+        .confirm-modal p {
+            font-size: var(--font-size-base);
+            color: var(--color-neutral);
+            margin-bottom: var(--space-lg);
+        }
+        
+        .confirm-modal-buttons {
+            display: flex;
+            gap: var(--space-md);
+        }
+        
+        .confirm-modal-buttons button {
+            flex: 1;
+            min-height: var(--touch-target-lg);
+            font-size: var(--font-size-base);
+            font-weight: 700;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            border: 3px solid;
+        }
+        
+        .confirm-modal .btn-cancel {
+            background: var(--color-white);
+            color: var(--color-neutral);
+            border-color: var(--color-border);
+        }
+        
+        .confirm-modal .btn-confirm-paid {
+            background: var(--color-primary);
+            color: var(--color-white);
+            border-color: var(--color-primary);
+        }
+        
+        .confirm-modal .btn-confirm-unpaid {
+            background: var(--color-danger);
+            color: var(--color-white);
+            border-color: var(--color-danger);
+        }
+        
+        /* ===========================================
+           PROPERTY FILTER TABS (UX Improvement #3)
+           =========================================== */
+        .property-filter-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: var(--space-lg);
+            overflow-x: auto;
+            padding: 4px;
+            -webkit-overflow-scrolling: touch;
+            position: relative;
+            z-index: 100;
+            background: #F5F5F5;
+            border-radius: 12px;
+        }
+        
+        .property-filter-tab {
+            flex-shrink: 0;
+            padding: 12px 20px;
+            border-radius: 8px;
+            border: none;
+            background: transparent;
+            color: var(--color-neutral);
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer !important;
+            transition: all 0.2s;
+            min-height: var(--touch-target-min);
+            white-space: nowrap;
+            position: relative;
+            z-index: 101;
+            pointer-events: auto !important;
+        }
+        
+        .property-filter-tab:hover {
+            background: rgba(0, 0, 0, 0.05);
+        }
+        
+        .property-filter-tab.active {
+            background: var(--color-primary);
+            color: var(--color-white);
+        }
+        
+        .property-filter-tab .tab-count {
+            display: inline-block;
+            margin-left: var(--space-xs);
+            padding: 2px 8px;
+            border-radius: var(--radius-full);
+            font-size: var(--font-size-xs);
+            background: rgba(255,255,255,0.3);
+        }
+        
+        .property-filter-tab.active .tab-count {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        .property-filter-tab:not(.active) .tab-count {
+            background: rgba(0, 0, 0, 0.1);
+        }
+        
+        /* ===========================================
+           PHONE VALIDATION PREVIEW (UX Improvement #5)
+           =========================================== */
+        .phone-preview {
+            margin-top: var(--space-sm);
+            padding: var(--space-md);
+            border-radius: var(--radius-sm);
+            font-size: var(--font-size-sm);
+            display: none;
+        }
+        
+        .phone-preview.valid {
+            display: block;
+            background: #dcfce7;
+            color: var(--color-primary);
+            border: 2px solid var(--color-primary);
+        }
+        
+        .phone-preview.invalid {
+            display: block;
+            background: #fee2e2;
+            color: var(--color-danger);
+            border: 2px solid var(--color-danger);
+        }
+        
+        .phone-preview .preview-label {
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        
+        .phone-preview .preview-number {
+            font-size: var(--font-size-lg);
+            font-weight: 800;
+            font-family: monospace;
+        }
+        
+        /* ===========================================
+           LOADING SPINNER (UX Improvement #2)
+           =========================================== */
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+            margin-right: 8px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .btn-loading {
+            opacity: 0.8;
+            pointer-events: none;
+        }
+        
+        /* Enhanced toast with types */
+        .undo-toast.success {
+            background: var(--color-primary);
+        }
+        
+        .undo-toast.error {
+            background: var(--color-danger);
+        }
+        
+        .undo-toast.warning {
+            background: #f59e0b;
+        }
+        
+        /* ===========================================
+           PRINT STYLES (UX Improvement #13)
+           =========================================== */
+        @media print {
+            /* Hide non-essential elements */
+            .bottom-nav,
+            .top-navbar,
+            .nav-tabs,
+            .search-section,
+            .send-section,
+            .view-toggle,
+            .view-toggle-btn,
+            .controls,
+            .btn-primary,
+            .btn-secondary,
+            .whatsapp-inline-btn,
+            .tenant-status-btn,
+            .add-phone-btn,
+            .edit-phone-btn,
+            .test-mode-banner,
+            .offline-banner,
+            .undo-toast,
+            .confetti-container,
+            .celebration-banner,
+            .phone-modal,
+            .confirm-modal,
+            .property-filter-tabs,
+            details,
+            #lastSaved {
+                display: none !important;
+            }
+            
+            /* Reset body styles */
+            body {
+                background: white !important;
+                padding: 0 !important;
+                font-size: 12pt !important;
+                color: black !important;
+            }
+            
+            /* Make header simpler */
+            header {
+                box-shadow: none !important;
+                border-bottom: 2px solid #333 !important;
+                margin-bottom: 20pt !important;
+                padding: 10pt !important;
+            }
+            
+            h1 {
+                font-size: 18pt !important;
+                margin-bottom: 5pt !important;
+            }
+            
+            .subtitle {
+                font-size: 12pt !important;
+            }
+            
+            /* Month display */
+            .date-month-year {
+                font-size: 14pt !important;
+            }
+            
+            /* Property sections */
+            .property-section {
+                page-break-inside: avoid;
+                box-shadow: none !important;
+                border: 2px solid #333 !important;
+                margin-bottom: 15pt !important;
+            }
+            
+            .property-header {
+                background: #f0f0f0 !important;
+                color: black !important;
+                padding: 8pt !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            
+            /* Tenant items */
+            .tenant-item {
+                padding: 8pt !important;
+                border-bottom: 1px solid #ccc !important;
+                border-left: 4px solid !important;
+                page-break-inside: avoid;
+            }
+            
+            .tenant-item.paid {
+                border-left-color: #0A7A0A !important;
+            }
+            
+            .tenant-item:not(.paid) {
+                border-left-color: #CC0000 !important;
+            }
+            
+            .tenant-name {
+                font-size: 11pt !important;
+            }
+            
+            .tenant-rent {
+                font-size: 12pt !important;
+                border: none !important;
+                background: none !important;
+                padding: 0 !important;
+            }
+            
+            /* Status indicator for print */
+            .tenant-item::after {
+                content: "PENDIENTE";
+                font-weight: bold;
+                color: #CC0000;
+                float: right;
+            }
+            
+            .tenant-item.paid::after {
+                content: "✓ PAGADO";
+                color: #0A7A0A;
+            }
+            
+            /* Progress bar */
+            .progress-bar-container {
+                background: #f0f0f0 !important;
+                padding: 10pt !important;
+                border: 2px solid #333 !important;
+            }
+            
+            /* Grand totals */
+            .grand-total {
+                background: #f0f0f0 !important;
+                color: black !important;
+                border: 2px solid #333 !important;
+            }
+            
+            /* Falta cobrar banner */
+            #faltaCobrarTop,
+            [style*="background: #CC0000"] {
+                background: white !important;
+                color: black !important;
+                border: 3px solid #CC0000 !important;
+            }
+            
+            /* Excel view - preferred for printing */
+            .excel-view {
+                display: block !important;
+            }
+            
+            .card-view {
+                display: none !important;
+            }
+            
+            .excel-table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+            }
+            
+            .excel-table th,
+            .excel-table td {
+                border: 1px solid #333 !important;
+                padding: 6pt !important;
+                font-size: 10pt !important;
+            }
+            
+            .excel-table th {
+                background: #e0e0e0 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            
+            /* Print header */
+            @page {
+                margin: 1cm;
+            }
+            
+            /* Print footer with date */
+            .container::after {
+                content: "Impreso el " attr(data-print-date);
+                display: block;
+                text-align: center;
+                font-size: 9pt;
+                color: #666;
+                margin-top: 20pt;
+                padding-top: 10pt;
+                border-top: 1px solid #ccc;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+    <header>
+            <h1>RentasClaras</h1>
+              
+            <!-- NAVBAR - Pagos y Contratos -->
+            <nav class="top-navbar">
+                <a href="/" class="top-navbar-item active">
+                    <span>Pagos</span>
+                </a>
+                <a href="/contratos" class="top-navbar-item">
+                    <span>Contratos</span>
+                </a>
+            </nav>
+              
+            <p class="subtitle" style="font-size: 1.3rem; font-weight: 700; color: #000;">¿Quién ya pagó este mes?</p>
+            
+            <!-- #5: MONTH SELECTOR with large arrows + HOY button -->
+            <div style="display: flex; align-items: center; justify-content: center; gap: 20px; margin: 24px 0;">
+                {% if can_go_prev %}
+                <a href="/?year={{ prev_year }}&month={{ prev_month }}" 
+                   style="background: #333333; color: white; width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; text-decoration: none; font-weight: 800;">
+                    ◀
+                </a>
+                {% else %}
+                <div style="background: #cccccc; color: #999999; width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: 800; cursor: not-allowed;">
+                    ◀
+                </div>
+                {% endif %}
+                <div style="text-align: center;">
+                    <div style="font-size: 2.5rem; font-weight: 800; color: #000; text-transform: capitalize;">{{ month_name }}</div>
+                    <div style="font-size: 1.4rem; font-weight: 700; color: #333333;">{{ year }}</div>
+                </div>
+                <a href="/?year={{ next_year }}&month={{ next_month }}" 
+                   style="background: #333333; color: white; width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; text-decoration: none; font-weight: 800;">
+                    ▶
+                </a>
+            </div>
+            <!-- #10: HOY button to return to current month -->
+            {% if not is_current_month %}
+            <div style="text-align: center; margin-bottom: 16px;">
+                <a href="/" style="display: inline-block; padding: 12px 32px; background: #0A7A0A; color: white; border-radius: 12px; font-size: 1.2rem; font-weight: 800; text-decoration: none;">
+                    Regresar a Hoy
+                </a>
+            </div>
+            {% endif %}
+        </header>
+        
+        <!-- #8: FALTA COBRAR moved to TOP - Clean summary card -->
+        <div style="background: white; border: 4px solid #CC0000; padding: 20px; border-radius: 16px; margin-bottom: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                <div style="font-size: 1.1rem; font-weight: 700; color: #333;">Pendiente este mes:</div>
+                <div style="font-size: 1.8rem; font-weight: 800; color: #CC0000;" id="faltaCobrarTop">${{ "{:,.0f}".format(total_rent) }} MXN</div>
+            </div>
+            <div style="font-size: 1rem; margin-top: 8px; color: #666;" id="faltaPersonasTop">{{ total_tenants }} inquilinos por pagar</div>
+        </div>
+        
+        {% if test_mode %}
+        <div class="test-mode-banner">
+            MODO PRUEBA — Los mensajes irán a tu número ({{ test_phone }}), no a los inquilinos.
+        </div>
+        {% endif %}
+        
+        <!-- Hidden counters for JavaScript updates (summary cards removed per UX feedback - info redundant with top banner) -->
+        <div style="display: none;">
+            <span id="totalTenants">{{ total_tenants }}</span>
+            <span id="pendingCount">{{ total_tenants }}</span>
+            <span id="paidCount">0</span>
+            <span id="grandTotalExpected">${{ "{:,.0f}".format(total_rent) }} MXN</span>
+            <span id="grandTotalPending">${{ "{:,.0f}".format(total_rent) }} MXN</span>
+            <span id="grandTotalPaid">$0 MXN</span>
+            <span id="collectionRate">0% cobrado</span>
+            {% for property_name, tenants in tenants_by_property.items() %}
+            <span data-subtotal-paid="{{ property_name }}">0 pagados</span>
+            <span data-subtotal-pending="{{ property_name }}">{{ tenants|length }} pendientes</span>
+            {% endfor %}
+        </div>
+        
+        <!-- Progress Bar - NOW AT TOP for visibility, #11 CONFETTI ADDED -->
+        <div class="progress-bar-container" style="background: #0A7A0A; padding: 20px; border-radius: 16px; margin-bottom: 24px;">
+            <div class="progress-bar-label" style="color: white;">
+                <span style="font-size: 1.2rem;">Cobrado este mes</span>
+                <span id="collectionPercentage" style="font-size: 1.4rem; font-weight: 800;">0%</span>
+            </div>
+            <div class="progress-bar-track">
+                <div class="progress-bar-fill" id="collectionProgressBar" style="width: 0%;">
+                    <span class="progress-bar-text" id="collectionProgressText"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- #6: Search Bar - neutral colors (no blue) -->
+        <div class="search-section" style="margin-bottom: 24px; position: relative; z-index: 5;">
+            <div style="position: relative;">
+                <input type="text" 
+                       id="tenantSearch" 
+                       class="search-input" 
+                       placeholder="Buscar por nombre..." 
+                       style="width: 100%; padding: 16px 20px 16px 48px; font-size: 1.1rem; border: 3px solid #CCCCCC; border-radius: 12px; background: white; color: #000;">
+                <svg style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); width: 20px; height: 20px; color: #999;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" stroke-width="2" d="m21 21-4.35-4.35"/></svg>
+                <button type="button" 
+                        id="clearSearch" 
+                        onclick="clearSearchStandalone()"
+                        style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; font-size: 1.3rem; cursor: pointer; display: none;">
+                    ✕
+                </button>
+            </div>
+            <div id="searchResults" style="margin-top: 8px; color: #000; font-size: 1rem; display: none;"></div>
+        </div>
+        
+        <!-- STANDALONE SEARCH SCRIPT - Independent of main script -->
+        <script>
+        (function() {
+            var searchInput = document.getElementById('tenantSearch');
+            var clearBtn = document.getElementById('clearSearch');
+            var resultsDiv = document.getElementById('searchResults');
+            
+            if (searchInput) {
+                searchInput.addEventListener('input', function(e) {
+                    var term = (e.target.value || '').toLowerCase().trim();
+                    
+                    // Show/hide clear button
+                    if (clearBtn) {
+                        clearBtn.style.display = term ? 'block' : 'none';
+                    }
+                    
+                    // Get all tenant items (card view)
+                    var allItems = document.querySelectorAll('.tenant-item');
+                    var allSections = document.querySelectorAll('.property-section');
+                    
+                    // Get all excel rows
+                    var allRows = document.querySelectorAll('.excel-table tbody tr');
+                    
+                    if (!term) {
+                        // Show all
+                        allItems.forEach(function(item) { item.style.display = 'flex'; });
+                        allSections.forEach(function(section) { section.style.display = 'block'; });
+                        allRows.forEach(function(row) { row.style.display = ''; });
+                        var excelSections = document.querySelectorAll('.excel-property-section');
+                        excelSections.forEach(function(section) { section.style.display = 'block'; });
+                        if (resultsDiv) resultsDiv.style.display = 'none';
+                        return;
+                    }
+                    
+                    var matchCount = 0;
+                    var propertyVisibility = {};
+                    
+                    // Filter card view
+                    allItems.forEach(function(item) {
+                        var checkbox = item.querySelector('.tenant-checkbox');
+                        if (!checkbox) return;
+                        var name = (checkbox.dataset.name || '').toLowerCase();
+                        var property = checkbox.dataset.property;
+                        
+                        if (name.indexOf(term) !== -1) {
+                            item.style.display = 'flex';
+                            matchCount++;
+                            propertyVisibility[property] = true;
+                        } else {
+                            item.style.display = 'none';
+                        }
+                    });
+                    
+                    // Filter excel view
+                    allRows.forEach(function(row) {
+                        var nameCell = row.querySelector('td:nth-child(2)');
+                        if (!nameCell) return;
+                        var name = nameCell.textContent.toLowerCase();
+                        
+                        if (name.indexOf(term) !== -1) {
+                            row.style.display = '';
+                        } else {
+                            row.style.display = 'none';
+                        }
+                    });
+                    
+                    // Hide empty property sections (card view)
+                    allSections.forEach(function(section) {
+                        var propertyName = section.dataset.property;
+                        section.style.display = propertyVisibility[propertyName] ? 'block' : 'none';
+                    });
+                    
+                    // Hide empty Excel sections
+                    var excelPropertySections = document.querySelectorAll('.excel-property-section');
+                    excelPropertySections.forEach(function(section) {
+                        var visibleRows = section.querySelectorAll('tr[data-tenant-id]');
+                        var hasVisible = false;
+                        visibleRows.forEach(function(row) {
+                            if (row.style.display !== 'none') {
+                                hasVisible = true;
+                            }
+                        });
+                        section.style.display = hasVisible ? 'block' : 'none';
+                    });
+                    
+                    // Show results count
+                    if (resultsDiv) {
+                        resultsDiv.style.display = 'block';
+                        if (matchCount === 0) {
+                            resultsDiv.innerHTML = 'No se encontró "' + e.target.value + '"';
+                        } else if (matchCount === 1) {
+                            resultsDiv.innerHTML = '1 inquilino encontrado';
+                        } else {
+                            resultsDiv.innerHTML = matchCount + ' inquilinos encontrados';
+                        }
+                    }
+                });
+            }
+            
+            // Clear search function
+            window.clearSearchStandalone = function() {
+                if (searchInput) {
+                    searchInput.value = '';
+                    searchInput.dispatchEvent(new Event('input'));
+                    searchInput.focus();
+                }
+            };
+        })();
+        </script>
+        
+        <!-- UX #3: Property Filter Tabs -->
+        <div class="property-filter-tabs" id="propertyFilterTabs" style="display: flex; gap: 8px; margin-bottom: 24px; overflow-x: auto; padding-bottom: 8px; -webkit-overflow-scrolling: touch; position: relative; z-index: 100; background: #F5F5F5; border-radius: 12px; padding: 4px;">
+            <button type="button" class="property-filter-tab active" data-filter="all" onclick="filterByProperty('all', this)" style="flex-shrink: 0; padding: 12px 20px; border-radius: 8px; border: none; background: #0A7A0A; color: white; font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: all 0.2s; min-height: 48px; white-space: nowrap; position: relative; z-index: 101;">
+                Todas <span class="tab-count" id="tabCountAll">{{ total_tenants }}</span>
+            </button>
+            {% for property_name, tenants in tenants_by_property.items() %}
+            <button type="button" class="property-filter-tab" data-filter="{{ property_name }}" onclick="filterByProperty('{{ property_name }}', this)" style="flex-shrink: 0; padding: 12px 20px; border-radius: 8px; border: none; background: transparent; color: #333333; font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: all 0.2s; min-height: 48px; white-space: nowrap; position: relative; z-index: 101;">
+                {{ property_name }} <span class="tab-count" data-tab-count="{{ property_name }}">{{ tenants|length }}</span>
+            </button>
+            {% endfor %}
+        </div>
+        
+        <!-- #3: Bulk actions moved to collapsed section for safety -->
+        <details style="margin-bottom: 24px;">
+            <summary style="cursor: pointer; padding: 16px; background: #F5F5F5; border-radius: 12px; font-weight: 700; color: #333333; font-size: 1.1rem; border: 3px solid #CCCCCC;">
+                Acciones masivas (marcar todos)
+            </summary>
+            <div style="padding: 20px; background: #FAFAFA; border-radius: 0 0 12px 12px; display: flex; gap: 12px; flex-wrap: wrap;">
+                <button class="btn-secondary" onclick="confirmMarkAllUnpaid()" style="flex: 1; min-width: 200px;">Marcar todos pendientes</button>
+                <button class="btn-secondary" onclick="confirmMarkAllPaid()" style="flex: 1; min-width: 200px;">Marcar todos pagados</button>
+            </div>
+        </details>
+        
+        <!-- Last Saved Indicator -->
+        <div id="lastSaved" style="text-align: center; color: #0A7A0A; font-weight: 600; margin-bottom: 16px; font-size: 1rem;">
+        </div>
+          
+        <!-- Offline Banner -->
+        <div class="offline-banner" id="offlineBanner" style="display:none;">
+            Sin conexión a internet. Los cambios se guardarán cuando regrese.
+        </div>
+        
+        <!-- Undo Toast -->
+        <div class="undo-toast" id="undoToast">
+            <span id="undoMessage">Guardado</span>
+            <button onclick="undoLastAction()" id="undoBtn">Deshacer</button>
+        </div>
+
+        <!-- VIEW TOGGLE - Right above the data views -->
+        <div style="display: flex; gap: 8px; justify-content: center; margin-bottom: 16px; background: #F5F5F5; border-radius: 12px; padding: 4px;">
+            <button type="button" class="view-toggle-btn" id="cardViewBtn" onclick="switchToCardView()" style="flex: 1; padding: 12px 24px; border-radius: 8px; border: none; background: transparent; color: #333333; font-size: 1rem; font-weight: 700; cursor: pointer; min-height: 48px;">
+                Tarjetas
+            </button>
+            <button type="button" class="view-toggle-btn active" id="tableViewBtn" onclick="switchToTableView()" style="flex: 1; padding: 12px 24px; border-radius: 8px; border: none; background: #0A7A0A; color: white; font-size: 1rem; font-weight: 700; cursor: pointer; min-height: 48px;">
+                Tabla
+            </button>
+        </div>
+
+        <!-- CARD VIEW (default) -->
+        <div class="card-view" id="cardView">
+        {% for property_name, tenants in tenants_by_property.items() %}
+        {% set property_total = tenants|sum(attribute='rent') %}
+        <div class="property-section" data-property="{{ property_name }}" data-property-total="{{ property_total }}">
+            <div class="property-header">
+                <span>{{ property_name }}</span>
+                <div class="property-stats">
+                    <span class="property-pending-count" data-property-pending="{{ property_name }}">{{ tenants|length }} pendientes</span>
+                    <span class="property-paid-count" data-property-paid="{{ property_name }}">0 pagaron</span>
+                </div>
+            </div>
+            <!-- Property Subtotal Row -->
+            <div class="property-subtotal-row" style="background: #f5f5f5; padding: 12px 16px; border-radius: 8px; margin: 8px 0 12px 0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; border: 2px solid #e0e0e0;">
+                <div style="display: flex; gap: 16px; flex-wrap: wrap; align-items: center;">
+                    <span style="font-weight: 700; color: #333;">Subtotal:</span>
+                    <span class="property-subtotal-expected" data-subtotal-expected="{{ property_name }}" style="font-weight: 600; color: #333;">${{ "{:,.0f}".format(property_total) }} esperados</span>
+                </div>
+                <div style="display: flex; gap: 16px; flex-wrap: wrap; align-items: center;">
+                    <span class="property-subtotal-paid" data-subtotal-amount-paid="{{ property_name }}" style="font-weight: 700; color: #0A7A0A; background: #dcfce7; padding: 4px 12px; border-radius: 6px;">$0 cobrados</span>
+                    <span class="property-subtotal-pending" data-subtotal-amount-pending="{{ property_name }}" style="font-weight: 700; color: #CC0000; background: #FEE2E2; padding: 4px 12px; border-radius: 6px;">${{ "{:,.0f}".format(property_total) }} pendientes</span>
+                </div>
+            </div>
+            <div class="tenant-list">
+                {% for tenant in tenants %}
+                <div class="tenant-item {% if tenant.paid %}paid{% endif %}" data-property="{{ property_name }}" data-tenant-id="{{ tenant.id }}">
+                    <input type="checkbox" class="tenant-checkbox" 
+                           id="tenant-{{ tenant.id }}" 
+                           data-id="{{ tenant.id }}"
+                           data-name="{{ tenant.name }}"
+                           data-phone="{{ tenant.phone }}"
+                           data-property="{{ property_name }}"
+                           {% if not tenant.paid %}checked{% endif %}>
+                    
+                    <div class="tenant-main-info">
+                        <div class="tenant-name">
+                            <span class="tenant-unit">({{ tenant.unit }})</span> {{ tenant.name }}
+                        </div>
+                    <!-- Phone number with warning if missing -->
+                        <div class="tenant-phone-inline">
+                            {% if tenant.phone %}
+                            <a href="tel:{{ tenant.phone }}" style="color: #000; text-decoration: none;">{{ tenant.phone }}</a>
+                            <button type="button" class="edit-phone-btn" onclick="editPhone('{{ tenant.id }}', '{{ tenant.phone }}')">Editar</button>
+                            {% else %}
+                            <div style="background: #CC0000; color: white; padding: 12px 16px; border-radius: 8px; font-weight: 700; font-size: 1rem; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; position: relative; z-index: 10;">
+                                <span>SIN TELÉFONO</span>
+                                <button type="button" class="add-phone-btn" onclick="editPhone('{{ tenant.id }}', '')" style="background: white !important; color: #CC0000 !important; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 700; cursor: pointer; min-height: 48px; position: relative; z-index: 11;">
+                                    Agregar
+                                </button>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Status + Amount row - aligned horizontally -->
+                    <div class="status-amount-row">
+                        <div class="payment-buttons">
+                            <button type="button" class="status-pill payment-btn {% if tenant.paid %}active-green{% endif %}" 
+                                    onclick="setPaymentStatus(this, '{{ tenant.id }}', true)"
+                                    data-tenant-id="{{ tenant.id }}">
+                                Ya pagó
+                            </button>
+                            <button type="button" class="status-pill payment-btn {% if not tenant.paid %}active-red{% endif %}" 
+                                    onclick="setPaymentStatus(this, '{{ tenant.id }}', false)"
+                                    data-tenant-id="{{ tenant.id }}">
+                                No ha pagado
+                            </button>
+                        </div>
+                        <div class="tenant-amount">
+                            <div class="tenant-rent">${{ "{:,.0f}".format(tenant.rent) }}</div>
+                        </div>
+                    </div>
+                      
+                    <!-- Inline WhatsApp button -->
+                    {% if tenant.phone and not tenant.paid %}
+                    <a href="#" class="whatsapp-inline-btn" 
+                       data-tenant-id="{{ tenant.id }}"
+                       onclick="sendWhatsApp(event, this)">
+                        Enviar mensaje
+                    </a>
+                    {% else %}
+                    <span class="whatsapp-inline-btn disabled">Pagado</span>
+                    {% endif %}
+                    
+                    <!-- Simplified details section -->
+                    <div class="tenant-details" data-details-for="{{ tenant.id }}">
+                        {% if tenant.emergency_contact %}
+                        <p><strong>Aval:</strong> {{ tenant.emergency_contact }} {% if tenant.emergency_phone %}({{ tenant.emergency_phone }}){% endif %}</p>
+                        {% endif %}
+                        {% if tenant.contract_start_formatted and tenant.contract_end_formatted %}
+                        <p><strong>Contrato:</strong> {{ tenant.contract_start_formatted }} → {{ tenant.contract_end_formatted }}</p>
+                        {% endif %}
+                          
+                        <div class="payment-method-row">
+                            <label><strong>¿Cómo pagó?</strong></label><br>
+                            <select class="payment-method" onchange="updatePaymentMethod(this)" {% if not tenant.paid %}disabled{% endif %}>
+                                <option value="">— Seleccionar método —</option>
+                                <option value="transferencia" {% if tenant.payment_method == 'transferencia' %}selected{% endif %}>Transferencia</option>
+                                <option value="envio" {% if tenant.payment_method == 'envio' %}selected{% endif %}>Envío sin tarjeta</option>
+                                <option value="deposito" {% if tenant.payment_method == 'deposito' %}selected{% endif %}>Depósito</option>
+                                <option value="efectivo" {% if tenant.payment_method == 'efectivo' %}selected{% endif %}>Efectivo</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+        </div>
+        <!-- END CARD VIEW -->
+
+        <!-- EXCEL TABLE VIEW (hidden by default) - Matching real Excel structure -->
+        <div class="excel-view" id="excelView" style="overflow-x: auto;">
+            {% for property_name, tenants in tenants_by_property.items() %}
+            <div class="excel-property-section" style="margin-bottom: 32px;">
+                <!-- Property Header - Excel style -->
+                <table class="excel-table" style="margin-bottom: 0; min-width: 800px;">
+                    <thead>
+                        <tr>
+                            <th colspan="6" style="background: white; border: none; font-size: 1.4rem; text-align: left; padding: 8px 16px;">
+                                {{ property_name }}
+                            </th>
+                            <th colspan="3" style="background: white; border: none; font-style: italic; text-align: right;">{{ month_name }}</th>
+                        </tr>
+                        <tr>
+                            <th style="width: 40px; text-align: center;"></th>
+                            <th style="min-width: 150px;">Nombre</th>
+                            <th style="text-align: center;">INICIA</th>
+                            <th style="text-align: center;">TERMINA</th>
+                            <th style="text-align: right; min-width: 80px;">Renta</th>
+                            <th style="text-align: right; min-width: 80px;">Pagado</th>
+                            <th style="text-align: center; width: 80px;">Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for tenant in tenants %}
+                        <tr data-tenant-id="{{ tenant.id }}" data-property="{{ property_name }}" class="excel-row {% if tenant.paid %}paid-row{% else %}unpaid-row{% endif %}">
+                            <td style="text-align: center; font-weight: bold;">{{ loop.index if property_name == 'Ensenada' else ['A','B','C','D','E','F','G','H','I','J'][loop.index0] if loop.index0 < 10 else loop.index }}</td>
+                            <td>
+                                <strong>{{ tenant.name }}</strong>
+                                {% if not tenant.phone %}<span style="color: #CC0000; font-size: 0.8rem;"> ⚠️</span>{% endif %}
+                            </td>
+                            <td style="text-align: center; font-size: 0.95rem;">{{ tenant.contract_start_formatted if tenant.contract_start_formatted else '' }}</td>
+                            <td style="text-align: center; font-size: 0.95rem;">{{ tenant.contract_end_formatted if tenant.contract_end_formatted else '' }}</td>
+                            <td class="rent-cell" style="{% if not tenant.paid %}color: #CC0000;{% endif %}">${{ "{:,.0f}".format(tenant.rent) }}</td>
+                            <td class="pagado-cell" data-tenant-id="{{ tenant.id }}" style="text-align: right; font-weight: 700; color: #0A7A0A;">
+                                {% if tenant.paid %}${{ "{:,.0f}".format(tenant.rent) }}{% endif %}
+                            </td>
+                            <td style="text-align: center;">
+                                <button type="button" class="status-pill status-pill--small tenant-status-btn-table {% if tenant.paid %}paid{% else %}unpaid{% endif %}"
+                                        onclick="togglePaidTable(this, '{{ tenant.id }}')">
+                                    {% if tenant.paid %}✓{% else %}{% endif %}
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        <!-- Property Total Row -->
+                        <tr style="background: #F9F9F9; font-weight: bold;">
+                            <td></td>
+                            <td>{{ property_name }}</td>
+                            <td colspan="2"></td>
+                            <td class="rent-cell" style="border-top: 2px solid #333;">${{ "{:,.0f}".format(tenants|sum(attribute='rent')) }}</td>
+                            <td class="property-total-paid" data-property="{{ property_name }}" style="text-align: right; color: #0A7A0A; border-top: 2px solid #333;">${{ "{:,.0f}".format(tenants|selectattr('paid')|sum(attribute='rent')) }}</td>
+                            <td></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            {% endfor %}
+            
+            <!-- Grand Total Summary Section -->
+            <div class="excel-property-section" style="margin-top: 24px; padding: 16px; background: #F5F5F5; border-radius: 8px;">
+                <table class="excel-table" style="max-width: 400px;">
+                    <tbody>
+                        {% for property_name, tenants in tenants_by_property.items() %}
+                        <tr>
+                            <td style="padding: 8px 16px; border: none;">{{ property_name }}</td>
+                            <td style="padding: 8px 16px; border: none; text-align: right; font-weight: bold;">${{ "{:,.0f}".format(tenants|sum(attribute='rent')) }}</td>
+                        </tr>
+                        {% endfor %}
+                        <tr style="border-top: 3px solid #333;">
+                            <td style="padding: 12px 16px; border: none; font-weight: 800; font-size: 1.2rem;">G total</td>
+                            <td style="padding: 12px 16px; border: none; text-align: right; font-weight: 800; font-size: 1.2rem; color: #0A7A0A;">
+                                ${{ "{:,.0f}".format(tenants_by_property.values()|map('sum', attribute='rent')|sum) }}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <!-- END EXCEL VIEW -->
+
+        <!-- SIMPLIFIED SEND SECTION - Single button -->
+        <div class="send-section" style="background: white; padding: 32px; border-radius: 16px; text-align: center; margin-top: 32px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); position: relative; z-index: 100;">
+            <div style="font-size: 1.2rem; margin-bottom: 24px; color: #000; font-weight: 700;">
+                Enviar recordatorio a <strong id="selectedCount" style="color: #CC0000; font-size: 1.6rem;">{{ total_tenants }}</strong> inquilino(s) pendientes
+            </div>
+            
+            <!-- ONE BIG BUTTON -->
+            <button id="sendAllApiBtn" onclick="sendAllViaApi()" 
+                    style="width: 100%; max-width: 600px; padding: 24px 32px; font-size: 1.4rem; font-weight: 700; background: #0A7A0A; color: white; border: none; border-radius: 12px; cursor: pointer; min-height: 72px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); position: relative; z-index: 101;">
+                Enviar a todos los pendientes
+            </button>
+            
+            <div id="apiStatus" style="margin: 24px 0; padding: 20px; border-radius: 12px; display: none; font-size: 1.1rem;"></div>
+            
+            <p style="color: #666666; font-size: 1rem; margin-top: 16px;">
+                Un clic = mensaje automático a cada inquilino pendiente
+            </p>
+            
+        </div>
+        
+        <!-- Celebration banner at 100% -->
+        <div class="confetti-container" id="confettiContainer"></div>
+        <div class="celebration-banner" id="celebrationBanner">
+            ¡TODOS PAGARON!
+        </div>
+    </div>
+    
+    <!-- MOBILE BOTTOM NAVIGATION - Only visible on mobile, consistent 2 items -->
+    <nav class="bottom-nav">
+        <a href="/" class="bottom-nav-item active">
+            <span class="bottom-nav-icon" style="font-size: 1.3rem; font-weight: 700;">$</span>
+            <span>Cobrar</span>
+        </a>
+        <a href="/contratos" class="bottom-nav-item">
+            <svg class="bottom-nav-icon" style="width: 24px; height: 24px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            <span>Contratos</span>
+        </a>
+    </nav>
+    
+    <!-- Phone Edit Modal -->
+    <div class="phone-modal" id="phoneModal">
+        <div class="phone-modal-content">
+            <h3>Editar Teléfono</h3>
+            <input type="tel" id="phoneInput" placeholder="+52 81 1234 5678" inputmode="tel" oninput="validatePhonePreview(this.value)">
+            <!-- UX #5: Phone validation preview -->
+            <div class="phone-preview" id="phonePreview">
+                <div class="preview-label">Se guardará como:</div>
+                <div class="preview-number" id="phonePreviewNumber"></div>
+            </div>
+            <div id="phoneError" style="display: none; color: #CC0000; font-size: 0.95rem; margin-top: 8px;"></div>
+            <div class="phone-modal-buttons">
+                <button class="btn-secondary" onclick="closePhoneModal()">Cancelar</button>
+                <button class="btn-primary" id="savePhoneBtn" onclick="savePhone()">Guardar</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Confirmation Modal for status changes -->
+    <div class="confirm-modal" id="confirmModal">
+        <div class="confirm-modal-content">
+            <div class="confirm-modal-icon" id="confirmIcon" style="font-size: 3rem;"></div>
+            <h3 id="confirmTitle">¿Confirmar cambio?</h3>
+            <p id="confirmMessage">¿Está seguro de realizar esta acción?</p>
+            <div class="confirm-modal-buttons">
+                <button class="btn-cancel" onclick="closeConfirmModal()">Cancelar</button>
+                <button class="btn-confirm-paid" id="confirmBtn" onclick="executeConfirmedAction()">Confirmar</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        console.log('Main script starting...');
+        const dayOfMonth = {{ day_of_month }};
+        const currentYear = {{ year }};
+        const currentMonth = {{ month }};
+        const testMode = {{ 'true' if test_mode else 'false' }};
+        const testPhone = "{{ test_phone }}";
+        console.log('Variables initialized:', { dayOfMonth, currentYear, currentMonth, testMode });
+
+        // #4: VIEW SWITCHING FUNCTIONS - Table is now DEFAULT
+        function switchToCardView() {
+            console.log('switchToCardView called');
+            const cardView = document.getElementById('cardView');
+            const excelView = document.getElementById('excelView');
+            
+            if (!cardView || !excelView) {
+                console.error('View elements not found:', { cardView, excelView });
+                return;
+            }
+            
+            // Direct style manipulation - guaranteed to work
+            cardView.style.display = 'block';
+            excelView.style.display = 'none';
+            
+            // Update header buttons styling
+            const cardBtn = document.getElementById('cardViewBtn');
+            const tableBtn = document.getElementById('tableViewBtn');
+            if (cardBtn && tableBtn) {
+                cardBtn.style.background = '#333333';
+                cardBtn.style.color = 'white';
+                tableBtn.style.background = 'white';
+                tableBtn.style.color = '#333333';
+            }
+            localStorage.setItem('preferredView', 'card');
+            console.log('Switched to card view');
+        }
+
+        function switchToTableView() {
+            console.log('switchToTableView called');
+            const cardView = document.getElementById('cardView');
+            const excelView = document.getElementById('excelView');
+            
+            if (!cardView || !excelView) {
+                console.error('View elements not found:', { cardView, excelView });
+                return;
+            }
+            
+            // Direct style manipulation - guaranteed to work
+            cardView.style.display = 'none';
+            excelView.style.display = 'block';
+            
+            // Update header buttons styling
+            const cardBtn = document.getElementById('cardViewBtn');
+            const tableBtn = document.getElementById('tableViewBtn');
+            if (cardBtn && tableBtn) {
+                cardBtn.style.background = 'white';
+                cardBtn.style.color = '#333333';
+                tableBtn.style.background = '#333333';
+                tableBtn.style.color = 'white';
+            }
+            localStorage.setItem('preferredView', 'table');
+            console.log('Switched to table view');
+        }
+
+        // #4: Restore user's preferred view on page load - DEFAULT is now TABLE
+        window.addEventListener('DOMContentLoaded', () => {
+            const preferredView = localStorage.getItem('preferredView') || 'table';
+            if (preferredView === 'card') {
+                switchToCardView();
+            } else {
+                switchToTableView();
+            }
+            
+            // Initialize counts and subtotals on page load
+            updateCounts();
+            
+            // Set up search functionality
+            const searchInput = document.getElementById('tenantSearch');
+            if (searchInput) {
+                searchInput.addEventListener('input', function(e) {
+                    filterTenants(e.target.value);
+                });
+            }
+        });
+
+        // Toggle paid status from Excel table view
+        function togglePaidTable(btn, tenantId) {
+            // Find the corresponding tenant in card view
+            const cardViewItem = document.querySelector(`.tenant-item[data-tenant-id="${tenantId}"]`);
+            if (!cardViewItem) {
+                console.error('Could not find card view item for tenant:', tenantId);
+                return;
+            }
+            
+            // Determine current state and toggle it
+            const row = btn.closest('tr');
+            const currentlyPaid = btn.classList.contains('paid');
+            const newPaidStatus = !currentlyPaid;
+            
+            // Find the payment buttons in card view and trigger the appropriate one
+            const paymentBtnPaid = cardViewItem.querySelector('.payment-btn[onclick*="true"]');
+            const paymentBtnUnpaid = cardViewItem.querySelector('.payment-btn[onclick*="false"]');
+            
+            if (newPaidStatus && paymentBtnPaid) {
+                // Trigger the "Ya pagó" button
+                setPaymentStatus(paymentBtnPaid, tenantId, true);
+            } else if (!newPaidStatus && paymentBtnUnpaid) {
+                // Trigger the "No ha pagado" button
+                setPaymentStatus(paymentBtnUnpaid, tenantId, false);
+            } else {
+                // Fallback: directly update via API
+                updatePaymentDirectly(tenantId, newPaidStatus);
+            }
+
+            // Update table row appearance
+            const pagadoCell = row.querySelector('.pagado-cell');
+            const rentCell = row.querySelector('.rent-cell');
+            const rentAmount = rentCell ? rentCell.textContent.trim() : '$0';
+
+            if (newPaidStatus) {
+                row.classList.add('paid-row');
+                row.classList.remove('unpaid-row');
+                btn.className = 'status-pill status-pill--small tenant-status-btn-table paid';
+                btn.textContent = '✓';
+                if (pagadoCell) {
+                    pagadoCell.textContent = rentAmount;
+                }
+                if (rentCell) {
+                    rentCell.style.color = '';
+                }
+            } else {
+                row.classList.add('unpaid-row');
+                row.classList.remove('paid-row');
+                btn.className = 'status-pill status-pill--small tenant-status-btn-table unpaid';
+                btn.textContent = '';
+                if (pagadoCell) {
+                    pagadoCell.textContent = '';
+                }
+                if (rentCell) {
+                    rentCell.style.color = '#CC0000';
+                }
+            }
+            
+            // Update property totals
+            updatePropertyTotals();
+        }
+        
+        // Fallback function for direct API update when card view buttons not found
+        function updatePaymentDirectly(tenantId, isPaid) {
+            fetch('/api/payment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tenant_id: tenantId, paid: isPaid })
+            }).then(response => {
+                if (response.ok) {
+                    updateCounts();
+                }
+            }).catch(err => console.error('Payment update failed:', err));
+        }
+        
+        // Update property totals when payment status changes
+        function updatePropertyTotals() {
+            const propertySections = document.querySelectorAll('.excel-property-section');
+            propertySections.forEach(section => {
+                let totalPaid = 0;
+                const rows = section.querySelectorAll('tr[data-tenant-id]');
+                rows.forEach(row => {
+                    if (row.classList.contains('paid-row')) {
+                        const rentCell = row.querySelector('.rent-cell');
+                        if (rentCell) {
+                            const rentText = rentCell.textContent.replace(/[$,]/g, '');
+                            totalPaid += parseFloat(rentText) || 0;
+                        }
+                    }
+                });
+                const totalCell = section.querySelector('.property-total-paid');
+                if (totalCell) {
+                    totalCell.textContent = '$' + totalPaid.toLocaleString('en-US', {maximumFractionDigits: 0});
+                }
+            });
+        }
+
+        // UX #1: Confirmation Modal State
+        let pendingConfirmAction = null;
+        let pendingConfirmBtn = null;
+        
+        function showConfirmModal(title, message, icon, actionType, btn) {
+            const modal = document.getElementById('confirmModal');
+            const titleEl = document.getElementById('confirmTitle');
+            const messageEl = document.getElementById('confirmMessage');
+            const iconEl = document.getElementById('confirmIcon');
+            const confirmBtn = document.getElementById('confirmBtn');
+            
+            titleEl.textContent = title;
+            messageEl.textContent = message;
+            iconEl.textContent = icon;
+            
+            // Update button style based on action type
+            confirmBtn.className = actionType === 'paid' ? 'btn-confirm-paid' : 'btn-confirm-unpaid';
+            confirmBtn.textContent = actionType === 'paid' ? 'Sí, pagó' : 'Marcar pendiente';
+            
+            pendingConfirmBtn = btn;
+            pendingConfirmAction = actionType;
+            
+            modal.classList.add('show');
+        }
+        
+        function closeConfirmModal() {
+            const modal = document.getElementById('confirmModal');
+            modal.classList.remove('show');
+            pendingConfirmAction = null;
+            pendingConfirmBtn = null;
+        }
+        
+        function executeConfirmedAction() {
+            if (pendingConfirmBtn) {
+                executeTogglePaid(pendingConfirmBtn);
+            }
+            closeConfirmModal();
+        }
+        
+        // #1 & #3: Toggle paid status - DIRECT toggle like contratos (no modal)
+        function togglePaid(btn) {
+            // Execute toggle directly - no confirmation needed
+            executeTogglePaid(btn);
+        }
+        
+        // NEW: Two-button payment status system (like Contratos renewal buttons)
+        function setPaymentStatus(btn, tenantId, isPaid) {
+            const item = btn.closest('.tenant-item');
+            if (!item) {
+                console.error('Could not find tenant-item for button');
+                return;
+            }
+            
+            const container = btn.closest('.payment-buttons');
+            const checkbox = item.querySelector('.tenant-checkbox');
+            const paymentSelect = item.querySelector('.payment-method');
+            const tenantName = item.querySelector('.tenant-name')?.textContent?.trim() || 'Inquilino';
+            const rentText = item.querySelector('.tenant-rent')?.textContent || '$0';
+            
+            // Update button states
+            container.querySelectorAll('.payment-btn').forEach(b => {
+                b.classList.remove('active-green', 'active-red');
+            });
+            
+            // Set active state
+            if (isPaid) {
+                btn.classList.add('active-green');
+                item.classList.add('paid');
+                if (checkbox) checkbox.checked = false;
+                if (paymentSelect) paymentSelect.disabled = false;
+                updateWhatsAppButton(item, true);
+                showPersistentConfirmation(`¡${tenantName} PAGÓ! ${rentText}`, 'paid');
+                
+                // Auto-show details to show payment method selector
+                const details = item.querySelector('.tenant-details');
+                if (details && !details.classList.contains('show')) {
+                    details.classList.add('show');
+                    if (paymentSelect) {
+                        setTimeout(() => {
+                            paymentSelect.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            paymentSelect.focus();
+                        }, 200);
+                    }
+                }
+            } else {
+                btn.classList.add('active-red');
+                item.classList.remove('paid');
+                if (checkbox) checkbox.checked = true;
+                if (paymentSelect) {
+                    paymentSelect.disabled = true;
+                    paymentSelect.value = '';
+                }
+                updateWhatsAppButton(item, false);
+                showPersistentConfirmation(`${tenantName} marcado como PENDIENTE`, 'unpaid');
+            }
+            
+            // Save to database
+            fetch('/api/payment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tenant_id: tenantId,
+                    paid: isPaid,
+                    payment_method: paymentSelect?.value || null
+                })
+            }).then(response => {
+                if (response.ok) {
+                    console.log(`Guardado: ${tenantId} = ${isPaid ? 'pagado' : 'pendiente'}`);
+                    updateLastSaved();
+                }
+            }).catch(err => {
+                console.error('Error guardando, guardando localmente:', err);
+                const queue = JSON.parse(localStorage.getItem('pendingPayments') || '[]');
+                queue.push({ tenantId: tenantId, paid: isPaid, timestamp: Date.now() });
+                localStorage.setItem('pendingPayments', JSON.stringify(queue));
+                showPersistentConfirmation('Guardado localmente (sin conexión)', 'warning');
+            });
+            
+            updateCounts();
+        }
+        
+        // Execute the actual toggle after confirmation
+        function executeTogglePaid(btn) {
+            const item = btn.closest('.tenant-item');
+            if (!item) {
+                console.error('Could not find tenant-item for button');
+                return;
+            }
+            
+            const checkbox = item.querySelector('.tenant-checkbox');
+            if (!checkbox) {
+                console.error('Could not find checkbox for tenant');
+                return;
+            }
+            
+            const paymentSelect = item.querySelector('.payment-method');
+            const tenantId = btn.dataset.tenantId;
+            const tenantName = item.querySelector('.tenant-name')?.textContent?.trim() || 'Inquilino';
+            const rentText = item.querySelector('.tenant-rent')?.textContent || '$0';
+            
+            // Show loading state on button
+            const originalHtml = btn.innerHTML;
+            btn.innerHTML = '<span class="loading-spinner"></span> Guardando...';
+            btn.classList.add('btn-loading');
+            
+            // Toggle the hidden checkbox
+            checkbox.checked = !checkbox.checked;
+            
+            // Determine new paid status (checked = NOT paid, needs reminder)
+            const isPaid = !checkbox.checked;
+            
+            // Update the button appearance
+            if (checkbox.checked) {
+                // Now UNPAID (will receive reminder)
+                btn.className = 'status-pill status-pill--full-width tenant-status-btn unpaid';
+                btn.innerHTML = '<span class="icon"></span><span class="label">No ha pagado</span>';
+                item.classList.remove('paid');
+                if (paymentSelect) {
+                    paymentSelect.disabled = true;
+                    paymentSelect.value = '';
+                }
+                updateWhatsAppButton(item, false);
+                // #1: Show PERSISTENT confirmation (no blinking)
+                showPersistentConfirmation(`${tenantName} marcado como PENDIENTE`, 'unpaid');
+            } else {
+                // Now PAID (won't receive reminder)
+                btn.className = 'status-pill status-pill--full-width tenant-status-btn paid';
+                btn.innerHTML = '<span class="icon"></span><span class="label">Ya pagó</span>';
+                item.classList.add('paid');
+                if (paymentSelect) {
+                    paymentSelect.disabled = false;
+                }
+                updateWhatsAppButton(item, true);
+                // #1: Show PERSISTENT confirmation (no blinking)
+                showPersistentConfirmation(`¡${tenantName} PAGÓ! ${rentText}`, 'paid');
+                
+                // #9: Auto-show details to show payment method selector
+                const details = item.querySelector('.tenant-details');
+                if (details && !details.classList.contains('show')) {
+                    details.classList.add('show');
+                    // Scroll to the payment method selector
+                    if (paymentSelect) {
+                        setTimeout(() => {
+                            paymentSelect.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            paymentSelect.focus();
+                        }, 200);
+                    }
+                }
+            }
+            
+            // Save to database with loading state
+            fetch('/api/payment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tenant_id: tenantId,
+                    paid: isPaid,
+                    payment_method: paymentSelect.value || null
+                })
+            }).then(response => {
+                if (response.ok) {
+                    console.log(`Guardado: ${tenantId} = ${isPaid ? 'pagado' : 'pendiente'}`);
+                    updateLastSaved();
+                }
+            }).catch(err => {
+                console.error('Error guardando, guardando localmente:', err);
+                // OFFLINE QUEUE: Save to LocalStorage for later sync
+                const queue = JSON.parse(localStorage.getItem('pendingPayments') || '[]');
+                queue.push({ tenantId: tenantId, paid: isPaid, timestamp: Date.now() });
+                localStorage.setItem('pendingPayments', JSON.stringify(queue));
+                showPersistentConfirmation('Guardado localmente (sin conexión)', 'warning');
+            });
+            
+            updateCounts();
+        }
+        
+        function updateCounts() {
+            const checkboxes = document.querySelectorAll('.tenant-checkbox');
+            let pending = 0;
+            let paid = 0;
+            let paidAmount = 0;
+            let totalAmount = 0;
+            
+            // Track per-property counts and amounts
+            const propertyPaidCounts = {};
+            const propertyPendingCounts = {};
+            const propertyPaidAmounts = {};
+            
+            checkboxes.forEach(cb => {
+                const propertyName = cb.dataset.property;
+                const item = cb.closest('.tenant-item');
+                const rentText = item.querySelector('.tenant-rent')?.textContent || '$0';
+                const rent = parseFloat(rentText.replace(/[$,]/g, '')) || 0;
+                
+                totalAmount += rent;
+                
+                if (!propertyPaidCounts[propertyName]) {
+                    propertyPaidCounts[propertyName] = 0;
+                    propertyPaidAmounts[propertyName] = 0;
+                }
+                if (!propertyPendingCounts[propertyName]) {
+                    propertyPendingCounts[propertyName] = 0;
+                }
+                
+                if (cb.checked) {
+                    pending++;
+                    propertyPendingCounts[propertyName]++;
+                } else {
+                    paid++;
+                    paidAmount += rent;
+                    propertyPaidCounts[propertyName]++;
+                    propertyPaidAmounts[propertyName] += rent;
+                }
+            });
+            
+            // Update property paid counters
+            Object.keys(propertyPaidCounts).forEach(propName => {
+                const paidCounter = document.querySelector(`[data-property-paid="${propName}"]`);
+                if (paidCounter) {
+                    paidCounter.textContent = `${propertyPaidCounts[propName]} pagaron`;
+                }
+                
+                const pendingCounter = document.querySelector(`[data-property-pending="${propName}"]`);
+                if (pendingCounter) {
+                    pendingCounter.textContent = `${propertyPendingCounts[propName]} pendientes`;
+                }
+                
+                // Get property total from data attribute
+                const propertySection = document.querySelector(`.property-section[data-property="${propName}"]`);
+                const propertyTotal = propertySection ? parseFloat(propertySection.dataset.propertyTotal) || 0 : 0;
+                const propertyPaidAmount = propertyPaidAmounts[propName] || 0;
+                const propertyPendingAmount = propertyTotal - propertyPaidAmount;
+                
+                // Update subtotal amounts (with peso values)
+                const subtotalAmountPaid = document.querySelector(`[data-subtotal-amount-paid="${propName}"]`);
+                if (subtotalAmountPaid) {
+                    subtotalAmountPaid.textContent = `$${propertyPaidAmount.toLocaleString()} cobrados`;
+                }
+                
+                const subtotalAmountPending = document.querySelector(`[data-subtotal-amount-pending="${propName}"]`);
+                if (subtotalAmountPending) {
+                    subtotalAmountPending.textContent = `$${propertyPendingAmount.toLocaleString()} pendientes`;
+                }
+                
+                // Update old subtotal counters (for hidden elements)
+                const subtotalPaid = document.querySelector(`[data-subtotal-paid="${propName}"]`);
+                if (subtotalPaid) {
+                    subtotalPaid.textContent = `${propertyPaidCounts[propName]} pagados`;
+                }
+                
+                const subtotalPending = document.querySelector(`[data-subtotal-pending="${propName}"]`);
+                if (subtotalPending) {
+                    subtotalPending.textContent = `${propertyPendingCounts[propName]} pendientes`;
+                }
+            });
+            
+            document.getElementById('pendingCount').textContent = pending;
+            document.getElementById('paidCount').textContent = paid;
+            document.getElementById('selectedCount').textContent = pending;
+            
+            // Update grand total breakdown (pending/paid amounts)
+            const pendingAmount = totalAmount - paidAmount;
+            
+            const grandTotalPending = document.getElementById('grandTotalPending');
+            const grandTotalPaid = document.getElementById('grandTotalPaid');
+            const collectionRateStat = document.getElementById('collectionRate');
+            
+            if (grandTotalPending) {
+                grandTotalPending.textContent = `$${pendingAmount.toLocaleString()} MXN`;
+            }
+            if (grandTotalPaid) {
+                grandTotalPaid.textContent = `$${paidAmount.toLocaleString()} MXN`;
+            }
+            
+            // Update collection rate progress bar
+            const progressBar = document.getElementById('collectionProgressBar');
+            const progressText = document.getElementById('collectionProgressText');
+            const percentageLabel = document.getElementById('collectionPercentage');
+            
+            if (progressBar && totalAmount > 0) {
+                const percentage = Math.round((paidAmount / totalAmount) * 100);
+                progressBar.style.width = `${percentage}%`;
+                
+                // Update percentage label
+                if (percentageLabel) {
+                    percentageLabel.textContent = `${percentage}%`;
+                }
+                
+                // Update collection rate stat in grand total
+                if (collectionRateStat) {
+                    collectionRateStat.textContent = `${percentage}% cobrado`;
+                }
+                
+                // Show text inside bar only if there's enough space (>15%)
+                if (progressText) {
+                    if (percentage >= 15) {
+                        progressText.textContent = `$${paidAmount.toLocaleString()}`;
+                    } else {
+                        progressText.textContent = '';
+                    }
+                }
+                
+                // Add 'complete' class when 100%
+                if (percentage === 100) {
+                    progressBar.classList.add('complete');
+                    // #11: CELEBRATION at 100%!
+                    triggerCelebration();
+                } else {
+                    progressBar.classList.remove('complete');
+                }
+            }
+            
+            // #8: Update TOP "Falta Cobrar" section
+            const faltaCobrarTop = document.getElementById('faltaCobrarTop');
+            const faltaPersonasTop = document.getElementById('faltaPersonasTop');
+            if (faltaCobrarTop) {
+                faltaCobrarTop.textContent = `$${pendingAmount.toLocaleString()} MXN`;
+            }
+            if (faltaPersonasTop) {
+                faltaPersonasTop.textContent = `de ${pending} personas`;
+            }
+            
+            // UX #3: Update property filter tab counts
+            updatePropertyFilterCounts();
+        }
+        
+        // #1: PERSISTENT CONFIRMATION function (no blinking, solid green/red)
+        function showPersistentConfirmation(message, type) {
+            const toast = document.getElementById('undoToast');
+            const messageEl = document.getElementById('undoMessage');
+            
+            if (!toast || !messageEl) return;
+            
+            messageEl.textContent = message;
+            
+            // Color based on type
+            if (type === 'paid') {
+                toast.style.background = '#0A7A0A';
+            } else if (type === 'unpaid') {
+                toast.style.background = '#CC0000';
+            } else {
+                toast.style.background = '#333333';
+            }
+            
+            toast.classList.add('show');
+            
+            // Hide after 3 seconds
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+        
+        // #11: CELEBRATION with confetti when 100% collected
+        let celebrationShown = false;
+        function triggerCelebration() {
+            if (celebrationShown) return;
+            celebrationShown = true;
+            
+            // Show celebration banner
+            const banner = document.getElementById('celebrationBanner');
+            if (banner) {
+                banner.classList.add('show');
+                setTimeout(() => {
+                    banner.classList.remove('show');
+                }, 4000);
+            }
+            
+            // Create confetti
+            const container = document.getElementById('confettiContainer');
+            if (!container) return;
+            
+            const colors = ['#0A7A0A', '#CC0000', '#FFD700', '#FF6B6B', '#4ECDC4'];
+            
+            for (let i = 0; i < 50; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + '%';
+                    confetti.style.top = '-20px';
+                    confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+                    confetti.style.opacity = '1';
+                    container.appendChild(confetti);
+                    
+                    // Animate falling
+                    const duration = 2000 + Math.random() * 2000;
+                    const endX = (Math.random() - 0.5) * 200;
+                    confetti.animate([
+                        { transform: 'translateY(0) rotate(0deg)', opacity: 1 },
+                        { transform: `translateY(100vh) translateX(${endX}px) rotate(720deg)`, opacity: 0 }
+                    ], {
+                        duration: duration,
+                        easing: 'ease-out'
+                    });
+                    
+                    // Remove after animation
+                    setTimeout(() => confetti.remove(), duration);
+                }, i * 50);
+            }
+            
+            // Reset after 10 seconds so it can trigger again if user changes things
+            setTimeout(() => {
+                celebrationShown = false;
+            }, 10000);
+        }
+        
+        // =============================================
+        // UX #3: Property Filter Tabs
+        // =============================================
+        
+        let activePropertyFilter = 'all';
+        
+        function filterByProperty(propertyName, btn) {
+            console.log('filterByProperty called with:', propertyName);
+            activePropertyFilter = propertyName;
+            
+            // Update tab active states and styles (green active, same as contratos)
+            const allTabs = document.querySelectorAll('.property-filter-tab');
+            allTabs.forEach(tab => {
+                tab.classList.remove('active');
+                tab.style.background = 'transparent';
+                tab.style.color = '#333333';
+            });
+            btn.classList.add('active');
+            btn.style.background = '#0A7A0A';
+            btn.style.color = 'white';
+            
+            // Clear any search filter first
+            const searchInput = document.getElementById('tenantSearch');
+            if (searchInput && searchInput.value) {
+                searchInput.value = '';
+                document.getElementById('clearSearch').style.display = 'none';
+                document.getElementById('searchResults').style.display = 'none';
+            }
+            
+            // Filter card view
+            const allItems = document.querySelectorAll('.tenant-item');
+            const allSections = document.querySelectorAll('.property-section');
+            
+            // Filter excel view
+            const excelSections = document.querySelectorAll('.excel-property-section');
+            
+            if (propertyName === 'all') {
+                // Show all
+                allItems.forEach(item => item.style.display = 'flex');
+                allSections.forEach(section => section.style.display = 'block');
+                excelSections.forEach(section => section.style.display = 'block');
+            } else {
+                // Filter by property (use includes for partial matching like Contratos)
+                allItems.forEach(item => {
+                    const itemProperty = item.dataset.property || '';
+                    item.style.display = itemProperty.includes(propertyName) ? 'flex' : 'none';
+                });
+                
+                allSections.forEach(section => {
+                    const sectionProperty = section.dataset.property || '';
+                    section.style.display = sectionProperty.includes(propertyName) ? 'block' : 'none';
+                });
+                
+                // For Excel view, hide non-matching sections
+                excelSections.forEach(section => {
+                    const sectionTable = section.querySelector('.excel-table');
+                    if (sectionTable) {
+                        const headerRow = sectionTable.querySelector('thead tr:first-child th');
+                        if (headerRow) {
+                            const headerText = headerRow.textContent.trim();
+                            section.style.display = headerText.includes(propertyName) ? 'block' : 'none';
+                        }
+                    }
+                });
+            }
+            
+            // Update counts display
+            updatePropertyFilterCounts();
+        }
+        
+        function updatePropertyFilterCounts() {
+            // Get counts per property
+            const allItems = document.querySelectorAll('.tenant-item');
+            const propertyCounts = {};
+            let totalPending = 0;
+            
+            allItems.forEach(item => {
+                const property = item.dataset.property;
+                const isPaid = item.classList.contains('paid');
+                
+                if (!propertyCounts[property]) {
+                    propertyCounts[property] = { total: 0, pending: 0 };
+                }
+                
+                propertyCounts[property].total++;
+                if (!isPaid) {
+                    propertyCounts[property].pending++;
+                    totalPending++;
+                }
+            });
+            
+            // Update tab badges
+            const allTabCount = document.getElementById('tabCountAll');
+            if (allTabCount) {
+                allTabCount.textContent = totalPending > 0 ? `${totalPending} pendientes` : '✓ Todos pagaron';
+            }
+            
+            Object.keys(propertyCounts).forEach(propName => {
+                const tabCount = document.querySelector(`[data-tab-count="${propName}"]`);
+                if (tabCount) {
+                    const pending = propertyCounts[propName].pending;
+                    tabCount.textContent = pending > 0 ? `${pending} pendientes` : '✓';
+                }
+            });
+        }
+        
+        // =============================================
+        // Search/Filter Tenants
+        // =============================================
+        
+        function filterTenants(searchTerm) {
+            const clearBtn = document.getElementById('clearSearch');
+            const resultsDiv = document.getElementById('searchResults');
+            const term = (searchTerm || '').toLowerCase().trim();
+            
+            // Show/hide clear button
+            if (clearBtn) {
+                clearBtn.style.display = term ? 'block' : 'none';
+            }
+            
+            // Filter card view
+            const allItems = document.querySelectorAll('.tenant-item');
+            const allSections = document.querySelectorAll('.property-section');
+            
+            // Filter excel view rows
+            const allRows = document.querySelectorAll('.excel-table tbody tr');
+            
+            if (!term) {
+                // Show all tenants and sections
+                allItems.forEach(item => item.style.display = 'flex');
+                allSections.forEach(section => section.style.display = 'block');
+                allRows.forEach(row => row.style.display = '');
+                // Also show all Excel property sections
+                const excelSections = document.querySelectorAll('.excel-property-section');
+                excelSections.forEach(section => section.style.display = 'block');
+                if (resultsDiv) resultsDiv.style.display = 'none';
+                return;
+            }
+            
+            let matchCount = 0;
+            const propertyVisibility = {};
+            
+            // Filter card view
+            allItems.forEach(item => {
+                const checkbox = item.querySelector('.tenant-checkbox');
+                if (!checkbox) return;
+                const name = (checkbox.dataset.name || '').toLowerCase();
+                const property = checkbox.dataset.property;
+                
+                if (name.includes(term)) {
+                    item.style.display = 'flex';
+                    matchCount++;
+                    propertyVisibility[property] = true;
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+            
+            // Filter excel view
+            allRows.forEach(row => {
+                const nameCell = row.querySelector('td:nth-child(2)');
+                if (!nameCell) return;
+                const name = nameCell.textContent.toLowerCase();
+                
+                if (name.includes(term)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+            
+            // Hide property sections with no visible tenants (card view)
+            allSections.forEach(section => {
+                const propertyName = section.dataset.property;
+                section.style.display = propertyVisibility[propertyName] ? 'block' : 'none';
+            });
+            
+            // Hide Excel property sections with no visible tenants
+            const excelPropertySections = document.querySelectorAll('.excel-property-section');
+            excelPropertySections.forEach(section => {
+                const visibleRows = section.querySelectorAll('tr[data-tenant-id]');
+                let hasVisible = false;
+                visibleRows.forEach(row => {
+                    if (row.style.display !== 'none') {
+                        hasVisible = true;
+                    }
+                });
+                section.style.display = hasVisible ? 'block' : 'none';
+            });
+            
+            // Show results count
+            resultsDiv.style.display = 'block';
+            if (matchCount === 0) {
+                resultsDiv.innerHTML = `No se encontró "<strong>${searchTerm}</strong>"`;
+            } else if (matchCount === 1) {
+                resultsDiv.innerHTML = `1 inquilino encontrado`;
+            } else {
+                resultsDiv.innerHTML = `${matchCount} inquilinos encontrados`;
+            }
+        }
+        
+        function clearSearch() {
+            const searchInput = document.getElementById('tenantSearch');
+            searchInput.value = '';
+            filterTenants('');
+            searchInput.focus();
+        }
+        
+        function updatePaymentMethod(select) {
+            const item = select.closest('.tenant-item');
+            const tenantId = item.dataset.tenantId;
+            const method = select.value;
+            
+            if (method && tenantId) {
+                fetch('/api/payment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        tenant_id: tenantId,
+                        paid: true,
+                        payment_method: method
+                    })
+                }).then(response => {
+                    if (response.ok) {
+                        console.log(`Método guardado: ${tenantId} = ${method}`);
+                    }
+                });
+            }
+        }
+        
+        function markAllUnpaid() {
+            document.querySelectorAll('.tenant-item').forEach(item => {
+                const checkbox = item.querySelector('.tenant-checkbox');
+                const btn = item.querySelector('.tenant-status-btn');
+                const paymentSelect = item.querySelector('.payment-method');
+                const tenantId = item.dataset.tenantId;
+                
+                if (!checkbox || !btn) return;
+                
+                checkbox.checked = true;
+                btn.className = 'status-pill status-pill--full-width tenant-status-btn unpaid';
+                btn.innerHTML = '<span class="icon"></span><span class="label">No ha pagado</span>';
+                item.classList.remove('paid');
+                if (paymentSelect) {
+                    paymentSelect.disabled = true;
+                    paymentSelect.value = '';
+                }
+                
+                // Update WhatsApp button visibility
+                updateWhatsAppButton(item, false);
+                
+                // Also update table view if exists
+                const tableRow = document.querySelector(`tr[data-tenant-id="${tenantId}"]`);
+                if (tableRow) {
+                    tableRow.classList.remove('paid-row');
+                    tableRow.classList.add('unpaid-row');
+                    const statusCell = tableRow.querySelector('.status-cell');
+                    if (statusCell) {
+                        statusCell.className = 'status-cell unpaid';
+                        statusCell.textContent = 'PENDIENTE';
+                    }
+                    const tableBtn = tableRow.querySelector('.tenant-status-btn-table');
+                    if (tableBtn) {
+                        tableBtn.className = 'status-pill status-pill--small tenant-status-btn-table unpaid';
+                        tableBtn.textContent = 'Marcar Pagado';
+                    }
+                }
+                
+                // Save to database
+                fetch('/api/payment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ tenant_id: tenantId, paid: false })
+                });
+            });
+            updateCounts();
+        }
+        
+        function markAllPaid() {
+            document.querySelectorAll('.tenant-item').forEach(item => {
+                const checkbox = item.querySelector('.tenant-checkbox');
+                const btn = item.querySelector('.tenant-status-btn');
+                const paymentSelect = item.querySelector('.payment-method');
+                const tenantId = item.dataset.tenantId;
+                
+                if (!checkbox || !btn) return;
+                
+                checkbox.checked = false;
+                btn.className = 'status-pill status-pill--full-width tenant-status-btn paid';
+                btn.innerHTML = '<span class="icon"></span><span class="label">Ya pagó</span>';
+                item.classList.add('paid');
+                if (paymentSelect) {
+                    paymentSelect.disabled = false;
+                }
+                
+                // Update WhatsApp button visibility
+                updateWhatsAppButton(item, true);
+                
+                // Also update table view if exists
+                const tableRow = document.querySelector(`tr[data-tenant-id="${tenantId}"]`);
+                if (tableRow) {
+                    tableRow.classList.remove('unpaid-row');
+                    tableRow.classList.add('paid-row');
+                    const statusCell = tableRow.querySelector('.status-cell');
+                    if (statusCell) {
+                        statusCell.className = 'status-cell paid';
+                        statusCell.textContent = 'PAGÓ';
+                    }
+                    const tableBtn = tableRow.querySelector('.tenant-status-btn-table');
+                    if (tableBtn) {
+                        tableBtn.className = 'status-pill status-pill--small tenant-status-btn-table paid';
+                        tableBtn.textContent = 'Marcar Pendiente';
+                    }
+                }
+                
+                // Save to database
+                fetch('/api/payment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ tenant_id: tenantId, paid: true })
+                });
+            });
+            updateCounts();
+        }
+        
+        function generateLinks() {
+            const checkboxes = document.querySelectorAll('.tenant-checkbox:checked');
+            const linksContainer = document.getElementById('whatsappLinks');
+            const previewContainer = document.getElementById('messagePreview');
+            
+            if (checkboxes.length === 0) {
+                alert('¡Todos han pagado! No hay inquilinos pendientes.');
+                return;
+            }
+            
+            // Clear previous links
+            linksContainer.innerHTML = '';
+            
+            // Generate links for each selected tenant
+            checkboxes.forEach((cb, index) => {
+                const name = cb.dataset.name;
+                const phone = testMode ? testPhone : cb.dataset.phone;
+                
+                // Fetch the message from server
+                fetch(`/api/message?tenant_id=${cb.dataset.id}&day=${dayOfMonth}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const link = document.createElement('a');
+                        link.href = data.whatsapp_url;
+                        link.target = '_blank';
+                        link.className = 'whatsapp-link';
+                        link.innerHTML = `
+                            <span class="link-name">${index + 1}. ${name}</span>
+                            <span class="link-icon">Enviar</span>
+                        `;
+                        linksContainer.appendChild(link);
+                        
+                        // Show preview of first message
+                        if (index === 0) {
+                            previewContainer.textContent = data.message;
+                            previewContainer.style.display = 'block';
+                        }
+                    });
+            });
+            
+            linksContainer.style.display = 'flex';
+        }
+        
+        // =============================================
+        // WhatsApp Cloud API - Send All Function
+        // =============================================
+        
+        async function sendAllViaApi() {
+            const btn = document.getElementById('sendAllApiBtn');
+            const statusDiv = document.getElementById('apiStatus');
+            const pendingCount = parseInt(document.getElementById('selectedCount').textContent);
+            
+            if (pendingCount === 0) {
+                alert('¡Todos han pagado! No hay inquilinos pendientes.');
+                return;
+            }
+            
+            // Confirm before sending
+            if (!confirm(`¿Enviar recordatorio de renta a ${pendingCount} inquilino(s) pendientes vía WhatsApp? Esto enviará mensajes automáticamente.`)) {
+                return;
+            }
+            
+            // Show loading state
+            btn.disabled = true;
+            btn.innerHTML = 'Enviando...';
+            statusDiv.style.display = 'block';
+            statusDiv.style.background = '#fef3c7';
+            statusDiv.style.color = '#92400e';
+            statusDiv.innerHTML = 'Enviando mensajes a inquilinos pendientes...';
+            
+            try {
+                const response = await fetch('/api/whatsapp/send-all', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Show success
+                    statusDiv.style.background = '#dcfce7';
+                    statusDiv.style.color = '#166534';
+                    statusDiv.innerHTML = `
+                        <strong>¡Enviado!</strong><br>
+                        ${data.summary.sent} mensajes enviados<br>
+                        ${data.summary.skipped_paid > 0 ? `${data.summary.skipped_paid} ya pagaron (no se les envió)<br>` : ''}
+                        ${data.summary.skipped_no_phone > 0 ? `${data.summary.skipped_no_phone} sin teléfono<br>` : ''}
+                        ${data.summary.failed > 0 ? `${data.summary.failed} fallaron<br>` : ''}
+                    `;
+                    
+                    // Show toast
+                    showUndoToast(`${data.summary.sent} mensajes enviados`, null);
+                } else {
+                    // Show error
+                    statusDiv.style.background = '#fee2e2';
+                    statusDiv.style.color = '#dc2626';
+                    statusDiv.innerHTML = `
+                        <strong>Error</strong><br>
+                        ${data.error || 'Error desconocido'}<br>
+                        <small>Revisa la configuración en docs/SETUP_WHATSAPP_API.md</small>
+                    `;
+                }
+            } catch (err) {
+                statusDiv.style.background = '#fee2e2';
+                statusDiv.style.color = '#dc2626';
+                statusDiv.innerHTML = `
+                    <strong>Error de conexión</strong><br>
+                    ${err.message}<br>
+                    <small>Verifica tu conexión a internet</small>
+                `;
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '📤 Enviar TODOS via WhatsApp API';
+            }
+        }
+        
+        // Check WhatsApp API status on page load
+        async function checkWhatsAppStatus() {
+            try {
+                const response = await fetch('/api/whatsapp/status');
+                const data = await response.json();
+                
+                const btn = document.getElementById('sendAllApiBtn');
+                if (!data.configured) {
+                    btn.style.background = '#9ca3af';
+                    btn.innerHTML = 'Configurar WhatsApp API';
+                    btn.onclick = () => {
+                        alert('WhatsApp API no está configurado.\\n\\nPasos:\\n1. Ve a docs/SETUP_WHATSAPP_API.md\\n2. Sigue los pasos para obtener credenciales\\n3. Agrega las credenciales al archivo .env');
+                    };
+                }
+            } catch (err) {
+                console.log('WhatsApp API check failed:', err);
+            }
+        }
+        
+        // Run on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            checkWhatsAppStatus();
+        });
+        
+        // =============================================
+        // Confirmation dialogs for bulk actions
+        // =============================================
+        
+        function confirmMarkAllUnpaid() {
+            if (confirm('¿Marcar TODOS los inquilinos como pendientes de pago? Esta acción se puede deshacer.')) {
+                markAllUnpaid();
+                showUndoToast('Todos marcados como pendientes', 'markAllPaid');
+            }
+        }
+        
+        function confirmMarkAllPaid() {
+            if (confirm('¿Marcar TODOS los inquilinos como pagados? Esta acción se puede deshacer.')) {
+                markAllPaid();
+                showUndoToast('Todos marcados como pagados', 'markAllUnpaid');
+            }
+        }
+        
+        // =============================================
+        // Undo Toast Functionality
+        // =============================================
+        
+        let lastAction = null;
+        let undoTimeout = null;
+        
+        function showUndoToast(message, undoActionName) {
+            const toast = document.getElementById('undoToast');
+            const messageEl = document.getElementById('undoMessage');
+            const undoBtn = document.getElementById('undoBtn');
+            
+            messageEl.textContent = message;
+            lastAction = undoActionName;
+            
+            toast.classList.add('show');
+            
+            // Clear previous timeout
+            if (undoTimeout) {
+                clearTimeout(undoTimeout);
+            }
+            
+            // Hide after 5 seconds
+            undoTimeout = setTimeout(() => {
+                toast.classList.remove('show');
+                lastAction = null;
+            }, 5000);
+        }
+        
+        function undoLastAction() {
+            const toast = document.getElementById('undoToast');
+            
+            if (lastAction === 'markAllPaid') {
+                markAllPaid();
+            } else if (lastAction === 'markAllUnpaid') {
+                markAllUnpaid();
+            }
+            
+            toast.classList.remove('show');
+            if (undoTimeout) {
+                clearTimeout(undoTimeout);
+            }
+            lastAction = null;
+        }
+        
+        // =============================================
+        // Offline Detection
+        // =============================================
+        
+        function updateOnlineStatus() {
+            const banner = document.getElementById('offlineBanner');
+            if (navigator.onLine) {
+                banner.style.display = 'none';
+            } else {
+                banner.style.display = 'block';
+            }
+        }
+        
+        // Initialize counts on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Update checkbox state based on paid status (loaded from DB)
+            document.querySelectorAll('.tenant-item').forEach(item => {
+                const btn = item.querySelector('.tenant-status-btn');
+                const checkbox = item.querySelector('.tenant-checkbox');
+                
+                // If button shows paid, uncheck the checkbox (paid = won't receive reminder)
+                if (btn.classList.contains('paid')) {
+                    checkbox.checked = false;
+                    item.classList.add('paid');
+                } else {
+                    checkbox.checked = true;
+                    item.classList.remove('paid');
+                }
+            });
+            
+            updateCounts();
+            
+            // Setup offline detection
+            updateOnlineStatus();
+            window.addEventListener('online', function() {
+                updateOnlineStatus();
+                syncPendingPayments();  // Sync when back online
+            });
+            window.addEventListener('offline', updateOnlineStatus);
+        });
+        
+        // =============================================
+        // Sync pending payments when back online
+        // =============================================
+        
+        function syncPendingPayments() {
+            const queue = JSON.parse(localStorage.getItem('pendingPayments') || '[]');
+            if (queue.length === 0) return;
+            
+            console.log(`🔄 Syncing ${queue.length} pending payments...`);
+            
+            queue.forEach((item, index) => {
+                fetch('/api/payment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        tenant_id: item.tenantId,
+                        paid: item.paid
+                    })
+                }).then(response => {
+                    if (response.ok) {
+                        console.log(`Synced payment for ${item.tenantId}`);
+                    }
+                });
+            });
+            
+            // Clear the queue after syncing
+            localStorage.removeItem('pendingPayments');
+            showUndoToast(`${queue.length} cambios sincronizados`, null);
+            updateLastSaved();
+        }
+        
+        // =============================================
+        // Last Saved Timestamp
+        // =============================================
+        
+        function updateLastSaved() {
+            const el = document.getElementById('lastSaved');
+            if (el) {
+                const now = new Date();
+                const timeStr = now.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+                el.textContent = `Última actualización: ${timeStr}`;
+                el.style.color = '#0A7A0A';  // System green
+            }
+        }
+        
+        // =============================================
+        // Phone Number Editing
+        // =============================================
+        
+        let currentEditingTenantId = null;
+        
+        function editPhone(tenantId, currentPhone) {
+            currentEditingTenantId = tenantId;
+            const modal = document.getElementById('phoneModal');
+            const input = document.getElementById('phoneInput');
+            const preview = document.getElementById('phonePreview');
+            const saveBtn = document.getElementById('savePhoneBtn');
+            
+            input.value = currentPhone || '+52';
+            preview.className = 'phone-preview'; // Reset preview state
+            preview.style.display = 'none';
+            saveBtn.disabled = false;
+            saveBtn.textContent = 'Guardar';
+            
+            modal.classList.add('show');
+            input.focus();
+            input.select();
+            
+            // Validate initial value
+            if (currentPhone) {
+                validatePhonePreview(currentPhone);
+            }
+        }
+        
+        // UX #5: Phone validation with preview
+        function validatePhonePreview(value) {
+            const preview = document.getElementById('phonePreview');
+            const previewNumber = document.getElementById('phonePreviewNumber');
+            const saveBtn = document.getElementById('savePhoneBtn');
+            
+            // Remove all non-digits
+            const digits = value.replace(/[^\d]/g, '');
+            
+            // Format the number for display
+            let formattedNumber = '';
+            let isValid = false;
+            
+            if (digits.length === 0) {
+                preview.style.display = 'none';
+                saveBtn.disabled = true;
+                return;
+            }
+            
+            // Check if it's a valid Mexican phone number
+            if (digits.startsWith('52')) {
+                // Already has country code
+                if (digits.length === 12) {
+                    // Full Mexican number: 52 + 10 digits
+                    formattedNumber = `+${digits.slice(0,2)} ${digits.slice(2,4)} ${digits.slice(4,8)} ${digits.slice(8,12)}`;
+                    isValid = true;
+                } else if (digits.length === 13 && digits.startsWith('521')) {
+                    // Old Mexican mobile format: 52 + 1 + 10 digits
+                    formattedNumber = `+52 ${digits.slice(3,5)} ${digits.slice(5,9)} ${digits.slice(9,13)}`;
+                    isValid = true;
+                } else {
+                    formattedNumber = `+${digits} (incompleto - necesita 12 dígitos)`;
+                    isValid = false;
+                }
+            } else if (digits.length === 10) {
+                // Just 10 digit Mexican local number - add country code
+                formattedNumber = `+52 ${digits.slice(0,2)} ${digits.slice(2,6)} ${digits.slice(6,10)}`;
+                isValid = true;
+            } else if (digits.length > 10 && digits.length < 12) {
+                formattedNumber = `${digits} (verificar formato)`;
+                isValid = false;
+            } else if (digits.length > 12) {
+                formattedNumber = `${digits.slice(0,12)}... (muy largo)`;
+                isValid = false;
+            } else {
+                formattedNumber = `${digits} (necesita 10+ dígitos)`;
+                isValid = false;
+            }
+            
+            // Update preview display
+            preview.style.display = 'block';
+            previewNumber.textContent = formattedNumber;
+            
+            if (isValid) {
+                preview.className = 'phone-preview valid';
+                preview.querySelector('.preview-label').textContent = 'Se guardará como:';
+                saveBtn.disabled = false;
+            } else {
+                preview.className = 'phone-preview invalid';
+                preview.querySelector('.preview-label').textContent = 'Formato incorrecto:';
+                saveBtn.disabled = true;
+            }
+        }
+        
+        function closePhoneModal() {
+            const modal = document.getElementById('phoneModal');
+            modal.classList.remove('show');
+            currentEditingTenantId = null;
+        }
+        
+        // #9: Phone save with FEEDBACK MESSAGE
+        function savePhone() {
+            const input = document.getElementById('phoneInput');
+            const phone = input.value.trim();
+            
+            if (!phone || !currentEditingTenantId) {
+                closePhoneModal();
+                return;
+            }
+            
+            // Show saving state
+            const saveBtn = document.querySelector('#phoneModal .btn-primary');
+            if (saveBtn) {
+                saveBtn.textContent = 'Guardando...';
+                saveBtn.disabled = true;
+            }
+            
+            fetch('/api/phone', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tenant_id: currentEditingTenantId,
+                    phone: phone
+                })
+            }).then(response => {
+                if (response.ok) {
+                    // #9: Show success feedback message BEFORE reload
+                    showPersistentConfirmation('¡Teléfono guardado! Ahora puedes enviar WhatsApp.', 'paid');
+                    updateLastSaved();
+                    // Reload page to show updated phone after short delay
+                    setTimeout(() => location.reload(), 1500);
+                }
+            }).catch(err => {
+                showPersistentConfirmation('Error guardando teléfono. Revise su conexión.', 'unpaid');
+            });
+            
+            closePhoneModal();
+        }
+        
+        // =============================================
+        // Inline WhatsApp Function
+        // =============================================
+        
+        function sendWhatsApp(event, btn) {
+            event.preventDefault();
+            const tenantId = btn.dataset.tenantId;
+            
+            // Show loading state
+            const originalText = btn.innerHTML;
+            btn.innerHTML = 'Cargando...';
+            
+            // Fetch message and open WhatsApp
+            fetch(`/api/message?tenant_id=${tenantId}&day=${dayOfMonth}`)
+                .then(response => response.json())
+                .then(data => {
+                    btn.innerHTML = originalText;
+                    window.open(data.whatsapp_url, '_blank');
+                })
+                .catch(err => {
+                    btn.innerHTML = originalText;
+                    alert('Error al generar mensaje. Revise su conexión.');
+                });
+        }
+        
+        // Update WhatsApp button state when payment status changes
+        function updateWhatsAppButton(item, isPaid) {
+            const waBtn = item.querySelector('.whatsapp-inline-btn');
+            if (waBtn && !waBtn.classList.contains('disabled')) {
+                if (isPaid) {
+                    waBtn.classList.add('disabled');
+                    waBtn.innerHTML = 'Pagado';
+                    waBtn.onclick = null;
+                } else {
+                    waBtn.classList.remove('disabled');
+                    waBtn.innerHTML = 'WhatsApp';
+                }
+            }
+        }
+    </script>
+</body>
+</html>
+"""
+
+
+# =============================================================================
+# ROUTES
+# =============================================================================
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    """Simple PIN login for password protection."""
+    if request.method == "POST":
+        pin = request.form.get("pin", "")
+        if pin == RENTASCLARAS_PIN:
+            session["authenticated"] = True
+            return redirect(url_for("index"))
+        else:
+            return render_template_string(
+                LOGIN_TEMPLATE, error="PIN incorrecto. Intente de nuevo."
+            )
+    return render_template_string(LOGIN_TEMPLATE, error=None)
+
+
+@app.route("/logout")
+def logout():
+    """Clear the session and log out."""
+    session.clear()
+    return redirect(url_for("login"))
+
+
+LOGIN_TEMPLATE = """
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <title>RentasClaras - Iniciar Sesión</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        :root {
+            --safe-area-top: env(safe-area-inset-top, 0px);
+            --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+            --color-primary: #0A7A0A;
+            --color-primary-dark: #085A08;
+            --color-danger: #CC0000;
+            --color-neutral: #333333;
+        }
+        
+        html {
+            height: 100%;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #FFFFFF;
+            min-height: 100%;
+            min-height: 100dvh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            padding-top: calc(16px + var(--safe-area-top));
+            padding-bottom: calc(16px + var(--safe-area-bottom));
+        }
+        
+        .login-card {
+            background: white;
+            padding: 24px;
+            border-radius: 24px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+            text-align: center;
+            max-width: 100%;
+            width: 100%;
+        }
+        
+        @media (min-width: 768px) {
+            .login-card {
+                padding: 48px;
+                max-width: 500px;
+            }
+        }
+        
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 12px;
+        }
+        
+        @media (min-width: 768px) {
+            h1 {
+                font-size: 4rem;
+                margin-bottom: 16px;
+            }
+        }
+        
+        .subtitle {
+            font-size: 1.4rem;
+            color: #000;
+            margin-bottom: 16px;
+            font-weight: 800;
+        }
+        
+        @media (min-width: 768px) {
+            .subtitle {
+                font-size: 1.6rem;
+                margin-bottom: 20px;
+            }
+        }
+        
+        /* Welcome message */
+        .welcome-message {
+            font-size: 1.2rem;
+            color: var(--color-primary);
+            margin-bottom: 32px;
+            font-weight: 600;
+        }
+        
+        @media (min-width: 768px) {
+            .welcome-message {
+                font-size: 1.4rem;
+                margin-bottom: 40px;
+            }
+        }
+        
+        /* PIN instruction text */
+        .pin-instruction {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #666;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+        
+        @media (min-width: 768px) {
+            .pin-instruction {
+                font-size: 1.3rem;
+                margin-bottom: 20px;
+            }
+        }
+        
+        /* PIN INPUT - Mobile first */
+        .pin-container {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 24px;
+        }
+        
+        @media (min-width: 768px) {
+            .pin-container {
+                gap: 16px;
+                margin-bottom: 32px;
+            }
+        }
+        
+        .pin-digit {
+            width: 60px;
+            height: 60px;
+            font-size: 1.75rem;
+            text-align: center;
+            border: 4px solid var(--color-neutral);
+            border-radius: 12px;
+            font-weight: 800;
+            background: white;
+        }
+        
+        @media (min-width: 768px) {
+            .pin-digit {
+                width: 80px;
+                height: 80px;
+                font-size: 2.5rem;
+                border-radius: 16px;
+            }
+        }
+        
+        .pin-digit:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            background: #F0FDF4;
+        }
+        
+        /* Hidden actual input */
+        .pin-input-hidden {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .error {
+            background: var(--color-danger);
+            color: white;
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            font-weight: 800;
+            font-size: 1rem;
+        }
+        
+        @media (min-width: 768px) {
+            .error {
+                padding: 20px;
+                margin-bottom: 24px;
+                font-size: 1.2rem;
+            }
+        }
+        
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <h1>RC</h1>
+        <div class="subtitle">RentasClaras</div>
+        <div class="welcome-message">¡Bienvenidos papis! 💚</div>
+        
+        {% if error %}
+        <div class="error">{{ error }}</div>
+        {% endif %}
+        
+        <form method="POST" action="/login" id="loginForm">
+            <!-- Instruction above PIN boxes -->
+            <div class="pin-instruction">Ingrese su PIN</div>
+            
+            <!-- #12: Large digit boxes for visual PIN entry -->
+            <div class="pin-container" onclick="document.getElementById('pinInput').focus()">
+                <input type="text" class="pin-digit" id="pin1" maxlength="1" readonly placeholder="●">
+                <input type="text" class="pin-digit" id="pin2" maxlength="1" readonly placeholder="●">
+                <input type="text" class="pin-digit" id="pin3" maxlength="1" readonly placeholder="●">
+                <input type="text" class="pin-digit" id="pin4" maxlength="1" readonly placeholder="●">
+            </div>
+            
+            <!-- Hidden actual input that receives the PIN -->
+            <input type="password" 
+                   name="pin" 
+                   id="pinInput"
+                   class="pin-input-hidden" 
+                   maxlength="4"
+                   inputmode="numeric"
+                   pattern="[0-9]*"
+                   autofocus
+                   required>
+            
+        </form>
+    </div>
+    
+    <script>
+        // #12: PIN box visual feedback
+        const pinInput = document.getElementById('pinInput');
+        const digits = [
+            document.getElementById('pin1'),
+            document.getElementById('pin2'),
+            document.getElementById('pin3'),
+            document.getElementById('pin4')
+        ];
+        
+        pinInput.addEventListener('input', function() {
+            const value = this.value;
+            
+            digits.forEach((digit, index) => {
+                if (value[index]) {
+                    digit.value = '●';
+                    digit.style.borderColor = '#0A7A0A';
+                    digit.style.background = '#F0FDF4';
+                } else {
+                    digit.value = '';
+                    digit.style.borderColor = '#333333';
+                    digit.style.background = 'white';
+                }
+            });
+            
+            // Auto-submit when 4 digits entered
+            if (value.length === 4) {
+                setTimeout(() => {
+                    document.getElementById('loginForm').submit();
+                }, 300);
+            }
+        });
+        
+        // Focus the hidden input when clicking anywhere in the PIN container
+        document.querySelector('.pin-container').addEventListener('click', function() {
+            pinInput.focus();
+        });
+        
+        // Mobile keyboard scroll fix - scroll PIN container into view when focused
+        pinInput.addEventListener('focus', function() {
+            // Small delay to wait for keyboard to appear
+            setTimeout(() => {
+                const pinContainer = document.querySelector('.pin-container');
+                if (pinContainer) {
+                    pinContainer.scrollIntoView({ 
+                        behavior: 'smooth', 
+                        block: 'center' 
+                    });
+                }
+            }, 300);
+        });
+        
+        // Also handle visual viewport resize (when keyboard appears)
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', function() {
+                if (document.activeElement === pinInput) {
+                    const pinContainer = document.querySelector('.pin-container');
+                    if (pinContainer) {
+                        pinContainer.scrollIntoView({ 
+                            behavior: 'smooth', 
+                            block: 'center' 
+                        });
+                    }
+                }
+            });
+        }
+        
+        // Focus on page load
+        pinInput.focus();
+    </script>
+</body>
+</html>
+"""
+
+
+@app.route("/")
+@login_required
+def index():
+    # Get year/month from query params or use current
+    today = datetime.now()
+    year = request.args.get("year", today.year, type=int)
+    month = request.args.get("month", today.month, type=int)
+
+    # #5: Calculate prev/next month for month selector arrows
+    # MINIMUM DATE: December 2025 (no data before this)
+    MIN_YEAR = 2025
+    MIN_MONTH = 12
+
+    if month == 1:
+        prev_month = 12
+        prev_year = year - 1
+    else:
+        prev_month = month - 1
+        prev_year = year
+
+    # Check if we can go back (not before December 2025)
+    can_go_prev = (prev_year > MIN_YEAR) or (
+        prev_year == MIN_YEAR and prev_month >= MIN_MONTH
+    )
+
+    if month == 12:
+        next_month = 1
+        next_year = year + 1
+    else:
+        next_month = month + 1
+        next_year = year
+
+    # #10: Check if we're viewing the current month (for HOY button)
+    is_current_month = year == today.year and month == today.month
+
+    # Get payment status for this month
+    monthly_status = get_monthly_status(year, month)
+
+    # Get tenants grouped by property with payment status
+    all_tenants = get_all_tenants()
+    tenants_by_property = {}
+
+    for tenant in all_tenants:
+        # Merge payment status into tenant
+        status = monthly_status.get(tenant.id, {})
+        tenant.paid = bool(status.get("paid", 0))
+        tenant.payment_method = status.get("payment_method")
+
+        if tenant.property_name not in tenants_by_property:
+            tenants_by_property[tenant.property_name] = []
+        tenants_by_property[tenant.property_name].append(tenant)
+
+    # Get Spanish month name
+    spanish_months = [
+        "enero",
+        "febrero",
+        "marzo",
+        "abril",
+        "mayo",
+        "junio",
+        "julio",
+        "agosto",
+        "septiembre",
+        "octubre",
+        "noviembre",
+        "diciembre",
+    ]
+    month_name = spanish_months[month - 1]
+
+    # Get available months for selector
+    available_months = get_available_months()
+
+    # Calculate total rent for grand total
+    total_rent = sum(tenant.rent for tenant in all_tenants)
+
+    # Helper function to format dates in Spanish
+    spanish_months_lower = [
+        "enero",
+        "febrero",
+        "marzo",
+        "abril",
+        "mayo",
+        "junio",
+        "julio",
+        "agosto",
+        "septiembre",
+        "octubre",
+        "noviembre",
+        "diciembre",
+    ]
+
+    def format_date_spanish(date_str):
+        if not date_str:
+            return None
+        try:
+            parsed = datetime.strptime(date_str, "%Y-%m-%d")
+        except:
+            try:
+                parsed = datetime.strptime(date_str, "%d/%m/%Y")
+            except:
+                return date_str
+        return f"{parsed.day} de {spanish_months_lower[parsed.month - 1]} {parsed.year}"
+
+    def format_date_excel(date_str):
+        """Format date as M/D/YYYY for Excel-style display"""
+        if not date_str:
+            return None
+        try:
+            parsed = datetime.strptime(date_str, "%Y-%m-%d")
+        except:
+            try:
+                parsed = datetime.strptime(date_str, "%d/%m/%Y")
+            except:
+                return date_str
+        return f"{parsed.month}/{parsed.day}/{parsed.year}"
+
+    # Format contract dates for each tenant
+    for tenant in all_tenants:
+        tenant.contract_start_formatted = format_date_excel(tenant.contract_start)
+        tenant.contract_end_formatted = format_date_excel(tenant.contract_end)
+
+    return render_template_string(
+        HTML_TEMPLATE,
+        tenants=all_tenants,
+        tenants_by_property=tenants_by_property,
+        total_tenants=len(all_tenants),
+        total_rent=total_rent,
+        current_date=today.strftime("%d de %B, %Y"),
+        day_of_month=today.day,
+        month_name=month_name,
+        year=year,
+        month=month,
+        prev_month=prev_month,
+        prev_year=prev_year,
+        next_month=next_month,
+        next_year=next_year,
+        available_months=available_months,
+        test_mode=TEST_MODE,
+        test_phone=TEST_PHONE,
+        is_current_month=is_current_month,
+        can_go_prev=can_go_prev,
+    )
+
+
+@app.route("/api/message")
+def get_message():
+    tenant_id = request.args.get("tenant_id")
+
+    # Find tenant from database
+    all_tenants = get_all_tenants()
+    tenant = next((t for t in all_tenants if t.id == tenant_id), None)
+    if not tenant:
+        return jsonify({"error": "Tenant not found"}), 404
+
+    # Get current month name
+    today = datetime.now()
+    spanish_months = [
+        "enero",
+        "febrero",
+        "marzo",
+        "abril",
+        "mayo",
+        "junio",
+        "julio",
+        "agosto",
+        "septiembre",
+        "octubre",
+        "noviembre",
+        "diciembre",
+    ]
+    month_name = spanish_months[today.month - 1]
+
+    # Generate message
+    message = generate_rent_reminder(tenant, month_name)
+
+    # Create WhatsApp link
+    phone = TEST_PHONE if TEST_MODE else tenant.phone
+    whatsapp_url = create_whatsapp_link(phone, message)
+
+    return jsonify(
+        {
+            "tenant_id": tenant_id,
+            "tenant_name": tenant.name,
+            "message": message,
+            "whatsapp_url": whatsapp_url,
+        }
+    )
+
+
+@app.route("/api/tenants")
+def list_tenants():
+    all_tenants = get_all_tenants()
+    return jsonify(
+        [
+            {
+                "id": t.id,
+                "name": t.name,
+                "phone": t.phone,
+                "property": t.property_name,
+                "unit": t.unit,
+                "rent": float(t.rent),
+                "paid": t.paid,
+            }
+            for t in all_tenants
+        ]
+    )
+
+
+@app.route("/api/payment", methods=["POST"])
+def update_payment():
+    """Update payment status for a tenant"""
+    data = request.json
+    tenant_id = data.get("tenant_id")
+    paid = data.get("paid", False)
+    payment_method = data.get("payment_method")
+
+    today = datetime.now()
+    update_payment_status(
+        tenant_id=tenant_id,
+        year=today.year,
+        month=today.month,
+        paid=paid,
+        payment_method=payment_method,
+    )
+
+    return jsonify({"success": True})
+
+
+@app.route("/api/phone", methods=["POST"])
+def update_phone():
+    """Update phone number for a tenant"""
+    data = request.json
+    tenant_id = data.get("tenant_id")
+    phone = data.get("phone", "")
+
+    update_tenant_phone(tenant_id, phone)
+
+    return jsonify({"success": True})
+
+
+@app.route("/api/renewal", methods=["POST"])
+def update_renewal():
+    """Update contract renewal status for a tenant"""
+    data = request.json
+    tenant_id = data.get("tenant_id")
+
+    update_renewal_status(
+        tenant_id=tenant_id,
+        renewal_status=data.get("renewal_status"),
+        contract_delivered=data.get("contract_delivered"),
+        contract_picked_up=data.get("contract_picked_up"),
+        leaving_date=data.get("leaving_date"),
+        replacement_name=data.get("replacement_name"),
+        replacement_phone=data.get("replacement_phone"),
+    )
+
+    return jsonify({"success": True})
+
+
+@app.route("/api/whatsapp/status")
+def whatsapp_status():
+    """Check if WhatsApp API is configured"""
+    try:
+        from src.whatsapp_client import check_credentials
+
+        return jsonify(check_credentials())
+    except ImportError:
+        return jsonify({"configured": False, "error": "whatsapp_client not found"})
+
+
+@app.route("/api/whatsapp/send-all", methods=["POST"])
+def send_all_whatsapp():
+    """
+    Send WhatsApp reminders to all unpaid tenants via Meta Cloud API.
+
+    This is the main automation endpoint that:
+    1. Gets all tenants who haven't paid this month
+    2. Sends each a personalized rent reminder
+    3. Returns a summary of what was sent
+    """
+    try:
+        from src.whatsapp_client import check_credentials, send_rent_reminder
+    except ImportError:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": "WhatsApp client not installed. Check src/whatsapp_client.py",
+                }
+            ),
+            500,
+        )
+
+    # Check if credentials are configured
+    creds = check_credentials()
+    if not creds["configured"]:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": "WhatsApp API not configured. See docs/SETUP_WHATSAPP_API.md",
+                    "credentials": creds,
+                }
+            ),
+            400,
+        )
+
+    # Get current month info
+    today = datetime.now()
+    spanish_months = [
+        "enero",
+        "febrero",
+        "marzo",
+        "abril",
+        "mayo",
+        "junio",
+        "julio",
+        "agosto",
+        "septiembre",
+        "octubre",
+        "noviembre",
+        "diciembre",
+    ]
+    month_name = spanish_months[today.month - 1]
+
+    # Get payment status for this month
+    monthly_status = get_monthly_status(today.year, today.month)
+
+    # Get all tenants
+    all_tenants = get_all_tenants()
+
+    # Filter to unpaid tenants with phone numbers
+    results = {"sent": [], "failed": [], "skipped_paid": [], "skipped_no_phone": []}
+
+    for tenant in all_tenants:
+        # Check if paid
+        status = monthly_status.get(tenant.id, {})
+        is_paid = bool(status.get("paid", 0))
+
+        if is_paid:
+            results["skipped_paid"].append(
+                {"id": tenant.id, "name": tenant.name, "reason": "Already paid"}
+            )
+            continue
+
+        # Check if has phone
+        if not tenant.phone:
+            results["skipped_no_phone"].append(
+                {"id": tenant.id, "name": tenant.name, "reason": "No phone number"}
+            )
+            continue
+
+        # Extract display name
+        display_name = extract_display_name(tenant.name)
+
+        # Format amount with commas
+        amount_str = f"{tenant.rent:,.0f}"
+
+        # Send WhatsApp message
+        response = send_rent_reminder(
+            to_phone=tenant.phone,
+            tenant_name=display_name,
+            month=month_name,
+            amount=amount_str,
+        )
+
+        if response.success:
+            results["sent"].append(
+                {
+                    "id": tenant.id,
+                    "name": tenant.name,
+                    "phone": tenant.phone,
+                    "message_id": response.message_id,
+                }
+            )
+        else:
+            results["failed"].append(
+                {
+                    "id": tenant.id,
+                    "name": tenant.name,
+                    "phone": tenant.phone,
+                    "error": response.error,
+                }
+            )
+
+    return jsonify(
+        {
+            "success": True,
+            "summary": {
+                "total_tenants": len(all_tenants),
+                "sent": len(results["sent"]),
+                "failed": len(results["failed"]),
+                "skipped_paid": len(results["skipped_paid"]),
+                "skipped_no_phone": len(results["skipped_no_phone"]),
+            },
+            "details": results,
+        }
+    )
+
+
+@app.route("/api/whatsapp/send-one", methods=["POST"])
+def send_one_whatsapp():
+    """Send WhatsApp reminder to a single tenant"""
+    try:
+        from src.whatsapp_client import check_credentials, send_rent_reminder
+    except ImportError:
+        return jsonify({"success": False, "error": "WhatsApp client not found"}), 500
+
+    creds = check_credentials()
+    if not creds["configured"]:
+        return jsonify({"success": False, "error": "WhatsApp API not configured"}), 400
+
+    data = request.json
+    tenant_id = data.get("tenant_id")
+
+    if not tenant_id:
+        return jsonify({"success": False, "error": "tenant_id required"}), 400
+
+    # Find tenant
+    all_tenants = get_all_tenants()
+    tenant = next((t for t in all_tenants if t.id == tenant_id), None)
+
+    if not tenant:
+        return jsonify({"success": False, "error": "Tenant not found"}), 404
+
+    if not tenant.phone:
+        return jsonify({"success": False, "error": "Tenant has no phone number"}), 400
+
+    # Get month name
+    today = datetime.now()
+    spanish_months = [
+        "enero",
+        "febrero",
+        "marzo",
+        "abril",
+        "mayo",
+        "junio",
+        "julio",
+        "agosto",
+        "septiembre",
+        "octubre",
+        "noviembre",
+        "diciembre",
+    ]
+    month_name = spanish_months[today.month - 1]
+
+    # Send message
+    display_name = extract_display_name(tenant.name)
+    amount_str = f"{tenant.rent:,.0f}"
+
+    response = send_rent_reminder(
+        to_phone=tenant.phone,
+        tenant_name=display_name,
+        month=month_name,
+        amount=amount_str,
+    )
+
+    if response.success:
+        return jsonify(
+            {"success": True, "message_id": response.message_id, "tenant": tenant.name}
+        )
+    else:
+        return jsonify({"success": False, "error": response.error}), 500
+
+
+# =============================================================================
+# CONTRACTS PAGE - Separate focused view for contract management
+# =============================================================================
+
+CONTRACTS_TEMPLATE = """
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>RentasClaras - Contratos</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        :root {
+            --safe-area-top: env(safe-area-inset-top, 0px);
+            --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+            --color-primary: #0A7A0A;
+            --color-danger: #CC0000;
+            --color-neutral: #333333;
+            --color-neutral-light: #F5F5F5;
+            --color-white: #FFFFFF;
+            --color-accent: #7c3aed;
+            --space-sm: 8px;
+            --space-md: 16px;
+            --space-lg: 24px;
+            --space-xl: 32px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --touch-target-min: 48px;
+            --touch-target-lg: 56px;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f0;
+            min-height: 100vh;
+            min-height: -webkit-fill-available;
+            color: #1a1a1a;
+            padding: var(--space-md);
+            padding-top: calc(var(--space-md) + var(--safe-area-top));
+            padding-bottom: calc(80px + var(--safe-area-bottom)); /* Space for bottom nav */
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+        
+        @media (min-width: 768px) {
+            body {
+                padding: var(--space-lg);
+                padding-bottom: var(--space-lg);
+                font-size: 18px;
+            }
+        }
+        
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+        }
+        
+        @media (min-width: 768px) {
+            .container {
+                max-width: 900px;
+            }
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: var(--space-lg);
+            background: var(--color-white);
+            padding: var(--space-md);
+            border-radius: var(--radius-lg);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        
+        @media (min-width: 768px) {
+            header {
+                padding: var(--space-lg);
+                margin-bottom: var(--space-xl);
+            }
+        }
+        
+        h1 {
+            font-size: 1.75rem;
+            margin-bottom: var(--space-sm);
+            color: #000000;
+            font-weight: 800;
+        }
+        
+        @media (min-width: 768px) {
+            h1 {
+                font-size: 2.2rem;
+            }
+        }
+        
+        .subtitle {
+            color: #4a4a4a;
+            font-size: 1rem;
+        }
+        
+        @media (min-width: 768px) {
+            .subtitle {
+                font-size: 1.1rem;
+            }
+        }
+        
+        /* Navigation Tabs - hidden on mobile (use bottom nav) */
+        .nav-tabs {
+            display: none;
+            gap: var(--space-md);
+            justify-content: center;
+            margin-bottom: var(--space-lg);
+        }
+        
+        @media (min-width: 768px) {
+            .nav-tabs {
+                display: flex;
+            }
+        }
+        
+        .nav-tab {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-sm);
+            padding: var(--space-md) var(--space-lg);
+            border-radius: var(--radius-md);
+            text-decoration: none;
+            font-size: 1.1rem;
+            font-weight: 800;
+            transition: all 0.2s;
+            min-height: var(--touch-target-lg);
+            border: 4px solid;
+        }
+        
+        .nav-tab.active {
+            background: var(--color-accent);
+            color: var(--color-white);
+            border-color: var(--color-accent);
+        }
+        
+        .nav-tab:not(.active) {
+            background: var(--color-white);
+            color: var(--color-accent);
+            border-color: var(--color-accent);
+        }
+        
+        .nav-tab:not(.active):hover {
+            background: #f3e8ff;
+        }
+        
+        /* ===========================================
+           TOP NAVBAR - Always visible
+           =========================================== */
+        .top-navbar {
+            display: flex;
+            gap: var(--space-sm);
+            justify-content: center;
+            margin: var(--space-md) 0;
+            padding: var(--space-sm);
+            background: #f5f5f5;
+            border-radius: 12px;
+        }
+        
+        .top-navbar-item {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-sm);
+            flex: 1;
+            padding: var(--space-md) var(--space-lg);
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 1rem;
+            font-weight: 800;
+            transition: all 0.2s;
+            min-height: var(--touch-target-lg);
+            border: none;
+            cursor: pointer;
+        }
+        
+        .top-navbar-item.active {
+            background: #0A7A0A;
+            color: var(--color-white);
+            box-shadow: 0 2px 8px rgba(10, 122, 10, 0.3);
+        }
+
+        .top-navbar-item:not(.active) {
+            background: var(--color-white);
+            color: #333333;
+        }
+        
+        .top-navbar-item:not(.active):hover {
+            background: var(--color-white);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .top-navbar-icon {
+            font-size: 1.3rem;
+        }
+        
+        @media (min-width: 768px) {
+            .top-navbar {
+                max-width: 500px;
+                margin: var(--space-lg) auto;
+            }
+            
+            .top-navbar-item {
+                font-size: 1.2rem;
+                padding: var(--space-lg) 32px;
+            }
+            
+            .top-navbar-icon {
+                font-size: 1.5rem;
+            }
+        }
+        
+        /* Bottom Navigation */
+        .bottom-nav {
+            display: flex;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--color-white);
+            border-top: 2px solid #CCCCCC;
+            padding: var(--space-sm);
+            padding-bottom: calc(var(--space-sm) + var(--safe-area-bottom));
+            z-index: 1000;
+            justify-content: space-around;
+            gap: var(--space-sm);
+            box-shadow: 0 -4px 12px rgba(0,0,0,0.1);
+        }
+        
+        @media (min-width: 768px) {
+            .bottom-nav {
+                display: none;
+            }
+        }
+        
+        .bottom-nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            color: var(--color-neutral);
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: var(--space-sm);
+            border-radius: var(--radius-md);
+            min-width: 64px;
+            min-height: var(--touch-target-min);
+            transition: all 0.2s;
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .bottom-nav-item.active {
+            color: var(--color-accent);
+            background: rgba(124, 58, 237, 0.1);
+        }
+        
+        .bottom-nav-icon {
+            font-size: 1.5rem;
+            margin-bottom: 2px;
+        }
+        
+        /* Summary cards - mobile first (stacked) */
+        .summary {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--space-sm);
+            margin-bottom: var(--space-lg);
+        }
+        
+        @media (min-width: 768px) {
+            .summary {
+                grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+                gap: var(--space-md);
+                margin-bottom: var(--space-xl);
+            }
+        }
+        
+        .summary-card {
+            background: var(--color-white);
+            padding: var(--space-md);
+            border-radius: var(--radius-lg);
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        
+        @media (min-width: 768px) {
+            .summary-card {
+                padding: var(--space-lg);
+            }
+        }
+        
+        .summary-value {
+            font-size: 1.75rem;
+            font-weight: 800;
+        }
+        
+        @media (min-width: 768px) {
+            .summary-value {
+                font-size: 2.2rem;
+            }
+        }
+        
+        .summary-value.green { color: var(--color-primary); }
+        .summary-value.red { color: var(--color-danger); }
+        .summary-value.yellow { color: var(--color-neutral); }
+        
+        .summary-label {
+            color: var(--color-neutral);
+            font-size: 0.875rem;
+            margin-top: var(--space-sm);
+            font-weight: 600;
+        }
+        
+        @media (min-width: 768px) {
+            .summary-label {
+                font-size: 0.95rem;
+            }
+        }
+        
+        /* Upcoming renewals */
+        .upcoming-section {
+            background: var(--color-white);
+            border-radius: var(--radius-lg);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: var(--space-lg);
+            overflow: hidden;
+        }
+        
+        .upcoming-header {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: var(--color-white);
+            padding: var(--space-md);
+            font-weight: 700;
+            font-size: 1rem;
+        }
+        
+        @media (min-width: 768px) {
+            .upcoming-header {
+                padding: var(--space-md) var(--space-lg);
+                font-size: 1.2rem;
+            }
+        }
+        
+        .upcoming-list {
+            padding: 0;
+        }
+        
+        /* Month section header */
+        .month-section {
+            border-bottom: 3px solid #e5e5e5;
+        }
+        
+        .month-section:last-child {
+            border-bottom: none;
+        }
+        
+        .month-header {
+            background: #f3f4f6;
+            padding: 14px 24px;
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: #1a1a1a;
+            border-bottom: 2px solid #e5e5e5;
+        }
+        
+        .upcoming-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 24px;
+            border-bottom: 2px solid #e5e5e5;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        
+        .upcoming-item:last-child {
+            border-bottom: none;
+        }
+        
+        .upcoming-item.renewing {
+            background: #f0fdf4;
+            border-left: 6px solid #0A7A0A;  /* System green */
+        }
+        
+        .upcoming-item.not-renewing {
+            background: #fef2f2;
+            border-left: 6px solid #CC0000;  /* System red */
+        }
+        
+        .upcoming-item.pending {
+            background: #F5F5F5;  /* Changed to gray - 3-color system */
+            border-left: 6px solid #333333;
+        }
+          
+        /* URGENT: Contracts expiring in <30 days */
+        .upcoming-item.expiring-soon {
+            background: #fef2f2;
+            border-left: 6px solid #CC0000;  /* System red */
+        }
+          
+        .expiring-soon-badge {
+            display: inline-block;
+            background: #dc2626;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            margin-left: 8px;
+        }
+        
+        .upcoming-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex: 1;
+            flex-wrap: wrap;
+        }
+        
+        .upcoming-name {
+            font-size: 1.15rem;
+            color: #1a1a1a;
+            font-weight: 600;
+        }
+        
+        .upcoming-date {
+            font-size: 1.15rem;
+            color: #1a1a1a;
+            font-weight: 700;
+        }
+        
+        .upcoming-status {
+            flex-shrink: 0;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.95rem;
+            font-weight: 700;
+        }
+        
+        .status-badge.green {
+            background: #dcfce7;
+            color: #166534;
+        }
+        
+        .status-badge.red {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+        
+        .status-badge.yellow {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        
+        /* Property section */
+        .property-section {
+            margin-bottom: 28px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+        
+        .property-header {
+            background: #7c3aed;
+            color: white;
+            padding: 16px 24px;
+            font-weight: 700;
+            font-size: 1.2rem;
+        }
+        
+        /* Contract card */
+        .contract-card {
+            padding: 20px;
+            border-bottom: 2px solid #e5e5e5;
+            background: white;
+        }
+        
+        .contract-card:last-child {
+            border-bottom: none;
+        }
+        
+        .contract-card.renewing {
+            background: #f0fdf4;
+            border-left: 6px solid #0A7A0A;  /* System green */
+        }
+        
+        .contract-card.not-renewing {
+            background: #fef2f2;
+            border-left: 6px solid #CC0000;  /* System red */
+        }
+        
+        .contract-card.pending {
+            background: #F5F5F5;  /* Changed to gray - 3-color system */
+            border-left: 6px solid #333333;
+        }
+        
+        .tenant-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        
+        .tenant-name {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #1a1a1a;
+            text-align: center;  /* Center tenant name horizontally */
+        }
+        
+        .tenant-unit {
+            color: #7c3aed;
+            font-weight: 700;
+        }
+        
+        .contract-dates {
+            font-size: 1rem;
+            color: #4a4a4a;
+            background: #f3f4f6;
+            padding: 8px 16px;
+            border-radius: 8px;
+        }
+        
+        /* Renewal buttons */
+        .renewal-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+        
+        /* UNIFIED BUTTON STYLES (Contratos page) - matches Pagos for consistency */
+        .status-pill.renewal-btn {
+            display: flex;
+            flex: 1;
+            padding: 14px 20px;
+            border: 3px solid #d4d4d4;
+            border-radius: 12px;
+            background: white;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: 700;
+            transition: all 0.2s;
+            min-height: 56px;
+            text-align: center;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .status-pill.renewal-btn:hover {
+            background: #f5f5f5;
+        }
+        
+        .status-pill.renewal-btn.active-green {
+            background: #dcfce7;
+            border-color: #0A7A0A;
+            color: #0A7A0A;
+        }
+        
+        .status-pill.renewal-btn.active-red {
+            background: #fee2e2;
+            border-color: #CC0000;
+            color: #CC0000;
+        }
+        
+        .status-pill.renewal-btn.active-yellow {
+            background: #F5F5F5;
+            border-color: #333333;
+            color: #333333;
+        }
+        
+        /* Contract tracking */
+        .contract-tracking {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin: 16px 0;
+            padding: 16px;
+            background: #f9fafb;
+            border-radius: 12px;
+        }
+        
+        .tracking-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            font-size: 1.1rem;
+        }
+        
+        .tracking-checkbox input[type="checkbox"] {
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+        }
+        
+        /* Replacement section */
+        .replacement-section {
+            margin-top: 16px;
+            padding: 16px;
+            background: #fef2f2;
+            border-radius: 12px;
+            border: 2px solid #fca5a5;
+        }
+        
+        .replacement-title {
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-bottom: 12px;
+            color: #dc2626;
+        }
+        
+        .replacement-input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #d4d4d4;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            margin-top: 8px;
+        }
+        
+        .replacement-input:focus {
+            outline: none;
+            border-color: #7c3aed;
+        }
+        
+        /* Available apartments section - Need to show! */
+        .available-section {
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+            margin-bottom: 32px;
+            overflow: hidden;
+        }
+        
+        .available-header {
+            color: white;
+            padding: 20px 24px;
+            font-weight: 800;
+            font-size: 1.3rem;
+        }
+        
+        .available-list {
+            background: white;
+        }
+        
+        .available-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 24px;
+            border-bottom: 2px solid #fee2e2;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        
+        .available-item:last-child {
+            border-bottom: none;
+        }
+        
+        .available-info {
+            flex: 1;
+        }
+        
+        .available-property {
+            font-size: 1.2rem;
+            color: #1a1a1a;
+            margin-bottom: 6px;
+        }
+        
+        .available-tenant {
+            font-size: 1rem;
+            color: #4a4a4a;
+            margin-bottom: 4px;
+        }
+        
+        .available-date {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #dc2626;
+        }
+        
+        .available-actions {
+            flex-shrink: 0;
+        }
+        
+        .call-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 20px;
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 700;
+            text-decoration: none;
+            min-height: 48px;
+        }
+        
+        .call-btn:hover {
+            background: #1d4ed8;
+        }
+        
+        .available-footer {
+            background: #fef2f2;
+            color: #991b1b;
+            padding: 16px 24px;
+            font-size: 1rem;
+            font-weight: 600;
+            text-align: center;
+        }
+        
+        /* Replacement badge in bird's eye view */
+        .replacement-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            margin-left: 8px;
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+        
+        .replacement-badge.needs-candidate {
+            background: #fef3c7;
+            color: #92400e;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+        
+        /* Toast notification */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1a1a1a;
+            color: white;
+            padding: 16px 24px;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            display: none;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        
+        .toast.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+        
+        /* Mobile styles */
+        @media (max-width: 600px) {
+            body {
+                padding: 12px;
+                font-size: 20px;
+            }
+            
+            .tenant-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .renewal-buttons {
+                flex-direction: column;
+            }
+            
+            .renewal-btn {
+                width: 100%;
+                text-align: center;
+            }
+            
+            .summary {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .summary-value {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>RentasClaras</h1>
+            
+            <!-- NAVBAR - Pagos y Contratos -->
+            <nav class="top-navbar">
+                <a href="/" class="top-navbar-item">
+                    <span>Pagos</span>
+                </a>
+                <a href="/contratos" class="top-navbar-item active">
+                    <span>Contratos</span>
+                </a>
+            </nav>
+            
+            <p class="subtitle">¿Quién renovará su contrato?</p>
+        </header>
+        
+        <div class="summary">
+            <div class="summary-card">
+                <div class="summary-value green" id="renewingCount">{{ renewing_count }}</div>
+                <div class="summary-label">Renovarán</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-value red" id="notRenewingCount">{{ not_renewing_count }}</div>
+                <div class="summary-label">No renovarán</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-value yellow" id="pendingCount">{{ pending_count }}</div>
+                <div class="summary-label">Pendientes</div>
+            </div>
+        </div>
+        
+        <!-- Search Bar for Contratos -->
+        <div style="margin-bottom: 24px;">
+            <div style="position: relative;">
+                <input type="text" 
+                       id="contractSearch" 
+                       placeholder="Buscar inquilino..." 
+                       oninput="filterContracts(this.value)"
+                       style="width: 100%; padding: 16px 20px 16px 48px; font-size: 1.1rem; border: 3px solid #CCCCCC; border-radius: 12px; background: white; color: #000;">
+                <svg style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); width: 20px; height: 20px; color: #999;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" stroke-width="2" d="m21 21-4.35-4.35"/></svg>
+                <button type="button" 
+                        id="clearContractSearch" 
+                        onclick="clearContractSearch()" 
+                        style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; font-size: 1.3rem; cursor: pointer; display: none;">
+                    ✕
+                </button>
+            </div>
+            <div id="contractSearchResults" style="margin-top: 8px; color: #000; font-size: 1rem; display: none;"></div>
+        </div>
+        
+        <!-- Property Filter Tabs for Contratos -->
+        <div class="property-filter-tabs" id="propertyFilterTabsContratos" style="display: flex; gap: 8px; margin-bottom: 24px; overflow-x: auto; padding-bottom: 8px; -webkit-overflow-scrolling: touch; position: relative; z-index: 10; background: #F5F5F5; border-radius: 12px; padding: 4px;">
+            <button type="button" class="property-filter-tab-contratos active" data-filter="all" onclick="filterContractsByProperty('all', this)" style="flex-shrink: 0; padding: 12px 20px; border-radius: 8px; border: none; background: #0A7A0A; color: white; font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: all 0.2s; min-height: 48px; white-space: nowrap; position: relative; z-index: 11;">
+                Todas <span class="tab-count" id="tabCountAllContratos">{{ total_tenants }}</span>
+            </button>
+            {% for property_name, tenants in tenants_by_property.items() %}
+            <button type="button" class="property-filter-tab-contratos" data-filter="{{ property_name }}" onclick="filterContractsByProperty('{{ property_name }}', this)" style="flex-shrink: 0; padding: 12px 20px; border-radius: 8px; border: none; background: transparent; color: #333333; font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: all 0.2s; min-height: 48px; white-space: nowrap; position: relative; z-index: 11;">
+                {{ property_name }} <span class="tab-count" data-tab-count="{{ property_name }}">{{ tenants|length }}</span>
+            </button>
+            {% endfor %}
+        </div>
+        
+        <!-- APARTMENTS AVAILABLE - Need to show to new tenants -->
+        {% if available_apartments %}
+        <div class="available-section" style="background: #CC0000; border-radius: 16px; box-shadow: 0 4px 12px rgba(204, 0, 0, 0.3); margin-bottom: 32px; overflow: hidden;">
+            <div class="available-header" style="background: #CC0000; color: white; padding: 20px 24px; font-weight: 700; font-size: 1.2rem;">
+                Departamentos Disponibles
+            </div>
+            <div class="available-list">
+                {% for apt in available_apartments %}
+                <div class="available-item">
+                    <div class="available-info">
+                        <div class="available-property">
+                            <strong>{{ apt.property_name }}</strong> — Unidad {{ apt.unit }}
+                        </div>
+                        <div class="available-tenant">
+                            Sale: {{ apt.name }}
+                        </div>
+                        <div class="available-date">
+                            Disponible: {{ apt.contract_end_formatted }}
+                        </div>
+                    </div>
+                    <div class="available-actions">
+                        <a href="tel:{{ apt.phone }}" class="call-btn" style="background: #0A7A0A;">Llamar</a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="available-footer" style="background: #FEE2E2; color: #991b1b; padding: 16px 24px; font-size: 1rem; font-weight: 600; text-align: center;">
+                Estos departamentos no tienen candidato aún.
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Bird's Eye View: Upcoming Renewals Grouped by Month -->
+        {% if upcoming_renewals_by_month %}
+        <div class="upcoming-section" style="background: white; border-radius: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 24px; overflow: hidden;">
+            <div class="upcoming-header" style="background: #CC0000; color: white; padding: 16px; font-weight: 700; font-size: 1rem;">
+                Próximos Vencimientos
+            </div>
+            <div class="upcoming-list">
+                {% for month_group in upcoming_renewals_by_month %}
+                <div class="month-section">
+                    <div class="month-header" style="background: #f3f4f6; padding: 14px 24px; font-size: 1.1rem; font-weight: 700; color: #1a1a1a; border-bottom: 2px solid #e5e5e5;">{{ month_group.month }}</div>
+                    {% for tenant in month_group.tenants %}
+                    <div class="upcoming-item {{ 'renewing' if tenant.renewal_status == 'renovará' else 'not-renewing' if tenant.renewal_status == 'no_renovará' else 'pending' }} {{ 'expiring-soon' if tenant.days_until_expiry is defined and tenant.days_until_expiry <= 30 else '' }}"
+                         id="upcoming-{{ tenant.id }}">
+                        <div class="upcoming-info">
+                            <span class="upcoming-name">
+                                <strong>{{ tenant.property_name }}</strong> ({{ tenant.unit }}) — {{ tenant.name }}
+                            </span>
+                            <span class="upcoming-date">{{ tenant.contract_end_formatted }}</span>
+                            {% if tenant.days_until_expiry is defined and tenant.days_until_expiry <= 30 %}
+                            <span class="expiring-soon-badge" style="background: #CC0000; color: white; padding: 4px 10px; border-radius: 12px; font-size: 0.85rem; font-weight: 700; margin-left: 8px;">{{ tenant.days_until_expiry }} días</span>
+                            {% endif %}
+                        </div>
+                        <div class="upcoming-status">
+                            {% if tenant.renewal_status == 'renovará' %}
+                            <span class="status-badge green">Renovará</span>
+                            {% elif tenant.renewal_status == 'no_renovará' %}
+                            <span class="status-badge red">No renovará</span>
+                            {% if tenant.replacement_name %}
+                            <span class="replacement-badge">{{ tenant.replacement_name }}</span>
+                            {% else %}
+                            <span class="replacement-badge needs-candidate" style="background: #FEE2E2; color: #CC0000;">Sin candidato</span>
+                            {% endif %}
+                            {% else %}
+                            <span class="status-badge yellow" style="background: #F5F5F5; color: #333333;">Pendiente</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        
+        {% for property_name, tenants in tenants_by_property.items() %}
+        <div class="property-section">
+            <div class="property-header">
+                🏢 {{ property_name }} ({{ tenants|length }} unidades)
+            </div>
+            
+            {% for tenant in tenants %}
+            <div class="contract-card {{ 'renewing' if tenant.renewal_status == 'renovará' else 'not-renewing' if tenant.renewal_status == 'no_renovará' else 'pending' }}" 
+                 data-tenant-id="{{ tenant.id }}">
+                
+                <div class="tenant-header">
+                    <div class="tenant-name">
+                        <span class="tenant-unit">({{ tenant.unit }})</span> {{ tenant.name }}
+                    </div>
+                    {% if tenant.contract_start_formatted and tenant.contract_end_formatted %}
+                    <div class="contract-dates">
+                        📄 {{ tenant.contract_start_formatted }} → {{ tenant.contract_end_formatted }}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="renewal-buttons">
+                    <button type="button" class="status-pill renewal-btn {% if tenant.renewal_status == 'renovará' %}active-green{% endif %}" 
+                            onclick="setRenewalStatus(this, '{{ tenant.id }}', 'renovará')">
+                        Sí Renovará
+                    </button>
+                    <button type="button" class="status-pill renewal-btn {% if tenant.renewal_status == 'no_renovará' %}active-red{% endif %}" 
+                            onclick="setRenewalStatus(this, '{{ tenant.id }}', 'no_renovará')">
+                        No Renovará
+                    </button>
+                    <button type="button" class="status-pill renewal-btn {% if tenant.renewal_status == 'pendiente' %}active-yellow{% endif %}" 
+                            onclick="setRenewalStatus(this, '{{ tenant.id }}', 'pendiente')">
+                        Pendiente
+                    </button>
+                </div>
+                
+                <div class="contract-tracking">
+                    <label class="tracking-checkbox">
+                        <input type="checkbox" {% if tenant.contract_delivered %}checked{% endif %} 
+                               onchange="updateContractDelivery(this, '{{ tenant.id }}', 'delivered')">
+                        <span>📨 Contrato nuevo entregado</span>
+                    </label>
+                    <label class="tracking-checkbox">
+                        <input type="checkbox" {% if tenant.contract_picked_up %}checked{% endif %} 
+                               onchange="updateContractDelivery(this, '{{ tenant.id }}', 'picked_up')">
+                        <span>✍️ Contrato firmado/recogido</span>
+                    </label>
+                </div>
+                
+                <div class="replacement-section" id="replacement-{{ tenant.id }}" 
+                     style="{% if tenant.renewal_status != 'no_renovará' %}display:none;{% endif %}">
+                    <div class="replacement-title">🔄 Datos del Reemplazo</div>
+                    <input type="text" class="replacement-input" 
+                           placeholder="Nombre del nuevo inquilino" 
+                           value="{{ tenant.replacement_name or '' }}"
+                           onchange="updateReplacement(this, '{{ tenant.id }}', 'name')">
+                    <input type="text" class="replacement-input" 
+                           placeholder="Teléfono del nuevo inquilino" 
+                           value="{{ tenant.replacement_phone or '' }}"
+                           onchange="updateReplacement(this, '{{ tenant.id }}', 'phone')">
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- MOBILE BOTTOM NAVIGATION -->
+    <nav class="bottom-nav">
+        <a href="/" class="bottom-nav-item">
+            <span class="bottom-nav-icon" style="font-size: 1.3rem; font-weight: 700;">$</span>
+            <span>Cobrar</span>
+        </a>
+        <a href="/contratos" class="bottom-nav-item active">
+            <svg class="bottom-nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+            <span>Contratos</span>
+        </a>
+    </nav>
+    
+    <div class="toast" id="toast">Guardado</div>
+    
+    
+    <script>
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2000);
+        }
+        
+        function updateCounts() {
+            let renewing = 0;
+            let notRenewing = 0;
+            let pending = 0;
+            
+            document.querySelectorAll('.contract-card').forEach(card => {
+                if (card.classList.contains('renewing')) renewing++;
+                else if (card.classList.contains('not-renewing')) notRenewing++;
+                else pending++;
+            });
+            
+            document.getElementById('renewingCount').textContent = renewing;
+            document.getElementById('notRenewingCount').textContent = notRenewing;
+            document.getElementById('pendingCount').textContent = pending;
+        }
+        
+        function setRenewalStatus(btn, tenantId, status) {
+            const card = btn.closest('.contract-card');
+            const container = btn.closest('.renewal-buttons');
+            
+            // Update button states
+            container.querySelectorAll('.renewal-btn').forEach(b => {
+                b.classList.remove('active-green', 'active-red', 'active-yellow');
+            });
+            
+            // Set active state and card style
+            card.classList.remove('renewing', 'not-renewing', 'pending');
+            
+            if (status === 'renovará') {
+                btn.classList.add('active-green');
+                card.classList.add('renewing');
+            } else if (status === 'no_renovará') {
+                btn.classList.add('active-red');
+                card.classList.add('not-renewing');
+            } else {
+                btn.classList.add('active-yellow');
+                card.classList.add('pending');
+            }
+            
+            // Show/hide replacement section
+            const replacementSection = document.getElementById(`replacement-${tenantId}`);
+            if (replacementSection) {
+                replacementSection.style.display = status === 'no_renovará' ? 'block' : 'none';
+            }
+            
+            // Save to database
+            fetch('/api/renewal', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tenant_id: tenantId,
+                    renewal_status: status
+                })
+            }).then(response => {
+                if (response.ok) {
+                    showToast('Guardado');
+                    updateCounts();
+                }
+            });
+        }
+        
+        function updateContractDelivery(checkbox, tenantId, type) {
+            const isChecked = checkbox.checked;
+            const data = { tenant_id: tenantId };
+            
+            if (type === 'delivered') {
+                data.contract_delivered = isChecked;
+            } else if (type === 'picked_up') {
+                data.contract_picked_up = isChecked;
+            }
+            
+            fetch('/api/renewal', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            }).then(response => {
+                if (response.ok) {
+                    showToast(isChecked ? 'Marcado' : 'Desmarcado');
+                }
+            });
+        }
+        
+        function updateReplacement(input, tenantId, field) {
+            const value = input.value;
+            const data = { tenant_id: tenantId };
+            
+            if (field === 'name') {
+                data.replacement_name = value;
+            } else if (field === 'phone') {
+                data.replacement_phone = value;
+            }
+            
+            fetch('/api/renewal', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            }).then(response => {
+                if (response.ok) {
+                    showToast('Guardado');
+                }
+            });
+        }
+        
+        // =============================================
+        // Search/Filter Contracts
+        // =============================================
+        
+        function filterContracts(searchTerm) {
+            const searchInput = document.getElementById('contractSearch');
+            const clearBtn = document.getElementById('clearContractSearch');
+            const resultsDiv = document.getElementById('contractSearchResults');
+            const term = searchTerm.toLowerCase().trim();
+            
+            // Show/hide clear button
+            clearBtn.style.display = term ? 'block' : 'none';
+            
+            // Get all contract cards and property sections
+            const allCards = document.querySelectorAll('.contract-card');
+            const allPropertySections = document.querySelectorAll('.property-section');
+            const allUpcomingItems = document.querySelectorAll('.upcoming-item');
+            
+            if (!term) {
+                // Show all
+                allCards.forEach(card => card.style.display = 'block');
+                allPropertySections.forEach(section => section.style.display = 'block');
+                allUpcomingItems.forEach(item => item.style.display = 'flex');
+                resultsDiv.style.display = 'none';
+                return;
+            }
+            
+            let matchCount = 0;
+            const propertyVisibility = {};
+            
+            // Filter contract cards
+            allCards.forEach(card => {
+                const nameEl = card.querySelector('.tenant-name');
+                if (!nameEl) return;
+                const name = nameEl.textContent.toLowerCase();
+                const propertySection = card.closest('.property-section');
+                const propertyHeader = propertySection ? propertySection.querySelector('.property-header') : null;
+                const propertyName = propertyHeader ? propertyHeader.textContent.trim() : '';
+                
+                if (name.includes(term)) {
+                    card.style.display = 'block';
+                    matchCount++;
+                    propertyVisibility[propertyName] = true;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+            
+            // Filter upcoming items
+            allUpcomingItems.forEach(item => {
+                const nameEl = item.querySelector('.upcoming-name');
+                if (!nameEl) return;
+                const name = nameEl.textContent.toLowerCase();
+                
+                if (name.includes(term)) {
+                    item.style.display = 'flex';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+            
+            // Hide property sections with no visible cards
+            allPropertySections.forEach(section => {
+                const header = section.querySelector('.property-header');
+                const propName = header ? header.textContent.trim() : '';
+                section.style.display = propertyVisibility[propName] ? 'block' : 'none';
+            });
+            
+            // Show results count
+            resultsDiv.style.display = 'block';
+            if (matchCount === 0) {
+                resultsDiv.innerHTML = `No se encontró "<strong>${searchTerm}</strong>"`;
+            } else if (matchCount === 1) {
+                resultsDiv.innerHTML = `1 inquilino encontrado`;
+            } else {
+            resultsDiv.innerHTML = `${matchCount} inquilinos encontrados`;
+            }
+        }
+        
+        // =============================================
+        // Property Filter Tabs for Contratos
+        // =============================================
+        
+        let activeContractPropertyFilter = 'all';
+        
+        function filterContractsByProperty(propertyName, btn) {
+            activeContractPropertyFilter = propertyName;
+            
+            // Update tab active states and styles (green active, consistent with Pagos)
+            const allTabs = document.querySelectorAll('.property-filter-tab-contratos');
+            allTabs.forEach(tab => {
+                tab.classList.remove('active');
+                tab.style.background = 'transparent';
+                tab.style.color = '#333333';
+            });
+            btn.classList.add('active');
+            btn.style.background = '#0A7A0A';
+            btn.style.color = 'white';
+            
+            // Clear any search filter first
+            const searchInput = document.getElementById('contractSearch');
+            if (searchInput && searchInput.value) {
+                searchInput.value = '';
+                document.getElementById('clearContractSearch').style.display = 'none';
+                document.getElementById('contractSearchResults').style.display = 'none';
+            }
+            
+            // Filter contract cards
+            const allCards = document.querySelectorAll('.contract-card');
+            const allPropertySections = document.querySelectorAll('.property-section');
+            const allUpcomingItems = document.querySelectorAll('.upcoming-item');
+            const availableSection = document.querySelector('.available-section');
+            const upcomingSection = document.querySelector('.upcoming-section');
+            
+            if (propertyName === 'all') {
+                // Show all
+                allCards.forEach(card => card.style.display = 'block');
+                allPropertySections.forEach(section => section.style.display = 'block');
+                allUpcomingItems.forEach(item => item.style.display = 'flex');
+                if (availableSection) availableSection.style.display = 'block';
+                if (upcomingSection) upcomingSection.style.display = 'block';
+            } else {
+                // Filter by property
+                allCards.forEach(card => {
+                    const propertySection = card.closest('.property-section');
+                    const propertyHeader = propertySection ? propertySection.querySelector('.property-header') : null;
+                    const propName = propertyHeader ? propertyHeader.textContent.trim() : '';
+                    
+                    if (propName.includes(propertyName)) {
+                        card.style.display = 'block';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+                
+                allPropertySections.forEach(section => {
+                    const header = section.querySelector('.property-header');
+                    const propName = header ? header.textContent.trim() : '';
+                    section.style.display = propName.includes(propertyName) ? 'block' : 'none';
+                });
+                
+                // Filter upcoming items by property name in the text
+                allUpcomingItems.forEach(item => {
+                    const nameEl = item.querySelector('.upcoming-name');
+                    if (!nameEl) return;
+                    const name = nameEl.textContent;
+                    item.style.display = name.includes(propertyName) ? 'flex' : 'none';
+                });
+                
+                // Hide available apartments section when filtering
+                if (availableSection) {
+                    const hasMatchingApartments = Array.from(availableSection.querySelectorAll('.available-property')).some(el => 
+                        el.textContent.includes(propertyName)
+                    );
+                    availableSection.style.display = hasMatchingApartments ? 'block' : 'none';
+                }
+            }
+        }
+        
+        function clearContractSearch() {
+            const searchInput = document.getElementById('contractSearch');
+            searchInput.value = '';
+            filterContracts('');
+            searchInput.focus();
+        }
+    </script>
+</body>
+</html>
+"""
+
+
+@app.route("/contratos")
+def contracts():
+    """Separate page focused on contract renewal management"""
+    from collections import defaultdict
+    from datetime import datetime
+
+    all_tenants = get_all_tenants()
+    tenants_by_property = {}
+
+    # Count by renewal status
+    renewing_count = 0
+    not_renewing_count = 0
+    pending_count = 0
+
+    # Spanish month names
+    spanish_months = [
+        "Enero",
+        "Febrero",
+        "Marzo",
+        "Abril",
+        "Mayo",
+        "Junio",
+        "Julio",
+        "Agosto",
+        "Septiembre",
+        "Octubre",
+        "Noviembre",
+        "Diciembre",
+    ]
+
+    # Spanish month names lowercase for date formatting
+    spanish_months_lower = [
+        "enero",
+        "febrero",
+        "marzo",
+        "abril",
+        "mayo",
+        "junio",
+        "julio",
+        "agosto",
+        "septiembre",
+        "octubre",
+        "noviembre",
+        "diciembre",
+    ]
+
+    def parse_date(date_str):
+        try:
+            return datetime.strptime(date_str, "%Y-%m-%d")
+        except:
+            try:
+                return datetime.strptime(date_str, "%d/%m/%Y")
+            except:
+                return None
+
+    # Add days_until_expiry for urgency highlighting
+    today = datetime.now()
+    for tenant in all_tenants:
+        if tenant.contract_end:
+            parsed = parse_date(tenant.contract_end)
+            if parsed:
+                tenant.days_until_expiry = (parsed - today).days
+
+    # Track upcoming renewals for bird's eye view, grouped by month
+    upcoming_by_month = defaultdict(list)
+
+    def format_date_spanish(date_str):
+        """Format date as '12 de diciembre 2025'"""
+        parsed = parse_date(date_str)
+        if parsed:
+            return f"{parsed.day} de {spanish_months_lower[parsed.month - 1]} {parsed.year}"
+        return date_str  # Return original if can't parse
+
+    for tenant in all_tenants:
+        # Format contract dates for display
+        if tenant.contract_start:
+            tenant.contract_start_formatted = format_date_spanish(tenant.contract_start)
+        else:
+            tenant.contract_start_formatted = None
+        if tenant.contract_end:
+            tenant.contract_end_formatted = format_date_spanish(tenant.contract_end)
+        else:
+            tenant.contract_end_formatted = None
+
+        if tenant.property_name not in tenants_by_property:
+            tenants_by_property[tenant.property_name] = []
+        tenants_by_property[tenant.property_name].append(tenant)
+
+        # Count statuses
+        if tenant.renewal_status == "renovará":
+            renewing_count += 1
+        elif tenant.renewal_status == "no_renovará":
+            not_renewing_count += 1
+        else:
+            pending_count += 1
+
+        # Add to upcoming renewals grouped by month
+        if tenant.contract_end:
+            parsed = parse_date(tenant.contract_end)
+            if parsed:
+                month_key = f"{spanish_months[parsed.month - 1]} {parsed.year}"
+                upcoming_by_month[month_key].append(
+                    {"tenant": tenant, "parsed_date": parsed}
+                )
+
+    # Sort tenants within each month by date
+    for month_key in upcoming_by_month:
+        upcoming_by_month[month_key].sort(key=lambda x: x["parsed_date"])
+
+    # Sort months chronologically using Spanish month names
+    def parse_spanish_month_year(month_str):
+        """Parse 'Enero 2025' to datetime for sorting."""
+        spanish_to_num = {
+            "enero": 1,
+            "febrero": 2,
+            "marzo": 3,
+            "abril": 4,
+            "mayo": 5,
+            "junio": 6,
+            "julio": 7,
+            "agosto": 8,
+            "septiembre": 9,
+            "octubre": 10,
+            "noviembre": 11,
+            "diciembre": 12,
+        }
+        try:
+            parts = month_str.split()
+            month_num = spanish_to_num.get(parts[0].lower(), 1)
+            year = int(parts[1])
+            return datetime(year, month_num, 1)
+        except:
+            return datetime.max
+
+    sorted_months = sorted(upcoming_by_month.keys(), key=parse_spanish_month_year)
+
+    # Build ordered dict of month -> tenants
+    upcoming_renewals_by_month = []
+    for month_key in sorted_months:
+        upcoming_renewals_by_month.append(
+            {
+                "month": month_key,
+                "tenants": [item["tenant"] for item in upcoming_by_month[month_key]],
+            }
+        )
+
+    # Sort tenants within each property by contract end date too
+    for prop_name in tenants_by_property:
+        tenants_by_property[prop_name].sort(
+            key=lambda t: (
+                parse_date(t.contract_end)
+                if t.contract_end and parse_date(t.contract_end)
+                else datetime.max
+            )
+        )
+
+    # Build list of available apartments (no renovará + no replacement candidate)
+    available_apartments = []
+    for tenant in all_tenants:
+        if tenant.renewal_status == "no_renovará" and not tenant.replacement_name:
+            available_apartments.append(tenant)
+
+    # Sort by contract end date (soonest first)
+    available_apartments.sort(
+        key=lambda t: (
+            parse_date(t.contract_end)
+            if t.contract_end and parse_date(t.contract_end)
+            else datetime.max
+        )
+    )
+
+    return render_template_string(
+        CONTRACTS_TEMPLATE,
+        tenants_by_property=tenants_by_property,
+        total_tenants=len(all_tenants),
+        renewing_count=renewing_count,
+        not_renewing_count=not_renewing_count,
+        pending_count=pending_count,
+        upcoming_renewals_by_month=upcoming_renewals_by_month,
+        available_apartments=available_apartments,
+    )
+
+
+# =============================================================================
+# MAIN
+# =============================================================================
+
+if __name__ == "__main__":
+    print(
+        """
+╔══════════════════════════════════════════════════════════════════╗
+║                    🏠 RentasClaras MVP                            ║
+║                Simple Bulk WhatsApp Sender                        ║
+╠══════════════════════════════════════════════════════════════════╣
+║                                                                   ║
+║  Abre tu navegador en: http://localhost:5000                     ║
+║                                                                   ║
+║  Instrucciones:                                                   ║
+║  1. Desmarca los inquilinos que YA PAGARON                       ║
+║  2. Click en "Generar Enlaces de WhatsApp"                       ║
+║  3. Click en cada enlace para enviar el mensaje                  ║
+║                                                                   ║
+║  ⚠️  MODO PRUEBA: Los mensajes irán a tu número                  ║
+║      Cambia TEST_MODE = False para producción                    ║
+║                                                                   ║
+╚══════════════════════════════════════════════════════════════════╝
+"""
+    )
+    app.run(debug=False, port=5000)

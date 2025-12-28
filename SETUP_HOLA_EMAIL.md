@@ -1,7 +1,7 @@
 # 📧 Guía: Configurar hola@vuelodigno.com para RECIBIR emails
 
 ## 🎯 Objetivo
-Crear `hola@vuelodigno.com` que reenvíe automáticamente todos los emails a tu Gmail personal (`zelmagarza1099@gmail.com`).
+Crear `hola@vuelodigno.com` que reenvíe automáticamente todos los emails a tu Gmail personal.
 
 **Costo: $0 / mes** (100% gratis, ilimitado)
 
@@ -12,7 +12,7 @@ Crear `hola@vuelodigno.com` que reenvíe automáticamente todos los emails a tu 
 1. Ve a https://www.cloudflare.com/
 2. Click en **"Sign Up"** (arriba derecha)
 3. Ingresa:
-   - Email: `zelmagarza1099@gmail.com` (o el que prefieras)
+   - Email: tu email personal
    - Contraseña: (elige una segura)
 4. Verifica tu email (revisa inbox)
 5. Login en Cloudflare
@@ -107,10 +107,10 @@ MX  @  route3.mx.cloudflare.net  (priority 7)
 ## ✅ Paso 7: Agregar tu Gmail como destino
 
 1. En **"Destination addresses"**, click en **"Add destination address"**
-2. Ingresa: `zelmagarza1099@gmail.com`
+2. Ingresa: tu email personal de Gmail
 3. Click en **"Save and Continue"** o **"Add"**
 
-**IMPORTANTE:** Cloudflare enviará un email de verificación a `zelmagarza1099@gmail.com`
+**IMPORTANTE:** Cloudflare enviará un email de verificación a tu Gmail
 
 4. Ve a tu Gmail
 5. Busca email de: `no-reply@cloudflaremail.com`
@@ -129,7 +129,7 @@ MX  @  route3.mx.cloudflare.net  (priority 7)
 4. Completa:
    - **Custom address:** `hola`
    - **Action:** Forward to
-   - **Destination:** `zelmagarza1099@gmail.com` (selecciona de la lista)
+   - **Destination:** tu email personal (selecciona de la lista)
 
 5. Click en **"Save"** o **"Create"**
 
@@ -143,7 +143,7 @@ MX  @  route3.mx.cloudflare.net  (priority 7)
 
 1. En Email Routing, busca **"Send test email"** o similar
 2. Cloudflare enviará un email de prueba a `hola@vuelodigno.com`
-3. Deberías recibirlo en `zelmagarza1099@gmail.com` en ~10 segundos
+3. Deberías recibirlo en tu Gmail en ~10 segundos
 
 ### Opción 2: Enviar email manual
 
@@ -153,7 +153,7 @@ MX  @  route3.mx.cloudflare.net  (priority 7)
 4. Mensaje: "Probando email forwarding"
 5. Envía
 
-6. **Revisa tu Gmail:** `zelmagarza1099@gmail.com`
+6. **Revisa tu Gmail**
    - Deberías ver el email en ~10-30 segundos
    - **FROM:** mostrará el email original del remitente
    - **TO:** `hola@vuelodigno.com` (forwarded to you)
@@ -165,7 +165,7 @@ MX  @  route3.mx.cloudflare.net  (priority 7)
 En Cloudflare Email Routing verás:
 
 ✅ **Status:** Active
-✅ **Addresses:** hola@vuelodigno.com → zelmagarza1099@gmail.com
+✅ **Addresses:** hola@vuelodigno.com → tu-email@gmail.com
 ✅ **Activity log:** Muestra emails recibidos y reenviados
 
 ---
@@ -187,7 +187,7 @@ En Cloudflare Email Routing verás:
 
 1. **Email destino no verificado:**
    - Ve a Cloudflare → Email Routing → Destination addresses
-   - Verifica que `zelmagarza1099@gmail.com` tenga ✅ verde
+   - Verifica que tu email de destino tenga ✅ verde
    - Si no, reenvía el email de verificación
 
 2. **DNS no propagado:**
@@ -212,7 +212,7 @@ En Cloudflare Email Routing verás:
 Ahora cuando alguien te escriba a `hola@vuelodigno.com`:
 
 1. ✅ Email llega a servidores de Cloudflare
-2. ✅ Cloudflare lo reenvía automáticamente a `zelmagarza1099@gmail.com`
+2. ✅ Cloudflare lo reenvía automáticamente a tu Gmail
 3. ✅ Recibes el email en tu Gmail personal
 4. ✅ Puedes responder desde Gmail (el destinatario verá tu Gmail, no hola@)
 
@@ -241,7 +241,7 @@ Si quieres que tus respuestas salgan desde `hola@vuelodigno.com` (no desde tu Gm
 - [ ] Dominio `vuelodigno.com` agregado a Cloudflare
 - [ ] Nameservers cambiados
 - [ ] Email Routing activado
-- [ ] `zelmagarza1099@gmail.com` verificado como destino
+- [ ] Tu email personal verificado como destino
 - [ ] `hola@vuelodigno.com` creado y activo
 - [ ] Email de prueba enviado y recibido
 
