@@ -3211,6 +3211,27 @@ HTML_TEMPLATE = """
                             <div class="tenant-rent">${{ "{:,.0f}".format(tenant.rent) }}</div>
                         </div>
                     </div>
+                    
+                    <!-- LATE FEE BREAKDOWN - Only shown for unpaid tenants with fees -->
+                    {% if not tenant.paid and tenant.days_late >= 1 %}
+                    <div style="background: #FEF3C7; border: 2px solid #F59E0B; border-radius: 12px; padding: 14px 16px; margin-top: 8px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 1.4rem;">⏰</span>
+                                <span style="font-weight: 700; color: #92400E; font-size: 1rem;">{{ tenant.days_late }} día{% if tenant.days_late > 1 %}s{% endif %} de atraso</span>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-size: 0.9rem; color: #92400E;">
+                                    Multa: $500{% if tenant.days_late > 1 %} + {{ tenant.days_late - 1 }}×$100{% endif %} = <strong>+${{ "{:,.0f}".format(tenant.late_fee) }}</strong>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="margin-top: 10px; padding-top: 10px; border-top: 2px dashed #F59E0B; display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-weight: 800; color: #78350F; font-size: 1.1rem;">TOTAL A COBRAR:</span>
+                            <span style="font-weight: 800; color: #CC0000; font-size: 1.4rem;">${{ "{:,.0f}".format(tenant.total_owed) }}</span>
+                        </div>
+                    </div>
+                    {% endif %}
                       
                     <!-- Inline WhatsApp button with SVG icon -->
                     {% if tenant.phone and not tenant.paid %}
@@ -5783,6 +5804,11 @@ def index():
     # #10: Check if we're viewing the current month (for HOY button)
     is_current_month = year == today.year and month == today.month
 
+    # Check if we're viewing a future month (no late fees for future months)
+    is_future_month = (year > today.year) or (
+        year == today.year and month > today.month
+    )
+
     # Get payment status for this month
     monthly_status = get_monthly_status(year, month)
 
@@ -5872,30 +5898,47 @@ def index():
 
         # Calculate days late and late fees for unpaid tenants
         if not tenant.paid:
+            # Future months: no late fees yet (month hasn't happened)
+            if is_future_month:
+                tenant.days_late = 0
+                tenant.late_fee = 0
+                tenant.total_owed = float(tenant.rent)
             # If viewing current month, use today's day
-            # If viewing past month, use full month (assume end of month)
-            if is_current_month:
+            elif is_current_month:
                 day_of_calculation = today.day
+                # Days late = day - 1 (Day 1 is not late, Day 2 = 1 day late)
+                tenant.days_late = max(0, day_of_calculation - 1)
+
+                # Calculate late fees: $500 initial (after day 1) + $100/day (after day 2, max 5 days)
+                if tenant.days_late >= 1:
+                    initial_penalty = 500
+                    # Daily penalty: starts day 3 (days_late >= 2), max 5 days
+                    daily_penalty_days = min(max(0, tenant.days_late - 1), 5)
+                    daily_penalty = daily_penalty_days * 100
+                    tenant.late_fee = initial_penalty + daily_penalty
+                    tenant.total_owed = float(tenant.rent) + tenant.late_fee
+                else:
+                    tenant.late_fee = 0
+                    tenant.total_owed = float(tenant.rent)
             else:
                 # For past months, assume they're fully late (end of month)
                 import calendar
 
                 day_of_calculation = calendar.monthrange(year, month)[1]
+                # Days late = day - 1 (Day 1 is not late, Day 2 = 1 day late)
+                tenant.days_late = max(0, day_of_calculation - 1)
 
-            # Days late = day - 1 (Day 1 is not late, Day 2 = 1 day late)
-            tenant.days_late = max(0, day_of_calculation - 1)
-
-            # Calculate late fees: $500 initial (after day 1) + $100/day (after day 2, max 5 days)
-            if tenant.days_late >= 1:
-                initial_penalty = 500
-                # Daily penalty: starts day 3 (days_late >= 2), max 5 days
-                daily_penalty_days = min(max(0, tenant.days_late - 1), 5)
-                daily_penalty = daily_penalty_days * 100
-                tenant.late_fee = initial_penalty + daily_penalty
-                tenant.total_owed = float(tenant.rent) + tenant.late_fee
-            else:
-                tenant.late_fee = 0
-                tenant.total_owed = float(tenant.rent)
+                # Calculate late fees: $500 initial (after day 1) + $100/day (after day 2, max 5 days)
+                if tenant.days_late >= 1:
+                    initial_penalty = 500
+                    # Daily penalty: starts day 3 (days_late >= 2), max 5 days
+                    daily_penalty_days = min(max(0, tenant.days_late - 1), 5)
+                    daily_penalty = daily_penalty_days * 100
+                    tenant.late_fee = initial_penalty + daily_penalty
+                    tenant.total_owed = float(tenant.rent) + tenant.late_fee
+                else:
+                    tenant.late_fee = 0
+                    tenant.total_owed = float(tenant.rent)
         else:
             tenant.days_late = 0
             tenant.late_fee = 0
@@ -5908,12 +5951,20 @@ def index():
     expiring_warning = [c for c in expiring_contracts if c["urgency"] == "warning"]
     expiring_expired = [c for c in expiring_contracts if c["urgency"] == "expired"]
 
+    # Calculate total late fees and total owed (for top banner)
+    total_late_fees = sum(t.late_fee for t in all_tenants if not t.paid)
+    total_owed = sum(t.total_owed for t in all_tenants if not t.paid)
+    unpaid_count = sum(1 for t in all_tenants if not t.paid)
+
     return render_template_string(
         HTML_TEMPLATE,
         tenants=all_tenants,
         tenants_by_property=tenants_by_property,
         total_tenants=len(all_tenants),
         total_rent=total_rent,
+        total_late_fees=total_late_fees,
+        total_owed=total_owed,
+        unpaid_count=unpaid_count,
         current_date=today.strftime("%d de %B, %Y"),
         day_of_month=today.day,
         month_name=month_name,
