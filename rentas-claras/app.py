@@ -264,6 +264,8 @@ HTML_TEMPLATE = """
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RentasClaras - Envío de Recordatorios</title>
+    <!-- SheetJS library for Excel export -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -3013,7 +3015,7 @@ HTML_TEMPLATE = """
                 <table class="excel-table" style="margin-bottom: 0; min-width: 800px;">
                     <thead>
                         <tr>
-                            <th colspan="6" style="background: white; border: none; font-size: 1.4rem; text-align: left; padding: 8px 16px;">
+                            <th colspan="4" style="background: white; border: none; font-size: 1.4rem; text-align: left; padding: 8px 16px;">
                                 {{ property_name }}
                             </th>
                             <th colspan="3" style="background: white; border: none; font-style: italic; text-align: right;">{{ month_name }}</th>
@@ -3026,7 +3028,6 @@ HTML_TEMPLATE = """
                             <th style="text-align: right; min-width: 80px;">Renta</th>
                             <th style="text-align: right; min-width: 80px;">Pagado</th>
                             <th style="text-align: center; width: 80px;">Estado</th>
-                            <th style="text-align: center; width: 100px;">Recibo</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -3049,19 +3050,6 @@ HTML_TEMPLATE = """
                                     {% if tenant.paid %}✓{% else %}{% endif %}
                                 </button>
                             </td>
-                            <td style="text-align: center;">
-                                <button type="button" class="pdf-download-btn" 
-                                        data-tenant-id="{{ tenant.id }}"
-                                        data-tenant-name="{{ tenant.name }}"
-                                        data-tenant-unit="{{ tenant.unit }}"
-                                        data-property="{{ property_name }}"
-                                        data-rent="{{ tenant.rent }}"
-                                        data-paid="{{ 'true' if tenant.paid else 'false' }}"
-                                        onclick="downloadReceipt(this)"
-                                        style="background: #0A7A0A; color: white; border: none; padding: 8px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 700; cursor: pointer; min-height: 40px; white-space: nowrap;">
-                                    Descargar PDF
-                                </button>
-                            </td>
                         </tr>
                         {% endfor %}
                         <!-- Property Total Row -->
@@ -3071,7 +3059,6 @@ HTML_TEMPLATE = """
                             <td colspan="2"></td>
                             <td class="rent-cell" style="border-top: 2px solid #333;">${{ "{:,.0f}".format(tenants|sum(attribute='rent')) }}</td>
                             <td class="property-total-paid" data-property="{{ property_name }}" style="text-align: right; color: #0A7A0A; border-top: 2px solid #333;">${{ "{:,.0f}".format(tenants|selectattr('paid')|sum(attribute='rent')) }}</td>
-                            <td></td>
                             <td></td>
                         </tr>
                     </tbody>
@@ -3096,7 +3083,17 @@ HTML_TEMPLATE = """
                             </td>
                         </tr>
                     </tbody>
-                </table>
+            </table>
+            </div>
+            
+            <!-- EXCEL DOWNLOAD BUTTON -->
+            <div style="text-align: center; margin-top: 24px;">
+                <button onclick="downloadExcel()" 
+                        style="background: #217346; color: white; border: none; padding: 20px 40px; border-radius: 12px; font-size: 1.3rem; font-weight: 700; cursor: pointer; min-height: 64px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); display: inline-flex; align-items: center; gap: 12px;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M14.5 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V7.5L14.5 2ZM18 20H6V4H13V8H18V20ZM12.9 14.5L15.2 19H13.4L12 16.5L10.6 19H8.8L11.1 14.5L9 10H10.8L12 12.3L13.2 10H15L12.9 14.5Z"/></svg>
+                    Descargar Excel
+                </button>
+                <p style="color: #666; font-size: 0.95rem; margin-top: 12px;">Descarga el archivo con una hoja por cada propiedad</p>
             </div>
         </div>
         <!-- END EXCEL VIEW -->
@@ -3380,6 +3377,194 @@ HTML_TEMPLATE = """
                     totalCell.textContent = '$' + totalPaid.toLocaleString('en-US', {maximumFractionDigits: 0});
                 }
             });
+        }
+
+        // PDF Receipt Download Function - Creates a professional PDF receipt for each tenant
+        function downloadReceipt(btn) {
+            const tenantId = btn.getAttribute('data-tenant-id');
+            const tenantName = btn.getAttribute('data-tenant-name');
+            const tenantUnit = btn.getAttribute('data-tenant-unit');
+            const property = btn.getAttribute('data-property');
+            const rent = btn.getAttribute('data-rent');
+            const isPaid = btn.getAttribute('data-paid') === 'true';
+            
+            // Generate folio number (unique identifier)
+            const now = new Date();
+            const folio = `RC-${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}-${tenantId}`;
+            
+            // Format date in Spanish
+            const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+            const dateStr = `${now.getDate()} de ${months[now.getMonth()]} de ${now.getFullYear()}`;
+            const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+            
+            // Current month/year for billing period
+            const billingMonth = months[currentMonth - 1] + ' ' + currentYear;
+            
+            // Status text and color
+            const statusText = isPaid ? 'PAGADO' : 'PENDIENTE';
+            const statusColor = isPaid ? '#0A7A0A' : '#CC0000';
+            const statusBg = isPaid ? '#DCFCE7' : '#FEE2E2';
+            
+            // Format rent amount
+            const rentFormatted = parseFloat(rent).toLocaleString('es-MX', { style: 'currency', currency: 'MXN' });
+            
+            // Create PDF content using HTML and print dialog
+            const pdfContent = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <title>Recibo de Renta - ${tenantName}</title>
+                <style>
+                    * { margin: 0; padding: 0; box-sizing: border-box; }
+                    body { 
+                        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+                        padding: 40px; 
+                        color: #333;
+                        max-width: 800px;
+                        margin: 0 auto;
+                    }
+                    .header { 
+                        text-align: center; 
+                        margin-bottom: 40px;
+                        border-bottom: 3px solid #0A7A0A;
+                        padding-bottom: 20px;
+                    }
+                    .logo { 
+                        font-size: 28px; 
+                        font-weight: 800; 
+                        color: #0A7A0A;
+                        margin-bottom: 8px;
+                    }
+                    .subtitle { color: #666; font-size: 14px; }
+                    .folio { 
+                        background: #F5F5F5; 
+                        padding: 12px 24px; 
+                        border-radius: 8px; 
+                        display: inline-block;
+                        margin-top: 16px;
+                        font-weight: 700;
+                        font-size: 14px;
+                    }
+                    .status-badge {
+                        display: inline-block;
+                        padding: 12px 32px;
+                        border-radius: 8px;
+                        font-weight: 800;
+                        font-size: 18px;
+                        margin: 24px 0;
+                        background: ${statusBg};
+                        color: ${statusColor};
+                        border: 3px solid ${statusColor};
+                    }
+                    .section { margin: 32px 0; }
+                    .section-title { 
+                        font-size: 14px; 
+                        color: #666; 
+                        text-transform: uppercase;
+                        letter-spacing: 1px;
+                        margin-bottom: 12px;
+                    }
+                    .info-grid { 
+                        display: grid; 
+                        grid-template-columns: 1fr 1fr; 
+                        gap: 16px;
+                    }
+                    .info-item { 
+                        background: #FAFAFA; 
+                        padding: 16px; 
+                        border-radius: 8px;
+                        border: 1px solid #E5E5E5;
+                    }
+                    .info-label { font-size: 12px; color: #666; margin-bottom: 4px; }
+                    .info-value { font-size: 16px; font-weight: 700; }
+                    .amount-section {
+                        background: #F5F5F5;
+                        padding: 32px;
+                        border-radius: 12px;
+                        text-align: center;
+                        margin: 32px 0;
+                    }
+                    .amount-label { font-size: 14px; color: #666; margin-bottom: 8px; }
+                    .amount-value { 
+                        font-size: 48px; 
+                        font-weight: 800; 
+                        color: ${isPaid ? '#0A7A0A' : '#CC0000'};
+                    }
+                    .footer {
+                        margin-top: 48px;
+                        padding-top: 24px;
+                        border-top: 2px solid #E5E5E5;
+                        text-align: center;
+                        color: #999;
+                        font-size: 12px;
+                    }
+                    .timestamp { margin-top: 8px; }
+                    @media print {
+                        body { padding: 20px; }
+                        .no-print { display: none; }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <div class="logo">RentasClaras</div>
+                    <div class="subtitle">Sistema de Administración de Rentas</div>
+                    <div class="folio">Folio: ${folio}</div>
+                </div>
+                
+                <div style="text-align: center;">
+                    <div class="status-badge">${statusText}</div>
+                </div>
+                
+                <div class="section">
+                    <div class="section-title">Datos del Inquilino</div>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">Nombre</div>
+                            <div class="info-value">${tenantName}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Unidad</div>
+                            <div class="info-value">${tenantUnit}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Propiedad</div>
+                            <div class="info-value">${property}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Periodo</div>
+                            <div class="info-value">${billingMonth}</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="amount-section">
+                    <div class="amount-label">Monto de Renta</div>
+                    <div class="amount-value">${rentFormatted}</div>
+                </div>
+                
+                <div class="footer">
+                    <div>Este documento es un comprobante oficial de RentasClaras</div>
+                    <div class="timestamp">Generado el ${dateStr} a las ${timeStr}</div>
+                    <div style="margin-top: 16px; color: #0A7A0A; font-weight: 700;">
+                        Conserve este recibo para su registro
+                    </div>
+                </div>
+                
+                <div class="no-print" style="text-align: center; margin-top: 32px;">
+                    <button onclick="window.print()" style="background: #0A7A0A; color: white; border: none; padding: 16px 32px; border-radius: 8px; font-size: 16px; font-weight: 700; cursor: pointer;">
+                        Imprimir / Guardar PDF
+                    </button>
+                </div>
+            </body>
+            </html>
+            `;
+            
+            // Open in new window for printing/saving as PDF
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(pdfContent);
+            printWindow.document.close();
         }
 
         // UX #1: Confirmation Modal State
@@ -6399,11 +6584,11 @@ CONTRACTS_TEMPLATE = """
         
         <!-- Property Filter Tabs for Contratos -->
         <div class="property-filter-tabs" id="propertyFilterTabsContratos" style="display: flex; gap: 8px; margin-bottom: 24px; overflow-x: auto; padding-bottom: 8px; -webkit-overflow-scrolling: touch; position: relative; z-index: 10; background: #F5F5F5; border-radius: 12px; padding: 4px;">
-            <button type="button" class="property-filter-tab-contratos active" data-filter="all" onclick="filterContractsByProperty('all', this)" style="flex-shrink: 0; padding: 12px 20px; border-radius: 8px; border: none; background: #0A7A0A; color: white; font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: all 0.2s; min-height: 48px; white-space: nowrap; position: relative; z-index: 11;">
+            <button type="button" class="property-filter-tab active" data-filter="all" onclick="filterContractsByProperty('all', this)" style="flex-shrink: 0; padding: 12px 20px; border-radius: 8px; border: none; background: #0A7A0A; color: white; font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: all 0.2s; min-height: 48px; white-space: nowrap; position: relative; z-index: 11;">
                 Todas <span class="tab-count" id="tabCountAllContratos">{{ total_tenants }}</span>
             </button>
             {% for property_name, tenants in tenants_by_property.items() %}
-            <button type="button" class="property-filter-tab-contratos" data-filter="{{ property_name }}" onclick="filterContractsByProperty('{{ property_name }}', this)" style="flex-shrink: 0; padding: 12px 20px; border-radius: 8px; border: none; background: transparent; color: #333333; font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: all 0.2s; min-height: 48px; white-space: nowrap; position: relative; z-index: 11;">
+            <button type="button" class="property-filter-tab" data-filter="{{ property_name }}" onclick="filterContractsByProperty('{{ property_name }}', this)" style="flex-shrink: 0; padding: 12px 20px; border-radius: 8px; border: none; background: transparent; color: #333333; font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: all 0.2s; min-height: 48px; white-space: nowrap; position: relative; z-index: 11;">
                 {{ property_name }} <span class="tab-count" data-tab-count="{{ property_name }}">{{ tenants|length }}</span>
             </button>
             {% endfor %}
@@ -6769,7 +6954,7 @@ CONTRACTS_TEMPLATE = """
             activeContractPropertyFilter = propertyName;
             
             // Update tab active states and styles (green active, consistent with Pagos)
-            const allTabs = document.querySelectorAll('.property-filter-tab-contratos');
+            const allTabs = document.querySelectorAll('#propertyFilterTabsContratos .property-filter-tab');
             allTabs.forEach(tab => {
                 tab.classList.remove('active');
                 tab.style.background = 'transparent';
