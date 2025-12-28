@@ -3258,20 +3258,21 @@ HTML_TEMPLATE = """
             {% for property_name, tenants in tenants_by_property.items() %}
             <div class="excel-property-section" style="margin-bottom: 32px;">
                 <!-- Property Header - Excel style -->
-                <table class="excel-table" style="margin-bottom: 0; min-width: 800px;">
+                <table class="excel-table" style="margin-bottom: 0; min-width: 950px;">
                     <thead>
                         <tr>
-                            <th colspan="4" style="background: white; border: none; font-size: 1.4rem; text-align: left; padding: 8px 16px;">
+                            <th colspan="5" style="background: white; border: none; font-size: 1.4rem; text-align: left; padding: 8px 16px;">
                                 {{ property_name }}
                             </th>
-                            <th colspan="3" style="background: white; border: none; font-style: italic; text-align: right;">{{ month_name }}</th>
+                            <th colspan="4" style="background: white; border: none; font-style: italic; text-align: right;">{{ month_name }}</th>
                         </tr>
                         <tr>
                             <th style="width: 40px; text-align: center;"></th>
                             <th style="min-width: 150px;">Nombre</th>
-                            <th style="text-align: center;">INICIA</th>
-                            <th style="text-align: center;">TERMINA</th>
                             <th style="text-align: right; min-width: 80px;">Renta</th>
+                            <th style="text-align: center; min-width: 70px; background: #FFF3CD; color: #856404;">DÍAS</th>
+                            <th style="text-align: right; min-width: 80px; background: #FFF3CD; color: #856404;">MULTA</th>
+                            <th style="text-align: right; min-width: 100px; font-weight: 800;">TOTAL</th>
                             <th style="text-align: right; min-width: 80px;">Pagado</th>
                             <th style="text-align: center; width: 80px;">Estado</th>
                         </tr>
@@ -3284,9 +3285,19 @@ HTML_TEMPLATE = """
                                 <strong>{{ tenant.name }}</strong>
                                 {% if not tenant.phone %}<span style="color: #CC0000; font-size: 0.8rem;"> ⚠️</span>{% endif %}
                             </td>
-                            <td style="text-align: center; font-size: 0.95rem;">{{ tenant.contract_start_formatted if tenant.contract_start_formatted else '' }}</td>
-                            <td style="text-align: center; font-size: 0.95rem;">{{ tenant.contract_end_formatted if tenant.contract_end_formatted else '' }}</td>
                             <td class="rent-cell" style="{% if not tenant.paid %}color: #CC0000;{% endif %}">${{ "{:,.0f}".format(tenant.rent) }}</td>
+                            <!-- DÍAS SIN PAGAR column -->
+                            <td style="text-align: center; font-weight: 700; {% if not tenant.paid and tenant.days_late >= 7 %}background: #FEE2E2; color: #CC0000;{% elif not tenant.paid and tenant.days_late >= 2 %}background: #FEF3C7; color: #B45309;{% elif not tenant.paid and tenant.days_late >= 1 %}background: #FFF3CD; color: #856404;{% endif %}">
+                                {% if tenant.paid %}—{% elif tenant.days_late == 0 %}Hoy{% else %}{{ tenant.days_late }}{% endif %}
+                            </td>
+                            <!-- MULTA column -->
+                            <td style="text-align: right; font-weight: 700; {% if tenant.late_fee > 0 %}color: #CC0000;{% else %}color: #666;{% endif %}">
+                                {% if tenant.paid %}—{% elif tenant.late_fee > 0 %}+${{ "{:,.0f}".format(tenant.late_fee) }}{% else %}$0{% endif %}
+                            </td>
+                            <!-- TOTAL A COBRAR column -->
+                            <td style="text-align: right; font-weight: 800; {% if not tenant.paid %}background: #FEE2E2; color: #CC0000;{% else %}color: #0A7A0A;{% endif %}">
+                                {% if tenant.paid %}${{ "{:,.0f}".format(tenant.rent) }}{% else %}${{ "{:,.0f}".format(tenant.total_owed) }}{% endif %}
+                            </td>
                             <td class="pagado-cell" data-tenant-id="{{ tenant.id }}" style="text-align: right; font-weight: 700; color: #0A7A0A;">
                                 {% if tenant.paid %}${{ "{:,.0f}".format(tenant.rent) }}{% endif %}
                             </td>
@@ -3302,8 +3313,10 @@ HTML_TEMPLATE = """
                         <tr style="background: #F9F9F9; font-weight: bold;">
                             <td></td>
                             <td>{{ property_name }}</td>
-                            <td colspan="2"></td>
                             <td class="rent-cell" style="border-top: 2px solid #333;">${{ "{:,.0f}".format(tenants|sum(attribute='rent')) }}</td>
+                            <td style="border-top: 2px solid #333;"></td>
+                            <td style="border-top: 2px solid #333; text-align: right; color: #CC0000;">+${{ "{:,.0f}".format(tenants|rejectattr('paid')|sum(attribute='late_fee')) }}</td>
+                            <td style="border-top: 2px solid #333; text-align: right; font-weight: 800; color: #CC0000;">${{ "{:,.0f}".format(tenants|rejectattr('paid')|sum(attribute='total_owed')) }}</td>
                             <td class="property-total-paid" data-property="{{ property_name }}" style="text-align: right; color: #0A7A0A; border-top: 2px solid #333;">${{ "{:,.0f}".format(tenants|selectattr('paid')|sum(attribute='rent')) }}</td>
                             <td></td>
                         </tr>
@@ -5851,10 +5864,42 @@ def index():
                 return date_str
         return f"{parsed.month}/{parsed.day}/{parsed.year}"
 
-    # Format contract dates for each tenant
+    # Format contract dates for each tenant and calculate late fees
+    # Calculate days late based on which month we're viewing
     for tenant in all_tenants:
         tenant.contract_start_formatted = format_date_excel(tenant.contract_start)
         tenant.contract_end_formatted = format_date_excel(tenant.contract_end)
+
+        # Calculate days late and late fees for unpaid tenants
+        if not tenant.paid:
+            # If viewing current month, use today's day
+            # If viewing past month, use full month (assume end of month)
+            if is_current_month:
+                day_of_calculation = today.day
+            else:
+                # For past months, assume they're fully late (end of month)
+                import calendar
+
+                day_of_calculation = calendar.monthrange(year, month)[1]
+
+            # Days late = day - 1 (Day 1 is not late, Day 2 = 1 day late)
+            tenant.days_late = max(0, day_of_calculation - 1)
+
+            # Calculate late fees: $500 initial (after day 1) + $100/day (after day 2, max 5 days)
+            if tenant.days_late >= 1:
+                initial_penalty = 500
+                # Daily penalty: starts day 3 (days_late >= 2), max 5 days
+                daily_penalty_days = min(max(0, tenant.days_late - 1), 5)
+                daily_penalty = daily_penalty_days * 100
+                tenant.late_fee = initial_penalty + daily_penalty
+                tenant.total_owed = float(tenant.rent) + tenant.late_fee
+            else:
+                tenant.late_fee = 0
+                tenant.total_owed = float(tenant.rent)
+        else:
+            tenant.days_late = 0
+            tenant.late_fee = 0
+            tenant.total_owed = float(tenant.rent)
 
     # Get expiring contracts for the alert banner (60 days ahead)
     expiring_contracts = get_expiring_contracts(days_ahead=60)
