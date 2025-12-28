@@ -674,6 +674,49 @@ def get_tenants_by_property() -> Dict[str, List[Tenant]]:
     return grouped
 
 
+def get_tenant_by_id(tenant_id: str) -> Optional[Tenant]:
+    """Get a single tenant by their ID."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT id, name, phone, property_name, unit, rent,
+               emergency_contact, emergency_phone, contract_start, contract_end, bank,
+               renewal_status, contract_delivered, contract_picked_up,
+               leaving_date, replacement_name, replacement_phone
+        FROM tenants
+        WHERE id = ? AND active = 1
+    """,
+        (tenant_id,),
+    )
+
+    row = cursor.fetchone()
+    conn.close()
+
+    if row:
+        return Tenant(
+            id=row["id"],
+            name=row["name"],
+            phone=row["phone"] or "",
+            property_name=row["property_name"],
+            unit=row["unit"],
+            rent=Decimal(str(row["rent"])),
+            emergency_contact=row["emergency_contact"],
+            emergency_phone=row["emergency_phone"],
+            contract_start=row["contract_start"],
+            contract_end=row["contract_end"],
+            bank=row["bank"],
+            renewal_status=row["renewal_status"] or "pendiente",
+            contract_delivered=bool(row["contract_delivered"]),
+            contract_picked_up=bool(row["contract_picked_up"]),
+            leaving_date=row["leaving_date"],
+            replacement_name=row["replacement_name"],
+            replacement_phone=row["replacement_phone"],
+        )
+    return None
+
+
 def get_monthly_record(tenant_id: str, year: int, month: int) -> Optional[Dict]:
     """Get the monthly payment record for a tenant."""
     conn = get_db_connection()

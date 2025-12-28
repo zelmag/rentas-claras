@@ -29,6 +29,7 @@ from database import (
     get_all_tenants,
     get_available_months,
     get_monthly_status,
+    get_tenant_by_id,
     get_tenants_by_property,
     init_database,
     seed_tenants,
@@ -2065,9 +2066,78 @@ HTML_TEMPLATE = """
             margin: 12px 0;
         }
         
+        /* ===========================================
+           Payment Toggle Switch Styles
+           =========================================== */
+        .payment-toggle-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 8px 0;
+        }
+        
+        .payment-toggle {
+            position: relative;
+            width: 60px;
+            height: 32px;
+            flex-shrink: 0;
+        }
+        
+        .payment-toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .payment-toggle .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #CC0000;
+            transition: 0.3s;
+            border-radius: 32px;
+        }
+        
+        .payment-toggle .slider:before {
+            position: absolute;
+            content: "";
+            height: 24px;
+            width: 24px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .payment-toggle input:checked + .slider {
+            background-color: #0A7A0A;
+        }
+        
+        .payment-toggle input:checked + .slider:before {
+            transform: translateX(28px);
+        }
+        
+        .payment-toggle-label {
+            font-size: 1rem;
+            font-weight: 700;
+            min-width: 100px;
+        }
+        
+        .payment-toggle-label.paid {
+            color: #0A7A0A;
+        }
+        
+        .payment-toggle-label.unpaid {
+            color: #CC0000;
+        }
+        
         /* UNIFIED BUTTON STYLES - payment-btn (Pagos) and renewal-btn (Contratos)
-           Both use identical styling for consistency across pages
-           Uses higher specificity to override .status-pill base styles */
+           Both use identical styling for consistency across pages */
         .status-pill.payment-btn,
         .status-pill.renewal-btn {
             display: flex;
@@ -2810,10 +2880,9 @@ HTML_TEMPLATE = """
             Sin conexión a internet. Los cambios se guardarán cuando regrese.
         </div>
         
-        <!-- Undo Toast -->
+        <!-- Toast -->
         <div class="undo-toast" id="undoToast">
             <span id="undoMessage">Guardado</span>
-            <button onclick="undoLastAction()" id="undoBtn">Deshacer</button>
         </div>
 
         <!-- VIEW TOGGLE - Right above the data views -->
@@ -2882,17 +2951,16 @@ HTML_TEMPLATE = """
                     
                     <!-- Status + Amount row - aligned horizontally -->
                     <div class="status-amount-row">
-                        <div class="payment-buttons">
-                            <button type="button" class="status-pill payment-btn {% if tenant.paid %}active-green{% endif %}" 
-                                    onclick="setPaymentStatus(this, '{{ tenant.id }}', true)"
-                                    data-tenant-id="{{ tenant.id }}">
-                                Ya pagó
-                            </button>
-                            <button type="button" class="status-pill payment-btn {% if not tenant.paid %}active-red{% endif %}" 
-                                    onclick="setPaymentStatus(this, '{{ tenant.id }}', false)"
-                                    data-tenant-id="{{ tenant.id }}">
-                                No ha pagado
-                            </button>
+                        <div class="payment-toggle-container">
+                            <label class="payment-toggle" data-tenant-id="{{ tenant.id }}">
+                                <input type="checkbox" 
+                                       {% if tenant.paid %}checked{% endif %}
+                                       onchange="togglePaymentStatus(this, '{{ tenant.id }}')">
+                                <span class="slider"></span>
+                            </label>
+                            <span class="payment-toggle-label {% if tenant.paid %}paid{% else %}unpaid{% endif %}">
+                                {% if tenant.paid %}Ya pagó{% else %}No ha pagado{% endif %}
+                            </span>
                         </div>
                         <div class="tenant-amount">
                             <div class="tenant-rent">${{ "{:,.0f}".format(tenant.rent) }}</div>
@@ -2906,8 +2974,6 @@ HTML_TEMPLATE = """
                        onclick="sendWhatsApp(event, this)">
                         Enviar mensaje
                     </a>
-                    {% else %}
-                    <span class="whatsapp-inline-btn disabled">Pagado</span>
                     {% endif %}
                     
                     <!-- Simplified details section -->
@@ -3357,6 +3423,83 @@ HTML_TEMPLATE = """
                 }
             } else {
                 btn.classList.add('active-red');
+                item.classList.remove('paid');
+                if (checkbox) checkbox.checked = true;
+                if (paymentSelect) {
+                    paymentSelect.disabled = true;
+                    paymentSelect.value = '';
+                }
+                updateWhatsAppButton(item, false);
+                showPersistentConfirmation(`${tenantName} marcado como PENDIENTE`, 'unpaid');
+            }
+            
+            // Save to database
+            fetch('/api/payment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tenant_id: tenantId,
+                    paid: isPaid,
+                    payment_method: paymentSelect?.value || null
+                })
+            }).then(response => {
+                if (response.ok) {
+                    console.log(`Guardado: ${tenantId} = ${isPaid ? 'pagado' : 'pendiente'}`);
+                    updateLastSaved();
+                }
+            }).catch(err => {
+                console.error('Error guardando, guardando localmente:', err);
+                const queue = JSON.parse(localStorage.getItem('pendingPayments') || '[]');
+                queue.push({ tenantId: tenantId, paid: isPaid, timestamp: Date.now() });
+                localStorage.setItem('pendingPayments', JSON.stringify(queue));
+                showPersistentConfirmation('Guardado localmente (sin conexión)', 'warning');
+            });
+            
+            updateCounts();
+        }
+        
+        // NEW: Toggle switch payment status handler
+        function togglePaymentStatus(toggle, tenantId) {
+            const isPaid = toggle.checked;
+            const item = toggle.closest('.tenant-item');
+            if (!item) {
+                console.error('Could not find tenant-item for toggle');
+                return;
+            }
+            
+            const checkbox = item.querySelector('.tenant-checkbox');
+            const paymentSelect = item.querySelector('.payment-method');
+            const tenantName = item.querySelector('.tenant-name')?.textContent?.trim() || 'Inquilino';
+            const rentText = item.querySelector('.tenant-rent')?.textContent || '$0';
+            const toggleLabel = item.querySelector('.payment-toggle-label');
+            
+            // Update toggle label
+            if (toggleLabel) {
+                toggleLabel.textContent = isPaid ? 'Ya pagó' : 'No ha pagado';
+                toggleLabel.classList.toggle('paid', isPaid);
+                toggleLabel.classList.toggle('unpaid', !isPaid);
+            }
+            
+            // Update item state
+            if (isPaid) {
+                item.classList.add('paid');
+                if (checkbox) checkbox.checked = false;
+                if (paymentSelect) paymentSelect.disabled = false;
+                updateWhatsAppButton(item, true);
+                showPersistentConfirmation(`¡${tenantName} PAGÓ! ${rentText}`, 'paid');
+                
+                // Auto-show details to show payment method selector
+                const details = item.querySelector('.tenant-details');
+                if (details && !details.classList.contains('show')) {
+                    details.classList.add('show');
+                    if (paymentSelect) {
+                        setTimeout(() => {
+                            paymentSelect.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            paymentSelect.focus();
+                        }, 200);
+                    }
+                }
+            } else {
                 item.classList.remove('paid');
                 if (checkbox) checkbox.checked = true;
                 if (paymentSelect) {
@@ -5042,13 +5185,15 @@ def list_tenants():
 
 @app.route("/api/payment", methods=["POST"])
 def update_payment():
-    """Update payment status for a tenant"""
+    """Update payment status for a tenant and sync to Excel"""
     data = request.json
     tenant_id = data.get("tenant_id")
     paid = data.get("paid", False)
     payment_method = data.get("payment_method")
 
     today = datetime.now()
+    
+    # Update local SQLite database
     update_payment_status(
         tenant_id=tenant_id,
         year=today.year,
@@ -5056,6 +5201,50 @@ def update_payment():
         paid=paid,
         payment_method=payment_method,
     )
+
+    # Sync to Excel if payment is marked as paid
+    if paid:
+        try:
+            from src.excel_client import (
+                ExcelClient,
+                ExcelConfig,
+                PaymentRow,
+                generate_payment_id,
+            )
+
+            # Get tenant info to populate Excel record
+            tenant = get_tenant_by_id(tenant_id)
+            if tenant:
+                config = ExcelConfig.from_env()
+                client = ExcelClient(config)
+                client.authenticate()
+
+                # Create payment record for Excel
+                spanish_months = [
+                    "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+                    "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+                ]
+                month_name = spanish_months[today.month - 1]
+
+                payment = PaymentRow(
+                    payment_id=generate_payment_id(),
+                    tenant_id=tenant_id,
+                    payment_date=today.strftime("%Y-%m-%d"),
+                    amount=tenant.rent,
+                    method=payment_method or "Web UI",
+                    withdrawal_code=None,
+                    bank=tenant.bank,
+                    concept=f"Renta {month_name} {today.year}",
+                    folio=f"RC-{today.strftime('%Y%m%d')}-{tenant_id}",
+                    confirmed=True,
+                    notes="Marcado pagado desde la vista de tarjetas"
+                )
+                client.add_payment(payment)
+                print(f"✅ Synced payment for {tenant.name} to Excel")
+        except ImportError as e:
+            print(f"⚠️ Excel sync skipped - missing dependencies: {e}")
+        except Exception as e:
+            print(f"⚠️ Excel sync failed (payment saved locally): {e}")
 
     return jsonify({"success": True})
 
