@@ -28,6 +28,7 @@ from typing import Optional
 from database import (
     get_all_tenants,
     get_available_months,
+    get_expiring_contracts,
     get_monthly_status,
     get_tenant_by_id,
     get_tenants_by_property,
@@ -2778,6 +2779,96 @@ HTML_TEMPLATE = """
             </div>
         </header>
         
+        <!-- CONTRACT EXPIRY ALERT BANNER - Proactive reminder for landlord -->
+        {% if expiring_contracts|length > 0 %}
+        <div style="background: white; border-radius: 16px; margin-bottom: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); overflow: hidden;">
+            <!-- Banner header with count -->
+            <a href="/contratos" style="display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; text-decoration: none;
+                       {% if expiring_expired|length > 0 or expiring_critical|length > 0 %}
+                       background: linear-gradient(135deg, #CC0000 0%, #990000 100%); color: white;
+                       {% elif expiring_warning|length > 0 %}
+                       background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); color: white;
+                       {% else %}
+                       background: #F5F5F5; color: #333;
+                       {% endif %}
+                       ">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                        <circle cx="12" cy="16" r="2" fill="currentColor"/>
+                    </svg>
+                    <div>
+                        <div style="font-size: 1.1rem; font-weight: 800;">
+                            {% if expiring_expired|length > 0 %}
+                            {{ expiring_expired|length }} contrato(s) VENCIDO(S)
+                            {% elif expiring_critical|length > 0 %}
+                            {{ expiring_critical|length }} contrato(s) vence(n) en menos de 2 semanas
+                            {% elif expiring_warning|length > 0 %}
+                            {{ expiring_warning|length }} contrato(s) vence(n) este mes
+                            {% else %}
+                            {{ expiring_contracts|length }} contrato(s) próximo(s) a vencer
+                            {% endif %}
+                        </div>
+                        <div style="font-size: 0.9rem; opacity: 0.9; margin-top: 2px;">Toca para ver detalles en Contratos</div>
+                    </div>
+                </div>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+            </a>
+            
+            <!-- Quick preview of most urgent contracts (max 3) -->
+            <div style="padding: 0 16px 16px 16px;">
+                {% for contract in expiring_contracts[:3] %}
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; margin-top: 8px; border-radius: 10px;
+                            {% if contract.urgency == 'expired' %}
+                            background: #FEE2E2; border-left: 4px solid #CC0000;
+                            {% elif contract.urgency == 'critical' %}
+                            background: #FEF3C7; border-left: 4px solid #F59E0B;
+                            {% elif contract.urgency == 'warning' %}
+                            background: #FEF9C3; border-left: 4px solid #EAB308;
+                            {% else %}
+                            background: #F5F5F5; border-left: 4px solid #666;
+                            {% endif %}
+                            ">
+                    <div>
+                        <div style="font-weight: 700; font-size: 1rem; color: #333;">{{ contract.name }}</div>
+                        <div style="font-size: 0.9rem; color: #666;">{{ contract.property_name }} ({{ contract.unit }})</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-weight: 800; font-size: 1rem;
+                                    {% if contract.urgency == 'expired' %}color: #CC0000;
+                                    {% elif contract.urgency == 'critical' %}color: #B45309;
+                                    {% elif contract.urgency == 'warning' %}color: #A16207;
+                                    {% else %}color: #666;{% endif %}">
+                            {% if contract.days_until_expiry < 0 %}
+                            ¡Venció hace {{ -contract.days_until_expiry }} día(s)!
+                            {% elif contract.days_until_expiry == 0 %}
+                            ¡Vence HOY!
+                            {% elif contract.days_until_expiry == 1 %}
+                            Vence mañana
+                            {% else %}
+                            {{ contract.days_until_expiry }} días
+                            {% endif %}
+                        </div>
+                        <div style="font-size: 0.85rem; color: #888;">{{ contract.contract_end_formatted }}</div>
+                    </div>
+                </div>
+                {% endfor %}
+                {% if expiring_contracts|length > 3 %}
+                <div style="text-align: center; padding: 12px; margin-top: 8px;">
+                    <a href="/contratos" style="color: #0A7A0A; font-weight: 700; text-decoration: none;">
+                        Ver {{ expiring_contracts|length - 3 }} más →
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+        
         <!-- #8: FALTA COBRAR moved to TOP - Clean summary card -->
         <div style="background: white; border: 4px solid #CC0000; padding: 20px; border-radius: 16px; margin-bottom: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
@@ -4700,40 +4791,65 @@ HTML_TEMPLATE = """
         }
         
         function markAllUnpaid() {
+            // Get all tenant IDs from both card and table views
+            const allTenantIds = new Set();
+            
+            // Collect from card view
             document.querySelectorAll('.tenant-item').forEach(item => {
-                const checkbox = item.querySelector('.tenant-checkbox');
-                const btn = item.querySelector('.tenant-status-btn');
-                const paymentSelect = item.querySelector('.payment-method');
-                const tenantId = item.dataset.tenantId;
-                
-                if (!checkbox || !btn) return;
-                
-                checkbox.checked = true;
-                btn.className = 'status-pill status-pill--full-width tenant-status-btn unpaid';
-                btn.innerHTML = '<span class="icon"></span><span class="label">No ha pagado</span>';
-                item.classList.remove('paid');
-                if (paymentSelect) {
-                    paymentSelect.disabled = true;
-                    paymentSelect.value = '';
+                if (item.dataset.tenantId) allTenantIds.add(item.dataset.tenantId);
+            });
+            
+            // Collect from table view
+            document.querySelectorAll('tr[data-tenant-id]').forEach(row => {
+                if (row.dataset.tenantId) allTenantIds.add(row.dataset.tenantId);
+            });
+            
+            allTenantIds.forEach(tenantId => {
+                // Update card view if exists
+                const item = document.querySelector(`.tenant-item[data-tenant-id="${tenantId}"]`);
+                if (item) {
+                    const checkbox = item.querySelector('.tenant-checkbox');
+                    const btn = item.querySelector('.tenant-status-btn');
+                    const paymentSelect = item.querySelector('.payment-method');
+                    
+                    if (checkbox) checkbox.checked = true;
+                    if (btn) {
+                        btn.className = 'status-pill status-pill--full-width tenant-status-btn unpaid';
+                        btn.innerHTML = '<span class="icon"></span><span class="label">No ha pagado</span>';
+                    }
+                    item.classList.remove('paid');
+                    if (paymentSelect) {
+                        paymentSelect.disabled = true;
+                        paymentSelect.value = '';
+                    }
+                    
+                    // Update WhatsApp button visibility
+                    updateWhatsAppButton(item, false);
                 }
                 
-                // Update WhatsApp button visibility
-                updateWhatsAppButton(item, false);
-                
-                // Also update table view if exists
+                // Update table view if exists
                 const tableRow = document.querySelector(`tr[data-tenant-id="${tenantId}"]`);
                 if (tableRow) {
                     tableRow.classList.remove('paid-row');
                     tableRow.classList.add('unpaid-row');
-                    const statusCell = tableRow.querySelector('.status-cell');
-                    if (statusCell) {
-                        statusCell.className = 'status-cell unpaid';
-                        statusCell.textContent = 'PENDIENTE';
-                    }
+                    
+                    // Update the status button in table
                     const tableBtn = tableRow.querySelector('.tenant-status-btn-table');
                     if (tableBtn) {
                         tableBtn.className = 'status-pill status-pill--small tenant-status-btn-table unpaid';
-                        tableBtn.textContent = 'Marcar Pagado';
+                        tableBtn.textContent = '';
+                    }
+                    
+                    // Update the "Pagado" cell (clear the amount)
+                    const pagadoCell = tableRow.querySelector('.pagado-cell');
+                    if (pagadoCell) {
+                        pagadoCell.textContent = '';
+                    }
+                    
+                    // Update the rent cell color to red (pending)
+                    const rentCell = tableRow.querySelector('.rent-cell');
+                    if (rentCell) {
+                        rentCell.style.color = '#CC0000';
                     }
                 }
                 
@@ -4744,43 +4860,68 @@ HTML_TEMPLATE = """
                     body: JSON.stringify({ tenant_id: tenantId, paid: false })
                 });
             });
+            
+            // Update property totals in table view
+            updatePropertyTotals();
             updateCounts();
         }
         
         function markAllPaid() {
+            // Get all tenant IDs from both card and table views
+            const allTenantIds = new Set();
+            
+            // Collect from card view
             document.querySelectorAll('.tenant-item').forEach(item => {
-                const checkbox = item.querySelector('.tenant-checkbox');
-                const btn = item.querySelector('.tenant-status-btn');
-                const paymentSelect = item.querySelector('.payment-method');
-                const tenantId = item.dataset.tenantId;
-                
-                if (!checkbox || !btn) return;
-                
-                checkbox.checked = false;
-                btn.className = 'status-pill status-pill--full-width tenant-status-btn paid';
-                btn.innerHTML = '<span class="icon"></span><span class="label">Ya pagó</span>';
-                item.classList.add('paid');
-                if (paymentSelect) {
-                    paymentSelect.disabled = false;
+                if (item.dataset.tenantId) allTenantIds.add(item.dataset.tenantId);
+            });
+            
+            // Collect from table view
+            document.querySelectorAll('tr[data-tenant-id]').forEach(row => {
+                if (row.dataset.tenantId) allTenantIds.add(row.dataset.tenantId);
+            });
+            
+            allTenantIds.forEach(tenantId => {
+                // Update card view if exists
+                const item = document.querySelector(`.tenant-item[data-tenant-id="${tenantId}"]`);
+                if (item) {
+                    const checkbox = item.querySelector('.tenant-checkbox');
+                    const btn = item.querySelector('.tenant-status-btn');
+                    const paymentSelect = item.querySelector('.payment-method');
+                    
+                    if (checkbox) checkbox.checked = false;
+                    if (btn) {
+                        btn.className = 'status-pill status-pill--full-width tenant-status-btn paid';
+                        btn.innerHTML = '<span class="icon"></span><span class="label">Ya pagó</span>';
+                    }
+                    item.classList.add('paid');
+                    if (paymentSelect) {
+                        paymentSelect.disabled = false;
+                    }
+                    
+                    // Update WhatsApp button visibility
+                    updateWhatsAppButton(item, true);
                 }
                 
-                // Update WhatsApp button visibility
-                updateWhatsAppButton(item, true);
-                
-                // Also update table view if exists
+                // Update table view if exists
                 const tableRow = document.querySelector(`tr[data-tenant-id="${tenantId}"]`);
                 if (tableRow) {
                     tableRow.classList.remove('unpaid-row');
                     tableRow.classList.add('paid-row');
-                    const statusCell = tableRow.querySelector('.status-cell');
-                    if (statusCell) {
-                        statusCell.className = 'status-cell paid';
-                        statusCell.textContent = 'PAGÓ';
-                    }
+                    
+                    // Update the status button in table
                     const tableBtn = tableRow.querySelector('.tenant-status-btn-table');
                     if (tableBtn) {
                         tableBtn.className = 'status-pill status-pill--small tenant-status-btn-table paid';
-                        tableBtn.textContent = 'Marcar Pendiente';
+                        tableBtn.textContent = '✓';
+                    }
+                    
+                    // Get the rent amount from the rent cell and update the "Pagado" cell
+                    const rentCell = tableRow.querySelector('.rent-cell');
+                    const pagadoCell = tableRow.querySelector('.pagado-cell');
+                    if (rentCell && pagadoCell) {
+                        pagadoCell.textContent = rentCell.textContent;
+                        // Remove red color from rent cell (no longer pending)
+                        rentCell.style.color = '';
                     }
                 }
                 
@@ -4791,6 +4932,9 @@ HTML_TEMPLATE = """
                     body: JSON.stringify({ tenant_id: tenantId, paid: true })
                 });
             });
+            
+            // Update property totals in table view
+            updatePropertyTotals();
             updateCounts();
         }
         
@@ -5712,6 +5856,13 @@ def index():
         tenant.contract_start_formatted = format_date_excel(tenant.contract_start)
         tenant.contract_end_formatted = format_date_excel(tenant.contract_end)
 
+    # Get expiring contracts for the alert banner (60 days ahead)
+    expiring_contracts = get_expiring_contracts(days_ahead=60)
+    # Count by urgency for the banner
+    expiring_critical = [c for c in expiring_contracts if c["urgency"] == "critical"]
+    expiring_warning = [c for c in expiring_contracts if c["urgency"] == "warning"]
+    expiring_expired = [c for c in expiring_contracts if c["urgency"] == "expired"]
+
     return render_template_string(
         HTML_TEMPLATE,
         tenants=all_tenants,
@@ -5732,6 +5883,10 @@ def index():
         test_phone=TEST_PHONE,
         is_current_month=is_current_month,
         can_go_prev=can_go_prev,
+        expiring_contracts=expiring_contracts,
+        expiring_critical=expiring_critical,
+        expiring_warning=expiring_warning,
+        expiring_expired=expiring_expired,
     )
 
 
@@ -7044,11 +7199,11 @@ CONTRACTS_TEMPLATE = """
         <!-- Property Filter Tabs for Contratos -->
         <div class="property-filter-tabs" id="propertyFilterTabsContratos" style="display: flex; gap: 8px; margin-bottom: 24px; overflow-x: auto; padding-bottom: 8px; -webkit-overflow-scrolling: touch; position: relative; z-index: 10; background: #F5F5F5; border-radius: 12px; padding: 4px;">
             <button type="button" class="property-filter-tab active" data-filter="all" onclick="filterContractsByProperty('all', this)" style="flex-shrink: 0; padding: 12px 20px; border-radius: 8px; border: none; background: #0A7A0A; color: white; font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: all 0.2s; min-height: 48px; white-space: nowrap; position: relative; z-index: 11;">
-                Todas <span class="tab-count" id="tabCountAllContratos">{{ total_tenants }}</span>
+                Todas <span class="tab-count" id="tabCountAllContratos" style="background: rgba(255,255,255,0.3); padding: 2px 10px; border-radius: 12px; margin-left: 6px;">{{ total_tenants }}</span>
             </button>
             {% for property_name, tenants in tenants_by_property.items() %}
             <button type="button" class="property-filter-tab" data-filter="{{ property_name }}" onclick="filterContractsByProperty('{{ property_name }}', this)" style="flex-shrink: 0; padding: 12px 20px; border-radius: 8px; border: none; background: transparent; color: #333333; font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: all 0.2s; min-height: 48px; white-space: nowrap; position: relative; z-index: 11;">
-                {{ property_name }} <span class="tab-count" data-tab-count="{{ property_name }}">{{ tenants|length }}</span>
+                {{ property_name }} <span class="tab-count" data-tab-count="{{ property_name }}" style="background: rgba(0,0,0,0.1); padding: 2px 10px; border-radius: 12px; margin-left: 6px;">{{ tenants|length }}</span>
             </button>
             {% endfor %}
         </div>

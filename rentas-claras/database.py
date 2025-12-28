@@ -901,6 +901,72 @@ def get_available_months() -> List[Dict[str, int]]:
     return months
 
 
+def get_expiring_contracts(days_ahead: int = 60) -> List[Dict[str, Any]]:
+    """
+    Get contracts expiring within the specified number of days.
+    
+    Returns list of dicts with tenant info and days until expiration.
+    Sorted by expiration date (soonest first).
+    
+    Args:
+        days_ahead: Number of days to look ahead (default 60)
+    
+    Returns:
+        List of dicts with: tenant_id, name, property_name, unit, contract_end,
+                           days_until_expiry, urgency ('critical', 'warning', 'info')
+    """
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    today = datetime.now().date()
+    
+    cursor.execute(
+        """
+        SELECT id, name, property_name, unit, contract_end, renewal_status
+        FROM tenants
+        WHERE active = 1 AND contract_end IS NOT NULL AND contract_end != ''
+        ORDER BY contract_end ASC
+    """
+    )
+    
+    expiring = []
+    for row in cursor.fetchall():
+        try:
+            contract_end = datetime.strptime(row["contract_end"], "%Y-%m-%d").date()
+            days_until = (contract_end - today).days
+            
+            # Only include contracts expiring within the specified window
+            # Also include recently expired (up to 30 days ago) for follow-up
+            if -30 <= days_until <= days_ahead:
+                # Determine urgency level
+                if days_until < 0:
+                    urgency = "expired"
+                elif days_until <= 14:
+                    urgency = "critical"
+                elif days_until <= 30:
+                    urgency = "warning"
+                else:
+                    urgency = "info"
+                
+                expiring.append({
+                    "tenant_id": row["id"],
+                    "name": row["name"],
+                    "property_name": row["property_name"],
+                    "unit": row["unit"],
+                    "contract_end": row["contract_end"],
+                    "contract_end_formatted": contract_end.strftime("%d %b %Y"),
+                    "days_until_expiry": days_until,
+                    "urgency": urgency,
+                    "renewal_status": row["renewal_status"] or "pendiente",
+                })
+        except (ValueError, TypeError):
+            # Skip invalid dates
+            continue
+    
+    conn.close()
+    return expiring
+
+
 # Initialize database when module is imported
 if __name__ == "__main__":
     init_database()
