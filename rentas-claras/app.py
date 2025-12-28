@@ -397,6 +397,67 @@ HTML_TEMPLATE = """
             color: var(--color-neutral);
         }
         
+        /* ===========================================
+           UNIFIED SEARCH BAR STYLES
+           Shared between Pagos and Contratos tabs
+           =========================================== */
+        .search-wrapper {
+            position: relative;
+            width: 100%;
+        }
+        
+        .search-input-styled {
+            width: 100%;
+            padding: 16px 48px 16px 48px; /* Right padding for X button */
+            font-size: 1.1rem;
+            border: 3px solid var(--color-border);
+            border-radius: var(--radius-md);
+            background: var(--color-white);
+            color: var(--color-black);
+            box-sizing: border-box;
+        }
+        
+        .search-input-styled:focus {
+            outline: none;
+            border-color: var(--color-primary);
+        }
+        
+        .search-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            color: #999;
+            pointer-events: none;
+        }
+        
+        .search-clear-btn {
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 48px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: none;
+            border: none;
+            font-size: 1.3rem;
+            cursor: pointer;
+            color: #666;
+            padding: 0;
+        }
+        
+        .search-clear-btn:hover {
+            color: var(--color-danger);
+        }
+        
+        .search-clear-btn.visible {
+            display: flex;
+        }
+        
         .status-pill.status-neutral:hover,
         .status-pill.pending:hover,
         .status-pill.active-yellow:hover {
@@ -2445,7 +2506,7 @@ HTML_TEMPLATE = """
         }
         
         /* ===========================================
-           PRINT STYLES (UX Improvement #13)
+           PRINT STYLES (UX Improvement #13) - Enhanced with page headers
            =========================================== */
         @media print {
             /* Hide non-essential elements */
@@ -2456,11 +2517,13 @@ HTML_TEMPLATE = """
             .send-section,
             .view-toggle,
             .view-toggle-btn,
+            .view-segmented-control,
             .controls,
             .btn-primary,
             .btn-secondary,
             .whatsapp-inline-btn,
             .tenant-status-btn,
+            .tenant-status-btn-table,
             .add-phone-btn,
             .edit-phone-btn,
             .test-mode-banner,
@@ -2471,6 +2534,7 @@ HTML_TEMPLATE = """
             .phone-modal,
             .confirm-modal,
             .property-filter-tabs,
+            #scrollIndicatorRight,
             details,
             #lastSaved {
                 display: none !important;
@@ -2558,7 +2622,7 @@ HTML_TEMPLATE = """
             }
             
             .tenant-item.paid::after {
-                content: "✓ PAGADO";
+                content: "PAGADO";
                 color: #0A7A0A;
             }
             
@@ -2611,14 +2675,35 @@ HTML_TEMPLATE = """
                 print-color-adjust: exact;
             }
             
-            /* Print header */
+            /* Excel property section headers */
+            .excel-property-section {
+                page-break-inside: avoid;
+            }
+            
+            /* Print header and footer */
             @page {
-                margin: 1cm;
+                margin: 1.5cm;
+                @top-center {
+                    content: "RentasClaras - Reporte de Cobranza";
+                    font-size: 10pt;
+                    color: #666;
+                }
+                @bottom-right {
+                    content: "Página " counter(page) " de " counter(pages);
+                    font-size: 9pt;
+                    color: #666;
+                }
+            }
+            
+            /* Print title header */
+            .container::before {
+                content: "";
+                display: block;
             }
             
             /* Print footer with date */
             .container::after {
-                content: "Impreso el " attr(data-print-date);
+                content: "Impreso el " attr(data-print-date) " | RentasClaras";
                 display: block;
                 text-align: center;
                 font-size: 9pt;
@@ -2647,35 +2732,50 @@ HTML_TEMPLATE = """
               
             <p class="subtitle" style="font-size: 1.3rem; font-weight: 700; color: #000;">¿Quién ya pagó este mes?</p>
             
-            <!-- #5: MONTH SELECTOR with large arrows + HOY button -->
-            <div style="display: flex; align-items: center; justify-content: center; gap: 20px; margin: 24px 0;">
-                {% if can_go_prev %}
-                <a href="/?year={{ prev_year }}&month={{ prev_month }}" 
-                   style="background: #333333; color: white; width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; text-decoration: none; font-weight: 800;">
-                    ◀
-                </a>
-                {% else %}
-                <div style="background: #cccccc; color: #999999; width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: 800; cursor: not-allowed;">
-                    ◀
+            <!-- Month Selector with SVG arrows and integrated Hoy button -->
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 12px; margin: 24px 0;">
+                <div style="display: flex; align-items: center; justify-content: center; gap: 20px;">
+                    {% if can_go_prev %}
+                    <a href="/?year={{ prev_year }}&month={{ prev_month }}" 
+                       style="background: #333333; color: white; width: 72px; height: 72px; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-decoration: none; box-shadow: 0 4px 12px rgba(0,0,0,0.2); transition: all 0.2s;"
+                       onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="15 18 9 12 15 6"></polyline>
+                        </svg>
+                    </a>
+                    {% else %}
+                    <div style="background: #E5E5E5; color: #999999; width: 72px; height: 72px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: not-allowed;">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="15 18 9 12 15 6"></polyline>
+                        </svg>
+                    </div>
+                    {% endif %}
+                    <div style="text-align: center; min-width: 180px;">
+                        <div style="font-size: 2.2rem; font-weight: 800; color: #000; text-transform: capitalize; line-height: 1.2;">{{ month_name }}</div>
+                        <div style="font-size: 1.3rem; font-weight: 700; color: #333333;">{{ year }}</div>
+                    </div>
+                    <a href="/?year={{ next_year }}&month={{ next_month }}" 
+                       style="background: #333333; color: white; width: 72px; height: 72px; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-decoration: none; box-shadow: 0 4px 12px rgba(0,0,0,0.2); transition: all 0.2s;"
+                       onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                    </a>
                 </div>
+                <!-- Integrated Hoy button - only shown when not in current month -->
+                {% if not is_current_month %}
+                <a href="/" style="display: inline-flex; align-items: center; gap: 8px; padding: 12px 28px; background: #0A7A0A; color: white; border-radius: 24px; font-size: 1.1rem; font-weight: 700; text-decoration: none; box-shadow: 0 2px 8px rgba(10, 122, 10, 0.3); transition: all 0.2s;"
+                   onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                    Ir a Hoy
+                </a>
                 {% endif %}
-                <div style="text-align: center;">
-                    <div style="font-size: 2.5rem; font-weight: 800; color: #000; text-transform: capitalize;">{{ month_name }}</div>
-                    <div style="font-size: 1.4rem; font-weight: 700; color: #333333;">{{ year }}</div>
-                </div>
-                <a href="/?year={{ next_year }}&month={{ next_month }}" 
-                   style="background: #333333; color: white; width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; text-decoration: none; font-weight: 800;">
-                    ▶
-                </a>
             </div>
-            <!-- #10: HOY button to return to current month -->
-            {% if not is_current_month %}
-            <div style="text-align: center; margin-bottom: 16px;">
-                <a href="/" style="display: inline-block; padding: 12px 32px; background: #0A7A0A; color: white; border-radius: 12px; font-size: 1.2rem; font-weight: 800; text-decoration: none;">
-                    Regresar a Hoy
-                </a>
-            </div>
-            {% endif %}
         </header>
         
         <!-- #8: FALTA COBRAR moved to TOP - Clean summary card -->
@@ -2721,23 +2821,24 @@ HTML_TEMPLATE = """
             </div>
         </div>
 
-        <!-- #6: Search Bar - neutral colors (no blue) -->
+        <!-- Search Bar - larger text, clearer placeholder -->
         <div class="search-section" style="margin-bottom: 24px; position: relative; z-index: 5;">
-            <div style="position: relative;">
+            <div class="search-wrapper">
                 <input type="text" 
                        id="tenantSearch" 
-                       class="search-input" 
-                       placeholder="Buscar por nombre..." 
-                       style="width: 100%; padding: 16px 20px 16px 48px; font-size: 1.1rem; border: 3px solid #CCCCCC; border-radius: 12px; background: white; color: #000;">
-                <svg style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); width: 20px; height: 20px; color: #999;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" stroke-width="2" d="m21 21-4.35-4.35"/></svg>
+                       class="search-input-styled" 
+                       placeholder="Escriba nombre del inquilino..."
+                       style="font-size: 1.2rem; padding: 18px 48px 18px 52px;">
+                <svg class="search-icon" style="width: 24px; height: 24px; left: 18px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" stroke-width="2" d="m21 21-4.35-4.35"/></svg>
                 <button type="button" 
                         id="clearSearch" 
+                        class="search-clear-btn"
                         onclick="clearSearchStandalone()"
-                        style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; font-size: 1.3rem; cursor: pointer; display: none;">
+                        style="font-size: 1.5rem;">
                     ✕
                 </button>
             </div>
-            <div id="searchResults" style="margin-top: 8px; color: #000; font-size: 1rem; display: none;"></div>
+            <div id="searchResults" style="margin-top: 12px; color: #000; font-size: 1.1rem; font-weight: 600; display: none;"></div>
         </div>
         
         <!-- STANDALONE SEARCH SCRIPT - Independent of main script -->
@@ -2751,9 +2852,13 @@ HTML_TEMPLATE = """
                 searchInput.addEventListener('input', function(e) {
                     var term = (e.target.value || '').toLowerCase().trim();
                     
-                    // Show/hide clear button
+                    // Show/hide clear button using class toggle
                     if (clearBtn) {
-                        clearBtn.style.display = term ? 'block' : 'none';
+                        if (term) {
+                            clearBtn.classList.add('visible');
+                        } else {
+                            clearBtn.classList.remove('visible');
+                        }
                     }
                     
                     // Get all tenant items (card view)
@@ -2850,31 +2955,72 @@ HTML_TEMPLATE = """
         })();
         </script>
         
-        <!-- UX #3: Property Filter Tabs -->
-        <div class="property-filter-tabs" id="propertyFilterTabs" style="display: flex; gap: 8px; margin-bottom: 24px; overflow-x: auto; padding-bottom: 8px; -webkit-overflow-scrolling: touch; position: relative; z-index: 100; background: #F5F5F5; border-radius: 12px; padding: 4px;">
-            <button type="button" class="property-filter-tab active" data-filter="all" onclick="filterByProperty('all', this)" style="flex-shrink: 0; padding: 12px 20px; border-radius: 8px; border: none; background: #0A7A0A; color: white; font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: all 0.2s; min-height: 48px; white-space: nowrap; position: relative; z-index: 101;">
-                Todas <span class="tab-count" id="tabCountAll">{{ total_tenants }}</span>
-            </button>
-            {% for property_name, tenants in tenants_by_property.items() %}
-            <button type="button" class="property-filter-tab" data-filter="{{ property_name }}" onclick="filterByProperty('{{ property_name }}', this)" style="flex-shrink: 0; padding: 12px 20px; border-radius: 8px; border: none; background: transparent; color: #333333; font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: all 0.2s; min-height: 48px; white-space: nowrap; position: relative; z-index: 101;">
-                {{ property_name }} <span class="tab-count" data-tab-count="{{ property_name }}">{{ tenants|length }}</span>
-            </button>
-            {% endfor %}
+        <!-- Property Filter Tabs with scroll indicator -->
+        <div style="position: relative; margin-bottom: 24px;">
+            <div class="property-filter-tabs" id="propertyFilterTabs" style="display: flex; gap: 8px; overflow-x: auto; padding: 8px; -webkit-overflow-scrolling: touch; position: relative; z-index: 100; background: #F5F5F5; border-radius: 12px; scroll-behavior: smooth;">
+                <button type="button" class="property-filter-tab active" data-filter="all" onclick="filterByProperty('all', this)" style="flex-shrink: 0; padding: 14px 24px; border-radius: 8px; border: none; background: #0A7A0A; color: white; font-size: 1rem; font-weight: 700; cursor: pointer; transition: all 0.2s; min-height: 52px; white-space: nowrap; position: relative; z-index: 101;">
+                    Todas <span class="tab-count" id="tabCountAll" style="background: rgba(255,255,255,0.3); padding: 2px 10px; border-radius: 12px; margin-left: 6px;">{{ total_tenants }}</span>
+                </button>
+                {% for property_name, tenants in tenants_by_property.items() %}
+                <button type="button" class="property-filter-tab" data-filter="{{ property_name }}" onclick="filterByProperty('{{ property_name }}', this)" style="flex-shrink: 0; padding: 14px 24px; border-radius: 8px; border: none; background: transparent; color: #333333; font-size: 1rem; font-weight: 700; cursor: pointer; transition: all 0.2s; min-height: 52px; white-space: nowrap; position: relative; z-index: 101;">
+                    {{ property_name }} <span class="tab-count" data-tab-count="{{ property_name }}" style="background: rgba(0,0,0,0.1); padding: 2px 10px; border-radius: 12px; margin-left: 6px;">{{ tenants|length }}</span>
+                </button>
+                {% endfor %}
+            </div>
+            <!-- Scroll indicator arrows (visible when content overflows) -->
+            <div id="scrollIndicatorRight" style="position: absolute; right: 0; top: 0; bottom: 0; width: 48px; background: linear-gradient(90deg, transparent, rgba(245,245,245,0.95)); display: flex; align-items: center; justify-content: center; pointer-events: none; border-radius: 0 12px 12px 0;">
+                <span style="font-size: 1.5rem; color: #666; animation: pulse 1.5s infinite;">›</span>
+            </div>
+            <style>
+                @keyframes pulse {
+                    0%, 100% { opacity: 0.5; transform: translateX(0); }
+                    50% { opacity: 1; transform: translateX(4px); }
+                }
+            </style>
+            <script>
+                // Hide scroll indicator if tabs don't overflow
+                (function() {
+                    var tabs = document.getElementById('propertyFilterTabs');
+                    var indicator = document.getElementById('scrollIndicatorRight');
+                    if (tabs && indicator) {
+                        function checkScroll() {
+                            var isOverflowing = tabs.scrollWidth > tabs.clientWidth;
+                            var isScrolledToEnd = tabs.scrollLeft + tabs.clientWidth >= tabs.scrollWidth - 10;
+                            indicator.style.display = (isOverflowing && !isScrolledToEnd) ? 'flex' : 'none';
+                        }
+                        checkScroll();
+                        tabs.addEventListener('scroll', checkScroll);
+                        window.addEventListener('resize', checkScroll);
+                    }
+                })();
+            </script>
         </div>
         
-        <!-- #3: Bulk actions moved to collapsed section for safety -->
-        <details style="margin-bottom: 24px;">
-            <summary style="cursor: pointer; padding: 16px; background: #F5F5F5; border-radius: 12px; font-weight: 700; color: #333333; font-size: 1.1rem; border: 3px solid #CCCCCC;">
-                Acciones masivas (marcar todos)
-            </summary>
-            <div style="padding: 20px; background: #FAFAFA; border-radius: 0 0 12px 12px; display: flex; gap: 12px; flex-wrap: wrap;">
-                <button class="btn-secondary" onclick="confirmMarkAllUnpaid()" style="flex: 1; min-width: 200px;">Marcar todos pendientes</button>
-                <button class="btn-secondary" onclick="confirmMarkAllPaid()" style="flex: 1; min-width: 200px;">Marcar todos pagados</button>
+        <!-- Bulk actions - visible buttons with clear warning styling -->
+        <div style="margin-bottom: 24px; padding: 20px; background: #FAFAFA; border-radius: 16px; border: 2px solid #E5E5E5;">
+            <div style="font-weight: 700; color: #666; font-size: 1rem; margin-bottom: 12px; text-align: center;">
+                Acciones para los {{ total_tenants }} inquilinos
             </div>
-        </details>
+            <div style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;">
+                <button type="button" onclick="confirmMarkAllUnpaid()" 
+                        style="flex: 1; min-width: 180px; max-width: 280px; padding: 16px 24px; background: white; color: #CC0000; border: 3px solid #CC0000; border-radius: 12px; font-size: 1.1rem; font-weight: 700; cursor: pointer; min-height: 56px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                    Todos pendientes
+                </button>
+                <button type="button" onclick="confirmMarkAllPaid()" 
+                        style="flex: 1; min-width: 180px; max-width: 280px; padding: 16px 24px; background: white; color: #0A7A0A; border: 3px solid #0A7A0A; border-radius: 12px; font-size: 1.1rem; font-weight: 700; cursor: pointer; min-height: 56px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                    Todos pagados
+                </button>
+            </div>
+        </div>
         
-        <!-- Last Saved Indicator -->
-        <div id="lastSaved" style="text-align: center; color: #0A7A0A; font-weight: 600; margin-bottom: 16px; font-size: 1rem;">
+        <!-- Last Saved Indicator - More visible for Excel users -->
+        <div id="lastSaved" style="display: flex; align-items: center; justify-content: center; gap: 8px; background: #dcfce7; border: 2px solid #0A7A0A; color: #0A7A0A; font-weight: 700; padding: 12px 20px; border-radius: 12px; margin-bottom: 16px; font-size: 1.05rem;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span id="lastSavedText"></span>
         </div>
           
         <!-- Offline Banner -->
@@ -2887,16 +3033,21 @@ HTML_TEMPLATE = """
             <span id="undoMessage">Guardado</span>
         </div>
 
-        <!-- VIEW TOGGLE SWITCH - Mutually exclusive options -->
-        <div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 16px;">
-            <span id="cardViewLabel" style="font-size: 1rem; font-weight: 600; color: #999; cursor: pointer;" onclick="switchToCardView()">Tarjetas</span>
-            <label class="toggle-switch" style="position: relative; display: inline-block; width: 60px; height: 34px; cursor: pointer;">
-                <input type="checkbox" id="viewToggle" onchange="toggleView()" checked style="opacity: 0; width: 0; height: 0;">
-                <span class="toggle-slider" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #0A7A0A; transition: 0.3s; border-radius: 34px;"></span>
-                <span class="toggle-knob" style="position: absolute; content: ''; height: 26px; width: 26px; left: 30px; bottom: 4px; background-color: white; transition: 0.3s; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></span>
-            </label>
-            <span id="tableViewLabel" style="font-size: 1rem; font-weight: 700; color: #0A7A0A; cursor: pointer;" onclick="switchToTableView()">Tabla</span>
+        <!-- VIEW TOGGLE - Clear segmented buttons (better for 60+ users than toggle switch) -->
+        <div class="view-segmented-control" style="display: flex; justify-content: center; margin-bottom: 20px;">
+            <div style="display: inline-flex; background: #F5F5F5; border-radius: 12px; padding: 4px; gap: 4px;">
+                <button type="button" id="cardViewBtn" onclick="switchToCardView()" 
+                        style="padding: 14px 28px; border-radius: 10px; border: none; font-size: 1.1rem; font-weight: 700; cursor: pointer; min-height: 52px; transition: all 0.2s; background: transparent; color: #666;">
+                    Tarjetas
+                </button>
+                <button type="button" id="tableViewBtn" onclick="switchToTableView()" 
+                        style="padding: 14px 28px; border-radius: 10px; border: none; font-size: 1.1rem; font-weight: 700; cursor: pointer; min-height: 52px; transition: all 0.2s; background: #0A7A0A; color: white; box-shadow: 0 2px 8px rgba(10, 122, 10, 0.3);">
+                    Tabla
+                </button>
+            </div>
         </div>
+        <!-- Hidden checkbox for backwards compatibility -->
+        <input type="checkbox" id="viewToggle" style="display: none;" checked>
 
         <!-- CARD VIEW (hidden by default - TABLE is default for Excel users) -->
         <div class="card-view" id="cardView" style="display: none;">
@@ -2970,12 +3121,16 @@ HTML_TEMPLATE = """
                         </div>
                     </div>
                       
-                    <!-- Inline WhatsApp button -->
+                    <!-- Inline WhatsApp button with SVG icon -->
                     {% if tenant.phone and not tenant.paid %}
                     <a href="#" class="whatsapp-inline-btn" 
                        data-tenant-id="{{ tenant.id }}"
-                       onclick="sendWhatsApp(event, this)">
-                        Enviar mensaje
+                       onclick="sendWhatsApp(event, this)"
+                       style="display: inline-flex; align-items: center; gap: 10px;">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                        </svg>
+                        Enviar WhatsApp
                     </a>
                     {% endif %}
                     
@@ -3155,12 +3310,20 @@ HTML_TEMPLATE = """
         </div>
     </div>
     
-    <!-- Confirmation Modal for status changes -->
+    <!-- Confirmation Modal for status changes - with enhanced context -->
     <div class="confirm-modal" id="confirmModal">
         <div class="confirm-modal-content">
             <div class="confirm-modal-icon" id="confirmIcon" style="font-size: 3rem;"></div>
             <h3 id="confirmTitle">¿Confirmar cambio?</h3>
-            <p id="confirmMessage">¿Está seguro de realizar esta acción?</p>
+            <!-- Enhanced context section -->
+            <div id="confirmContext" style="background: #F5F5F5; border-radius: 12px; padding: 16px; margin: 16px 0; text-align: left;">
+                <div style="font-size: 1.2rem; font-weight: 800; color: #333; margin-bottom: 8px;" id="confirmTenantName"></div>
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                    <span style="font-size: 1.1rem; color: #666;" id="confirmMonthYear"></span>
+                    <span style="font-size: 1.3rem; font-weight: 800; color: #0A7A0A;" id="confirmAmount"></span>
+                </div>
+            </div>
+            <p id="confirmMessage" style="font-size: 1rem; color: #666;">¿Está seguro de realizar esta acción?</p>
             <div class="confirm-modal-buttons">
                 <button class="btn-cancel" onclick="closeConfirmModal()">Cancelar</button>
                 <button class="btn-confirm-paid" id="confirmBtn" onclick="executeConfirmedAction()">Confirmar</button>
@@ -3177,7 +3340,7 @@ HTML_TEMPLATE = """
         const testPhone = "{{ test_phone }}";
         console.log('Variables initialized:', { dayOfMonth, currentYear, currentMonth, testMode });
 
-        // #4: VIEW SWITCHING FUNCTIONS - Table is now DEFAULT
+        // #4: VIEW SWITCHING FUNCTIONS - Segmented control buttons
         function toggleView() {
             const toggle = document.getElementById('viewToggle');
             if (toggle.checked) {
@@ -3201,24 +3364,24 @@ HTML_TEMPLATE = """
             cardView.style.display = 'block';
             excelView.style.display = 'none';
             
-            // Update toggle switch state and labels
-            const toggle = document.getElementById('viewToggle');
-            const cardLabel = document.getElementById('cardViewLabel');
-            const tableLabel = document.getElementById('tableViewLabel');
-            const knob = document.querySelector('.toggle-knob');
-            const slider = document.querySelector('.toggle-slider');
+            // Update segmented control button states
+            const cardBtn = document.getElementById('cardViewBtn');
+            const tableBtn = document.getElementById('tableViewBtn');
             
+            if (cardBtn) {
+                cardBtn.style.background = '#0A7A0A';
+                cardBtn.style.color = 'white';
+                cardBtn.style.boxShadow = '0 2px 8px rgba(10, 122, 10, 0.3)';
+            }
+            if (tableBtn) {
+                tableBtn.style.background = 'transparent';
+                tableBtn.style.color = '#666';
+                tableBtn.style.boxShadow = 'none';
+            }
+            
+            // Update hidden checkbox for compatibility
+            const toggle = document.getElementById('viewToggle');
             if (toggle) toggle.checked = false;
-            if (knob) knob.style.left = '4px';
-            if (slider) slider.style.backgroundColor = '#333333';
-            if (cardLabel) {
-                cardLabel.style.fontWeight = '700';
-                cardLabel.style.color = '#333333';
-            }
-            if (tableLabel) {
-                tableLabel.style.fontWeight = '600';
-                tableLabel.style.color = '#999';
-            }
             
             localStorage.setItem('preferredView', 'card');
             console.log('Switched to card view');
@@ -3238,24 +3401,24 @@ HTML_TEMPLATE = """
             cardView.style.display = 'none';
             excelView.style.display = 'block';
             
-            // Update toggle switch state and labels
-            const toggle = document.getElementById('viewToggle');
-            const cardLabel = document.getElementById('cardViewLabel');
-            const tableLabel = document.getElementById('tableViewLabel');
-            const knob = document.querySelector('.toggle-knob');
-            const slider = document.querySelector('.toggle-slider');
+            // Update segmented control button states
+            const cardBtn = document.getElementById('cardViewBtn');
+            const tableBtn = document.getElementById('tableViewBtn');
             
+            if (tableBtn) {
+                tableBtn.style.background = '#0A7A0A';
+                tableBtn.style.color = 'white';
+                tableBtn.style.boxShadow = '0 2px 8px rgba(10, 122, 10, 0.3)';
+            }
+            if (cardBtn) {
+                cardBtn.style.background = 'transparent';
+                cardBtn.style.color = '#666';
+                cardBtn.style.boxShadow = 'none';
+            }
+            
+            // Update hidden checkbox for compatibility
+            const toggle = document.getElementById('viewToggle');
             if (toggle) toggle.checked = true;
-            if (knob) knob.style.left = '30px';
-            if (slider) slider.style.backgroundColor = '#0A7A0A';
-            if (cardLabel) {
-                cardLabel.style.fontWeight = '600';
-                cardLabel.style.color = '#999';
-            }
-            if (tableLabel) {
-                tableLabel.style.fontWeight = '700';
-                tableLabel.style.color = '#0A7A0A';
-            }
             
             localStorage.setItem('preferredView', 'table');
             console.log('Switched to table view');
@@ -3567,9 +3730,208 @@ HTML_TEMPLATE = """
             printWindow.document.close();
         }
 
+        // Excel Download Function - Creates multi-sheet Excel file matching user's format
+        function downloadExcel() {
+            // Get all tenant data from the page
+            const tenantsData = {};
+            const propertySections = document.querySelectorAll('.excel-property-section');
+            
+            // Get month/year from page
+            const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+            const monthName = months[currentMonth - 1];
+            
+            propertySections.forEach(section => {
+                const table = section.querySelector('.excel-table');
+                if (!table) return;
+                
+                // Get property name from first header
+                const headerRow = table.querySelector('thead tr:first-child th');
+                if (!headerRow) return;
+                const propertyName = headerRow.textContent.trim();
+                
+                // Skip the summary section
+                if (propertyName === '') return;
+                
+                const rows = table.querySelectorAll('tbody tr[data-tenant-id]');
+                if (rows.length === 0) return;
+                
+                tenantsData[propertyName] = [];
+                
+                rows.forEach((row, index) => {
+                    const cells = row.querySelectorAll('td');
+                    if (cells.length < 6) return;
+                    
+                    const name = cells[1].textContent.trim().replace('⚠️', '').trim();
+                    const inicia = cells[2].textContent.trim();
+                    const termina = cells[3].textContent.trim();
+                    const rentText = cells[4].textContent.replace(/[$,]/g, '').trim();
+                    const rent = parseFloat(rentText) || 0;
+                    const pagadoText = cells[5].textContent.replace(/[$,]/g, '').trim();
+                    const pagado = parseFloat(pagadoText) || 0;
+                    
+                    // Row label: A, B, C... for some properties, 1, 2, 3... for Ensenada
+                    const rowLabel = cells[0].textContent.trim();
+                    
+                    tenantsData[propertyName].push({
+                        label: rowLabel,
+                        name: name,
+                        inicia: inicia,
+                        termina: termina,
+                        rent: rent,
+                        pagado: pagado
+                    });
+                });
+            });
+            
+            // Create workbook with SheetJS
+            const wb = XLSX.utils.book_new();
+            let grandTotals = [];
+            
+            // Create a sheet for each property
+            Object.keys(tenantsData).forEach(propertyName => {
+                const tenants = tenantsData[propertyName];
+                if (!tenants || tenants.length === 0) return;
+                
+                // Build sheet data matching the user's Excel format
+                const sheetData = [];
+                
+                // Row 1: RENTAS + Year
+                sheetData.push(['', 'RENTAS ' + currentYear, '', '', '', 'Por', '']);
+                
+                // Row 2: Property name
+                sheetData.push(['', propertyName, '', '', '', 'Pagar', '']);
+                
+                // Row 3: Month header (right side)
+                sheetData.push(['', '', '', '', '', 'Renta', 'Pagado', monthName]);
+                
+                // Row 4: Column headers
+                sheetData.push(['', '', 'INICIA', 'TERMINA', 'Bco', 'Renta', 'Pagado', 'AVISO']);
+                
+                // Tenant rows
+                let totalRent = 0;
+                let totalPagado = 0;
+                
+                tenants.forEach(tenant => {
+                    sheetData.push([
+                        tenant.label,
+                        tenant.name,
+                        tenant.inicia,
+                        tenant.termina,
+                        '',  // Bco (bank) - empty for now
+                        tenant.rent,
+                        tenant.pagado || '',
+                        ''  // AVISO - empty for now
+                    ]);
+                    totalRent += tenant.rent;
+                    totalPagado += tenant.pagado || 0;
+                });
+                
+                // Empty row
+                sheetData.push([]);
+                
+                // Totals row
+                sheetData.push(['', propertyName, '', '', '', totalRent, totalPagado]);
+                
+                // Store for summary sheet
+                grandTotals.push({ name: propertyName, total: totalRent, pagado: totalPagado });
+                
+                // Create worksheet
+                const ws = XLSX.utils.aoa_to_sheet(sheetData);
+                
+                // Set column widths
+                ws['!cols'] = [
+                    { wch: 4 },   // A - row label
+                    { wch: 25 },  // B - name
+                    { wch: 12 },  // C - inicia
+                    { wch: 12 },  // D - termina
+                    { wch: 6 },   // E - bco
+                    { wch: 10 },  // F - renta
+                    { wch: 10 },  // G - pagado
+                    { wch: 20 }   // H - aviso
+                ];
+                
+                // Add sheet to workbook (limit sheet name to 31 chars)
+                const sheetName = propertyName.substring(0, 31);
+                XLSX.utils.book_append_sheet(wb, ws, sheetName);
+            });
+            
+            // Create summary sheet (like Hoja2 in user's Excel)
+            const summaryData = [[], []];  // Empty rows at top
+            
+            grandTotals.forEach(item => {
+                summaryData.push(['', item.total]);
+            });
+            
+            // Empty rows
+            summaryData.push([]);
+            summaryData.push([]);
+            
+            // Add property breakdown
+            grandTotals.forEach(item => {
+                summaryData.push(['', item.name, '', '', '', item.total]);
+            });
+            
+            // Grand total
+            const grandTotal = grandTotals.reduce((sum, item) => sum + item.total, 0);
+            summaryData.push([]);
+            summaryData.push(['', 'G total', '', '', '', grandTotal]);
+            
+            const summaryWs = XLSX.utils.aoa_to_sheet(summaryData);
+            summaryWs['!cols'] = [
+                { wch: 4 },
+                { wch: 15 },
+                { wch: 10 },
+                { wch: 10 },
+                { wch: 10 },
+                { wch: 12 }
+            ];
+            XLSX.utils.book_append_sheet(wb, summaryWs, 'Resumen');
+            
+            // Generate filename with month and year
+            const filename = 'Rentas_' + monthName + '_' + currentYear + '.xlsx';
+            
+            // Download the file
+            XLSX.writeFile(wb, filename);
+        }
+
         // UX #1: Confirmation Modal State
         let pendingConfirmAction = null;
         let pendingConfirmBtn = null;
+        
+        // Get tenant info for modal context
+        function getTenantInfoFromBtn(btn) {
+            const item = btn.closest('.tenant-item') || btn.closest('tr[data-tenant-id]');
+            if (!item) return { name: '', amount: '', month: '' };
+            
+            const tenantId = item.dataset.tenantId;
+            
+            // Try to get name
+            let name = '';
+            const nameEl = item.querySelector('.tenant-name');
+            if (nameEl) {
+                name = nameEl.textContent.trim();
+            } else {
+                // From table view
+                const nameCell = item.querySelector('td:nth-child(2)');
+                if (nameCell) name = nameCell.textContent.trim();
+            }
+            
+            // Try to get amount
+            let amount = '';
+            const rentEl = item.querySelector('.tenant-rent');
+            if (rentEl) {
+                amount = rentEl.textContent.trim();
+            } else {
+                const rentCell = item.querySelector('.rent-cell');
+                if (rentCell) amount = rentCell.textContent.trim();
+            }
+            
+            // Get current month from page
+            const monthEl = document.querySelector('[style*="text-transform: capitalize"]');
+            const month = monthEl ? monthEl.textContent.trim() : '';
+            
+            return { name, amount, month };
+        }
         
         function showConfirmModal(title, message, icon, actionType, btn) {
             const modal = document.getElementById('confirmModal');
@@ -3578,9 +3940,26 @@ HTML_TEMPLATE = """
             const iconEl = document.getElementById('confirmIcon');
             const confirmBtn = document.getElementById('confirmBtn');
             
+            // Get tenant context
+            const tenantInfo = getTenantInfoFromBtn(btn);
+            const tenantNameEl = document.getElementById('confirmTenantName');
+            const monthYearEl = document.getElementById('confirmMonthYear');
+            const amountEl = document.getElementById('confirmAmount');
+            const contextEl = document.getElementById('confirmContext');
+            
             titleEl.textContent = title;
             messageEl.textContent = message;
             iconEl.textContent = icon;
+            
+            // Populate context if we have tenant info
+            if (tenantInfo.name && tenantNameEl) {
+                tenantNameEl.textContent = tenantInfo.name;
+                monthYearEl.textContent = tenantInfo.month;
+                amountEl.textContent = tenantInfo.amount;
+                if (contextEl) contextEl.style.display = 'block';
+            } else if (contextEl) {
+                contextEl.style.display = 'none';
+            }
             
             // Update button style based on action type
             confirmBtn.className = actionType === 'paid' ? 'btn-confirm-paid' : 'btn-confirm-unpaid';
@@ -4115,7 +4494,7 @@ HTML_TEMPLATE = """
             const searchInput = document.getElementById('tenantSearch');
             if (searchInput && searchInput.value) {
                 searchInput.value = '';
-                document.getElementById('clearSearch').style.display = 'none';
+                document.getElementById('clearSearch').classList.remove('visible');
                 document.getElementById('searchResults').style.display = 'none';
             }
             
@@ -4691,16 +5070,23 @@ HTML_TEMPLATE = """
         }
         
         // =============================================
-        // Last Saved Timestamp
+        // Last Saved Timestamp - More visible for Excel users
         // =============================================
         
         function updateLastSaved() {
             const el = document.getElementById('lastSaved');
-            if (el) {
+            const textEl = document.getElementById('lastSavedText');
+            if (el && textEl) {
                 const now = new Date();
                 const timeStr = now.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
-                el.textContent = `Última actualización: ${timeStr}`;
-                el.style.color = '#0A7A0A';  // System green
+                textEl.textContent = `Guardado a las ${timeStr}`;
+                el.style.display = 'flex';
+            } else if (el) {
+                // Fallback for old structure
+                const now = new Date();
+                const timeStr = now.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+                el.textContent = `Guardado a las ${timeStr}`;
+                el.style.color = '#0A7A0A';
             }
         }
         
@@ -5422,7 +5808,7 @@ def update_payment():
     payment_method = data.get("payment_method")
 
     today = datetime.now()
-    
+
     # Update local SQLite database
     update_payment_status(
         tenant_id=tenant_id,
@@ -5438,8 +5824,8 @@ def update_payment():
             from src.excel_client import (
                 ExcelClient,
                 ExcelConfig,
-                PaymentRow,
                 generate_payment_id,
+                PaymentRow,
             )
 
             # Get tenant info to populate Excel record
@@ -5451,8 +5837,18 @@ def update_payment():
 
                 # Create payment record for Excel
                 spanish_months = [
-                    "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-                    "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+                    "Enero",
+                    "Febrero",
+                    "Marzo",
+                    "Abril",
+                    "Mayo",
+                    "Junio",
+                    "Julio",
+                    "Agosto",
+                    "Septiembre",
+                    "Octubre",
+                    "Noviembre",
+                    "Diciembre",
                 ]
                 month_name = spanish_months[today.month - 1]
 
@@ -5467,7 +5863,7 @@ def update_payment():
                     concept=f"Renta {month_name} {today.year}",
                     folio=f"RC-{today.strftime('%Y%m%d')}-{tenant_id}",
                     confirmed=True,
-                    notes="Marcado pagado desde la vista de tarjetas"
+                    notes="Marcado pagado desde la vista de tarjetas",
                 )
                 client.add_payment(payment)
                 print(f"✅ Synced payment for {tenant.name} to Excel")
@@ -5743,6 +6139,8 @@ CONTRACTS_TEMPLATE = """
             --color-neutral: #333333;
             --color-neutral-light: #F5F5F5;
             --color-white: #FFFFFF;
+            --color-border: #CCCCCC;
+            --color-black: #000000;
             --color-accent: #7c3aed;
             --space-sm: 8px;
             --space-md: 16px;
@@ -5752,6 +6150,67 @@ CONTRACTS_TEMPLATE = """
             --radius-lg: 16px;
             --touch-target-min: 48px;
             --touch-target-lg: 56px;
+        }
+        
+        /* ===========================================
+           UNIFIED SEARCH BAR STYLES
+           Shared between Pagos and Contratos tabs
+           =========================================== */
+        .search-wrapper {
+            position: relative;
+            width: 100%;
+        }
+        
+        .search-input-styled {
+            width: 100%;
+            padding: 16px 48px 16px 48px;
+            font-size: 1.1rem;
+            border: 3px solid var(--color-border);
+            border-radius: var(--radius-md);
+            background: var(--color-white);
+            color: var(--color-black);
+            box-sizing: border-box;
+        }
+        
+        .search-input-styled:focus {
+            outline: none;
+            border-color: var(--color-primary);
+        }
+        
+        .search-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            color: #999;
+            pointer-events: none;
+        }
+        
+        .search-clear-btn {
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 48px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: none;
+            border: none;
+            font-size: 1.3rem;
+            cursor: pointer;
+            color: #666;
+            padding: 0;
+        }
+        
+        .search-clear-btn:hover {
+            color: var(--color-danger);
+        }
+        
+        .search-clear-btn.visible {
+            display: flex;
         }
         
         body {
@@ -6565,17 +7024,17 @@ CONTRACTS_TEMPLATE = """
         
         <!-- Search Bar for Contratos -->
         <div style="margin-bottom: 24px;">
-            <div style="position: relative;">
+            <div class="search-wrapper">
                 <input type="text" 
                        id="contractSearch" 
+                       class="search-input-styled"
                        placeholder="Buscar inquilino..." 
-                       oninput="filterContracts(this.value)"
-                       style="width: 100%; padding: 16px 20px 16px 48px; font-size: 1.1rem; border: 3px solid #CCCCCC; border-radius: 12px; background: white; color: #000;">
-                <svg style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); width: 20px; height: 20px; color: #999;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" stroke-width="2" d="m21 21-4.35-4.35"/></svg>
+                       oninput="filterContracts(this.value)">
+                <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" stroke-width="2" d="m21 21-4.35-4.35"/></svg>
                 <button type="button" 
                         id="clearContractSearch" 
-                        onclick="clearContractSearch()" 
-                        style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; font-size: 1.3rem; cursor: pointer; display: none;">
+                        class="search-clear-btn"
+                        onclick="clearContractSearch()">
                     ✕
                 </button>
             </div>
@@ -6875,8 +7334,12 @@ CONTRACTS_TEMPLATE = """
             const resultsDiv = document.getElementById('contractSearchResults');
             const term = searchTerm.toLowerCase().trim();
             
-            // Show/hide clear button
-            clearBtn.style.display = term ? 'block' : 'none';
+            // Show/hide clear button using class toggle
+            if (term) {
+                clearBtn.classList.add('visible');
+            } else {
+                clearBtn.classList.remove('visible');
+            }
             
             // Get all contract cards and property sections
             const allCards = document.querySelectorAll('.contract-card');
@@ -6968,7 +7431,7 @@ CONTRACTS_TEMPLATE = """
             const searchInput = document.getElementById('contractSearch');
             if (searchInput && searchInput.value) {
                 searchInput.value = '';
-                document.getElementById('clearContractSearch').style.display = 'none';
+                document.getElementById('clearContractSearch').classList.remove('visible');
                 document.getElementById('contractSearchResults').style.display = 'none';
             }
             
