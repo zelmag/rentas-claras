@@ -265,6 +265,7 @@ HTML_TEMPLATE = """
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RentasClaras - Envío de Recordatorios</title>
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
     <!-- SheetJS library for Excel export -->
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     <style>
@@ -5511,6 +5512,7 @@ LOGIN_TEMPLATE = """
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <title>RentasClaras - Iniciar Sesión</title>
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         
@@ -6399,6 +6401,7 @@ CONTRACTS_TEMPLATE = """
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <title>RentasClaras - Contratos</title>
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
     <style>
         * {
             box-sizing: border-box;

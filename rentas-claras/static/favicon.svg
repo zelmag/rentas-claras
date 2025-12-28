@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <defs>
+    <linearGradient id="greenGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0A7A0A"/>
+      <stop offset="100%" style="stop-color:#085A08"/>
+    </linearGradient>
+  </defs>
+  <!-- Background circle -->
+  <circle cx="16" cy="16" r="15" fill="url(#greenGradient)"/>
+  <!-- House/home icon -->
+  <path d="M16 6L6 14v12c0 .6.4 1 1 1h6v-7h6v7h6c.6 0 1-.4 1-1V14L16 6z" fill="white"/>
+  <!-- Peso/dollar sign inside house -->
+  <text x="16" y="18" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="#0A7A0A">$</text>
+</svg>
