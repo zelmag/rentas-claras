@@ -3181,10 +3181,12 @@ HTML_TEMPLATE = """
                            {% if not tenant.paid %}checked{% endif %}>
                     
                     <div class="tenant-main-info">
+                        <!-- 1. NAME at the top -->
                         <div class="tenant-name">
                             <span class="tenant-unit">({{ tenant.unit }})</span> {{ tenant.name }}
                         </div>
-                    <!-- Phone number with warning if missing -->
+                        
+                        <!-- 2. PHONE NUMBER -->
                         <div class="tenant-phone-inline">
                             {% if tenant.phone %}
                             <a href="tel:{{ tenant.phone }}" style="color: #000; text-decoration: none;">{{ tenant.phone }}</a>
@@ -3198,9 +3200,26 @@ HTML_TEMPLATE = """
                             </div>
                             {% endif %}
                         </div>
+                        
+                        <!-- 3. LATE FEE BANNER - Only shown for unpaid tenants with fees (MOVED UP) -->
+                        {% if not tenant.paid and tenant.days_late >= 1 %}
+                        <div style="{% if tenant.days_late >= 7 %}background: #FEE2E2; border: 2px solid #CC0000;{% else %}background: #FEF3C7; border: 2px solid #F59E0B;{% endif %} border-radius: 12px; padding: 14px 16px; margin-top: 12px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span style="font-size: 1.4rem;">{% if tenant.days_late >= 7 %}🚨{% else %}⏰{% endif %}</span>
+                                    <span style="font-weight: 700; {% if tenant.days_late >= 7 %}color: #CC0000;{% else %}color: #92400E;{% endif %} font-size: 1rem;">{{ tenant.days_late }} día{% if tenant.days_late > 1 %}s{% endif %} de atraso{% if tenant.days_late >= 7 %} — CRÍTICO{% endif %}</span>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="font-size: 0.9rem; {% if tenant.days_late >= 7 %}color: #991B1B;{% else %}color: #92400E;{% endif %}">
+                                        Multa: $500{% if tenant.days_late > 1 %} + {{ tenant.days_late - 1 }}×$100{% endif %} = <strong>+${{ "{:,.0f}".format(tenant.late_fee) }}</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
                     </div>
                     
-                    <!-- Status + Amount row - aligned horizontally -->
+                    <!-- 4. STATUS TOGGLE + 5. TOTAL AMOUNT - aligned horizontally -->
                     <div class="status-amount-row">
                         <div class="payment-toggle-container">
                             <label class="payment-toggle" data-tenant-id="{{ tenant.id }}">
@@ -3214,30 +3233,14 @@ HTML_TEMPLATE = """
                             </span>
                         </div>
                         <div class="tenant-amount">
+                            <!-- Show TOTAL with late fees for unpaid, or just rent for paid -->
+                            {% if not tenant.paid and tenant.late_fee > 0 %}
+                            <div class="tenant-rent" style="color: #CC0000; border-color: #CC0000; background: #FEE2E2;">${{ "{:,.0f}".format(tenant.total_owed) }}</div>
+                            {% else %}
                             <div class="tenant-rent">${{ "{:,.0f}".format(tenant.rent) }}</div>
+                            {% endif %}
                         </div>
                     </div>
-                    
-                    <!-- LATE FEE BREAKDOWN - Only shown for unpaid tenants with fees -->
-                    {% if not tenant.paid and tenant.days_late >= 1 %}
-                    <div style="{% if tenant.days_late >= 7 %}background: #FEE2E2; border: 2px solid #CC0000;{% else %}background: #FEF3C7; border: 2px solid #F59E0B;{% endif %} border-radius: 12px; padding: 14px 16px; margin-top: 8px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                                <span style="font-size: 1.4rem;">{% if tenant.days_late >= 7 %}🚨{% else %}⏰{% endif %}</span>
-                                <span style="font-weight: 700; {% if tenant.days_late >= 7 %}color: #CC0000;{% else %}color: #92400E;{% endif %} font-size: 1rem;">{{ tenant.days_late }} día{% if tenant.days_late > 1 %}s{% endif %} de atraso{% if tenant.days_late >= 7 %} — CRÍTICO{% endif %}</span>
-                            </div>
-                            <div style="text-align: right;">
-                                <div style="font-size: 0.9rem; {% if tenant.days_late >= 7 %}color: #991B1B;{% else %}color: #92400E;{% endif %}">
-                                    Multa: $500{% if tenant.days_late > 1 %} + {{ tenant.days_late - 1 }}×$100{% endif %} = <strong>+${{ "{:,.0f}".format(tenant.late_fee) }}</strong>
-                                </div>
-                            </div>
-                        </div>
-                        <div style="margin-top: 10px; padding-top: 10px; border-top: 2px dashed {% if tenant.days_late >= 7 %}#CC0000{% else %}#F59E0B{% endif %}; display: flex; justify-content: space-between; align-items: center;">
-                            <span style="font-weight: 800; {% if tenant.days_late >= 7 %}color: #991B1B;{% else %}color: #78350F;{% endif %} font-size: 1.1rem;">TOTAL A COBRAR:</span>
-                            <span style="font-weight: 800; color: #CC0000; font-size: 1.4rem;">${{ "{:,.0f}".format(tenant.total_owed) }}</span>
-                        </div>
-                    </div>
-                    {% endif %}
                       
                     <!-- Inline WhatsApp button with SVG icon -->
                     {% if tenant.phone and not tenant.paid %}
