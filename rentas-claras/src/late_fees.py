@@ -602,7 +602,7 @@ def run_late_fee_demo():
         (5, "Day 5 - Initial + 3 days ($500 + $300)"),
         (7, "Day 7 - Initial + 5 days ($500 + $500)"),
         (8, "Day 8 - CRITICAL (termination warning)"),
-        (15, "Day 15 - CRITICAL (penalties capped)"),
+        (15, "Day 15 - CRITICAL ($500 + $1,300 = $1,800)"),
     ]
     
     for day, description in test_cases:
