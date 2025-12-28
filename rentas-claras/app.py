@@ -2885,18 +2885,19 @@ HTML_TEMPLATE = """
             <span id="undoMessage">Guardado</span>
         </div>
 
-        <!-- VIEW TOGGLE - Right above the data views -->
-        <div style="display: flex; gap: 8px; justify-content: center; margin-bottom: 16px; background: #F5F5F5; border-radius: 12px; padding: 4px;">
-            <button type="button" class="view-toggle-btn" id="cardViewBtn" onclick="switchToCardView()" style="flex: 1; padding: 12px 24px; border-radius: 8px; border: none; background: transparent; color: #333333; font-size: 1rem; font-weight: 700; cursor: pointer; min-height: 48px;">
-                Tarjetas
-            </button>
-            <button type="button" class="view-toggle-btn active" id="tableViewBtn" onclick="switchToTableView()" style="flex: 1; padding: 12px 24px; border-radius: 8px; border: none; background: #0A7A0A; color: white; font-size: 1rem; font-weight: 700; cursor: pointer; min-height: 48px;">
-                Tabla
-            </button>
+        <!-- VIEW TOGGLE SWITCH - Mutually exclusive options -->
+        <div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 16px;">
+            <span id="cardViewLabel" style="font-size: 1rem; font-weight: 600; color: #999; cursor: pointer;" onclick="switchToCardView()">Tarjetas</span>
+            <label class="toggle-switch" style="position: relative; display: inline-block; width: 60px; height: 34px; cursor: pointer;">
+                <input type="checkbox" id="viewToggle" onchange="toggleView()" checked style="opacity: 0; width: 0; height: 0;">
+                <span class="toggle-slider" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #0A7A0A; transition: 0.3s; border-radius: 34px;"></span>
+                <span class="toggle-knob" style="position: absolute; content: ''; height: 26px; width: 26px; left: 30px; bottom: 4px; background-color: white; transition: 0.3s; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></span>
+            </label>
+            <span id="tableViewLabel" style="font-size: 1rem; font-weight: 700; color: #0A7A0A; cursor: pointer;" onclick="switchToTableView()">Tabla</span>
         </div>
 
-        <!-- CARD VIEW (default) -->
-        <div class="card-view" id="cardView">
+        <!-- CARD VIEW (hidden by default - TABLE is default for Excel users) -->
+        <div class="card-view" id="cardView" style="display: none;">
         {% for property_name, tenants in tenants_by_property.items() %}
         {% set property_total = tenants|sum(attribute='rent') %}
         <div class="property-section" data-property="{{ property_name }}" data-property-total="{{ property_total }}">
@@ -3004,8 +3005,8 @@ HTML_TEMPLATE = """
         </div>
         <!-- END CARD VIEW -->
 
-        <!-- EXCEL TABLE VIEW (hidden by default) - Matching real Excel structure -->
-        <div class="excel-view" id="excelView" style="overflow-x: auto;">
+        <!-- EXCEL TABLE VIEW (DEFAULT for 60+ users familiar with Excel) -->
+        <div class="excel-view" id="excelView" style="display: block; overflow-x: auto;">
             {% for property_name, tenants in tenants_by_property.items() %}
             <div class="excel-property-section" style="margin-bottom: 32px;">
                 <!-- Property Header - Excel style -->
@@ -3025,6 +3026,7 @@ HTML_TEMPLATE = """
                             <th style="text-align: right; min-width: 80px;">Renta</th>
                             <th style="text-align: right; min-width: 80px;">Pagado</th>
                             <th style="text-align: center; width: 80px;">Estado</th>
+                            <th style="text-align: center; width: 100px;">Recibo</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -3047,6 +3049,19 @@ HTML_TEMPLATE = """
                                     {% if tenant.paid %}✓{% else %}{% endif %}
                                 </button>
                             </td>
+                            <td style="text-align: center;">
+                                <button type="button" class="pdf-download-btn" 
+                                        data-tenant-id="{{ tenant.id }}"
+                                        data-tenant-name="{{ tenant.name }}"
+                                        data-tenant-unit="{{ tenant.unit }}"
+                                        data-property="{{ property_name }}"
+                                        data-rent="{{ tenant.rent }}"
+                                        data-paid="{{ 'true' if tenant.paid else 'false' }}"
+                                        onclick="downloadReceipt(this)"
+                                        style="background: #0A7A0A; color: white; border: none; padding: 8px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 700; cursor: pointer; min-height: 40px; white-space: nowrap;">
+                                    Descargar PDF
+                                </button>
+                            </td>
                         </tr>
                         {% endfor %}
                         <!-- Property Total Row -->
@@ -3056,6 +3071,7 @@ HTML_TEMPLATE = """
                             <td colspan="2"></td>
                             <td class="rent-cell" style="border-top: 2px solid #333;">${{ "{:,.0f}".format(tenants|sum(attribute='rent')) }}</td>
                             <td class="property-total-paid" data-property="{{ property_name }}" style="text-align: right; color: #0A7A0A; border-top: 2px solid #333;">${{ "{:,.0f}".format(tenants|selectattr('paid')|sum(attribute='rent')) }}</td>
+                            <td></td>
                             <td></td>
                         </tr>
                     </tbody>
@@ -3165,6 +3181,15 @@ HTML_TEMPLATE = """
         console.log('Variables initialized:', { dayOfMonth, currentYear, currentMonth, testMode });
 
         // #4: VIEW SWITCHING FUNCTIONS - Table is now DEFAULT
+        function toggleView() {
+            const toggle = document.getElementById('viewToggle');
+            if (toggle.checked) {
+                switchToTableView();
+            } else {
+                switchToCardView();
+            }
+        }
+
         function switchToCardView() {
             console.log('switchToCardView called');
             const cardView = document.getElementById('cardView');
@@ -3179,15 +3204,25 @@ HTML_TEMPLATE = """
             cardView.style.display = 'block';
             excelView.style.display = 'none';
             
-            // Update header buttons styling
-            const cardBtn = document.getElementById('cardViewBtn');
-            const tableBtn = document.getElementById('tableViewBtn');
-            if (cardBtn && tableBtn) {
-                cardBtn.style.background = '#333333';
-                cardBtn.style.color = 'white';
-                tableBtn.style.background = 'white';
-                tableBtn.style.color = '#333333';
+            // Update toggle switch state and labels
+            const toggle = document.getElementById('viewToggle');
+            const cardLabel = document.getElementById('cardViewLabel');
+            const tableLabel = document.getElementById('tableViewLabel');
+            const knob = document.querySelector('.toggle-knob');
+            const slider = document.querySelector('.toggle-slider');
+            
+            if (toggle) toggle.checked = false;
+            if (knob) knob.style.left = '4px';
+            if (slider) slider.style.backgroundColor = '#333333';
+            if (cardLabel) {
+                cardLabel.style.fontWeight = '700';
+                cardLabel.style.color = '#333333';
             }
+            if (tableLabel) {
+                tableLabel.style.fontWeight = '600';
+                tableLabel.style.color = '#999';
+            }
+            
             localStorage.setItem('preferredView', 'card');
             console.log('Switched to card view');
         }
@@ -3206,15 +3241,25 @@ HTML_TEMPLATE = """
             cardView.style.display = 'none';
             excelView.style.display = 'block';
             
-            // Update header buttons styling
-            const cardBtn = document.getElementById('cardViewBtn');
-            const tableBtn = document.getElementById('tableViewBtn');
-            if (cardBtn && tableBtn) {
-                cardBtn.style.background = 'white';
-                cardBtn.style.color = '#333333';
-                tableBtn.style.background = '#333333';
-                tableBtn.style.color = 'white';
+            // Update toggle switch state and labels
+            const toggle = document.getElementById('viewToggle');
+            const cardLabel = document.getElementById('cardViewLabel');
+            const tableLabel = document.getElementById('tableViewLabel');
+            const knob = document.querySelector('.toggle-knob');
+            const slider = document.querySelector('.toggle-slider');
+            
+            if (toggle) toggle.checked = true;
+            if (knob) knob.style.left = '30px';
+            if (slider) slider.style.backgroundColor = '#0A7A0A';
+            if (cardLabel) {
+                cardLabel.style.fontWeight = '600';
+                cardLabel.style.color = '#999';
             }
+            if (tableLabel) {
+                tableLabel.style.fontWeight = '700';
+                tableLabel.style.color = '#0A7A0A';
+            }
+            
             localStorage.setItem('preferredView', 'table');
             console.log('Switched to table view');
         }
@@ -5641,7 +5686,7 @@ CONTRACTS_TEMPLATE = """
         }
         
         /* ===========================================
-           TOP NAVBAR - Always visible
+           TOP NAVBAR - Always visible (UNIFIED with Pagos)
            =========================================== */
         .top-navbar {
             display: flex;
@@ -5649,8 +5694,8 @@ CONTRACTS_TEMPLATE = """
             justify-content: center;
             margin: var(--space-md) 0;
             padding: var(--space-sm);
-            background: #f5f5f5;
-            border-radius: 12px;
+            background: var(--color-neutral-light);
+            border-radius: var(--radius-lg);
         }
         
         .top-navbar-item {
@@ -5660,25 +5705,25 @@ CONTRACTS_TEMPLATE = """
             gap: var(--space-sm);
             flex: 1;
             padding: var(--space-md) var(--space-lg);
-            border-radius: 8px;
+            border-radius: var(--radius-md);
             text-decoration: none;
-            font-size: 1rem;
+            font-size: var(--font-size-base);
             font-weight: 800;
             transition: all 0.2s;
-            min-height: var(--touch-target-lg);
+            min-height: var(--touch-target-min);
             border: none;
             cursor: pointer;
         }
         
         .top-navbar-item.active {
-            background: #0A7A0A;
+            background: var(--color-primary);
             color: var(--color-white);
             box-shadow: 0 2px 8px rgba(10, 122, 10, 0.3);
         }
 
         .top-navbar-item:not(.active) {
             background: var(--color-white);
-            color: #333333;
+            color: var(--color-neutral);
         }
         
         .top-navbar-item:not(.active):hover {
@@ -5697,8 +5742,8 @@ CONTRACTS_TEMPLATE = """
             }
             
             .top-navbar-item {
-                font-size: 1.2rem;
-                padding: var(--space-lg) 32px;
+                font-size: var(--font-size-lg);
+                padding: var(--space-lg) var(--space-xl);
             }
             
             .top-navbar-icon {
