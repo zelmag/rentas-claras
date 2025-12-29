@@ -9,11 +9,12 @@ import logging
 from collections import defaultdict
 from datetime import datetime, timedelta
 
-from database import get_all_tenants, update_renewal_status
+from database import get_all_tenants, get_last_sync_time, update_renewal_status
 
 from flask import Blueprint, jsonify, render_template, request
 from routes.auth import login_required
 from services.dates import (
+    calculate_relative_time,
     format_date_spanish,
     parse_date,
     parse_spanish_month_year,
@@ -169,7 +170,7 @@ def contracts():
             available_apartments.append(tenant)
 
     # Sort by contract end date (soonest first)
-    available_apartments.sort(
+        available_apartments.sort(
         key=lambda t: (
             parse_date(t.contract_end)
             if t.contract_end and parse_date(t.contract_end)
@@ -204,6 +205,10 @@ def contracts():
                 {"month": month_group["month"], "tenants": filtered_tenants}
             )
 
+    # Get last sync time for sync indicator
+    last_sync = get_last_sync_time()
+    last_sync_relative = calculate_relative_time(last_sync)
+
     template_vars = dict(
         tenants_by_property=tenants_by_property,
         property_stats=property_stats,
@@ -214,6 +219,8 @@ def contracts():
         upcoming_renewals_by_month=action_needed_renewals_by_month,
         action_needed_count=action_needed_count,
         available_apartments=available_apartments,
+        last_sync=last_sync,
+        last_sync_relative=last_sync_relative,
         active_tab="contratos",
     )
 

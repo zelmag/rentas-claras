@@ -495,6 +495,105 @@
     .reminder-action:hover {
         background: rgba(255,255,255,0.3);
     }
+    /* ========== MESSAGE STATUS WIDGET ========== */
+    .message-status-widget {
+        background: var(--white);
+        border-radius: var(--radius-lg);
+        padding: 20px;
+        margin-bottom: 16px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        border: 1px solid var(--border);
+    }
+    
+    .message-status-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 16px;
+    }
+    
+    .message-status-title {
+        font-size: var(--text-base);
+        font-weight: 700;
+        color: #1A202C;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .message-status-link {
+        font-size: var(--text-sm);
+        color: var(--green);
+        text-decoration: none;
+        font-weight: 600;
+    }
+    
+    .message-status-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+    
+    @media (min-width: 480px) {
+        .message-status-grid {
+            grid-template-columns: repeat(5, 1fr);
+        }
+    }
+    
+    .message-status-item {
+        text-align: center;
+        padding: 12px 8px;
+        background: var(--gray-light);
+        border-radius: var(--radius-md);
+    }
+    
+    .message-status-item.sent {
+        background: #E0E7FF;
+    }
+    
+    .message-status-item.delivered {
+        background: #D1FAE5;
+    }
+    
+    .message-status-item.read {
+        background: #DBEAFE;
+    }
+    
+    .message-status-item.failed {
+        background: #FEE2E2;
+    }
+    
+    .message-status-item.replies {
+        background: #FEF3C7;
+    }
+    
+    .message-status-value {
+        font-size: var(--text-xl);
+        font-weight: 800;
+        color: #1A202C;
+    }
+    
+    .message-status-label {
+        font-size: var(--text-xs);
+        color: var(--gray);
+        margin-top: 4px;
+    }
+    
+    .message-status-empty {
+        text-align: center;
+        padding: 24px;
+        color: var(--gray);
+        font-size: var(--text-sm);
+    }
+    
+    .message-status-note {
+        font-size: var(--text-xs);
+        color: var(--gray);
+        text-align: center;
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px solid var(--border);
+    }
 </style>
 {% endblock %}
 
@@ -604,6 +703,53 @@
             </a>
         </div>
         {% endif %}
+
+        <!-- Message Status Widget - WhatsApp Delivery Tracking -->
+        <div class="content-section" id="section-message-status">
+            <div class="message-status-widget">
+                <div class="message-status-header">
+                    <div class="message-status-title">
+                        📱 Estado de Mensajes de Hoy
+                    </div>
+                    <a href="/recordatorios" class="message-status-link">Ver detalles →</a>
+                </div>
+                
+                {% if message_stats.has_activity %}
+                <div class="message-status-grid">
+                    <div class="message-status-item sent">
+                        <div class="message-status-value">{{ message_stats.sent }}</div>
+                        <div class="message-status-label">✓ Enviados</div>
+                    </div>
+                    <div class="message-status-item delivered">
+                        <div class="message-status-value">{{ message_stats.delivered }}</div>
+                        <div class="message-status-label">✓✓ Entregados</div>
+                    </div>
+                    <div class="message-status-item read">
+                        <div class="message-status-value">{{ message_stats.read }}</div>
+                        <div class="message-status-label">👁️ Leídos</div>
+                    </div>
+                    <div class="message-status-item replies">
+                        <div class="message-status-value">{{ message_stats.replies }}</div>
+                        <div class="message-status-label">💬 Respuestas</div>
+                    </div>
+                    <div class="message-status-item failed">
+                        <div class="message-status-value">{{ message_stats.failed }}</div>
+                        <div class="message-status-label">❌ Fallidos</div>
+                    </div>
+                </div>
+                {% if message_stats.delivered == 0 and message_stats.read == 0 %}
+                <div class="message-status-note">
+                    ⚠️ Los estados "Entregado" y "Leído" requieren que la app esté desplegada en un servidor público para recibir webhooks de Meta.
+                </div>
+                {% endif %}
+                {% else %}
+                <div class="message-status-empty">
+                    📭 No se han enviado mensajes hoy.<br>
+                    <a href="/recordatorios" style="color: var(--green); font-weight: 600;">Enviar recordatorios →</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
 
         <!-- Quick Actions - no section title, more action-oriented -->
         <div class="quick-actions-grid">

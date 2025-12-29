@@ -12,11 +12,11 @@ Features:
 import logging
 from decimal import Decimal
 
-from database import get_all_tenants, get_db_connection
+from database import get_all_tenants, get_db_connection, get_last_sync_time
 
 from flask import Blueprint, jsonify, render_template, request
 from routes.auth import login_required
-from services.dates import format_date_spanish
+from services.dates import format_date_spanish, calculate_relative_time
 from services.validation import validate_deposit_update
 
 
@@ -189,6 +189,10 @@ def depositos():
     # Property colors (matching contratos.html)
     property_colors = ["blue", "brown", "green", "purple", "gold"]
 
+    # Get last sync time for sync indicator
+    last_sync = get_last_sync_time()
+    last_sync_relative = calculate_relative_time(last_sync)
+
     return render_template(
         "depositos.html",
         tenants_by_property=tenants_by_property,
@@ -201,6 +205,8 @@ def depositos():
         total_tenants=len(all_tenants),
         active_count=active_count,
         returned_count=returned_count,
+        last_sync=last_sync,
+        last_sync_relative=last_sync_relative,
         active_tab="depositos",
     )
 

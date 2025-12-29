@@ -11,6 +11,7 @@ from flask import Blueprint, render_template
 
 from database import (
     get_all_tenants,
+    get_db_connection,
     get_expiring_contracts,
     get_monthly_status,
 )
@@ -93,6 +94,9 @@ def index():
                 'color': PROPERTY_COLORS[i % len(PROPERTY_COLORS)]
             })
     
+    # Get message status stats for today
+    message_stats = _get_today_message_stats()
+    
     return render_template(
         "dashboard.html",
         greeting=greeting,
@@ -107,5 +111,87 @@ def index():
         total_tenants=total_tenants,
         total_properties=total_properties,
         property_pending=property_pending,
+        message_stats=message_stats,
         active_tab="resumen",
     )
+
+
+def _get_today_message_stats() -> dict:
+    """
+    Get message statistics for today.
+    
+    Returns:
+    {
+        "sent": 5,
+        "delivered": 4,
+        "read": 3,
+        "failed": 0,
+        "replies": 1,
+        "has_activity": True
+    }
+    """
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    
+    # Get message status counts
+    cursor.execute(
+        """
+        SELECT status, COUNT(*) as count
+        FROM message_logs
+        WHERE sent_at >= ?
+        GROUP BY status
+        """,
+        (today_start.isoformat(),)
+    )
+    
+    status_counts = {
+        "sent": 0,
+        "delivered": 0,
+        "read": 0,
+        "failed": 0,
+    }
+    
+    for row in cursor.fetchall():
+        status = row["status"]
+        count = row["count"]
+        if status in status_counts:
+            status_counts[status] = count
+    
+    # Get reply count
+    # Check if incoming_messages table exists
+    cursor.execute(
+        """
+        SELECT name FROM sqlite_master 
+        WHERE type='table' AND name='incoming_messages'
+        """
+    )
+    
+    replies = 0
+    if cursor.fetchone():
+        cursor.execute(
+            """
+            SELECT COUNT(*) as count
+            FROM incoming_messages
+            WHERE received_at >= ?
+            """,
+            (today_start.isoformat(),)
+        )
+        row = cursor.fetchone()
+        if row:
+            replies = row["count"]
+    
+    conn.close()
+    
+    # Total sent includes all statuses (they all started as sent)
+    total_sent = status_counts["sent"] + status_counts["delivered"] + status_counts["read"] + status_counts["failed"]
+    
+    return {
+        "sent": total_sent,
+        "delivered": status_counts["delivered"] + status_counts["read"],  # delivered + read = all delivered
+        "read": status_counts["read"],
+        "failed": status_counts["failed"],
+        "replies": replies,
+        "has_activity": total_sent > 0 or replies > 0,
+    }

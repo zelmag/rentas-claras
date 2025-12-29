@@ -8,6 +8,7 @@ This package organizes routes into logical blueprints:
 - pagos: Main payment tracking page and APIs
 - contratos: Contract renewal management
 - whatsapp: WhatsApp API endpoints
+- webhook: WhatsApp webhook for delivery/read receipts & replies
 - admin: Admin/scheduler test endpoints
 - backups: Backup management APIs
 - tenants: Tenant management (add/edit/remove)
@@ -30,6 +31,7 @@ def register_blueprints(app: Flask) -> None:
     from routes.reminders import reminders_bp
     from routes.state import state_bp
     from routes.tenants import tenants_bp
+    from routes.webhook import webhook_bp
     from routes.whatsapp import whatsapp_bp
 
     app.register_blueprint(auth_bp)
@@ -38,6 +40,7 @@ def register_blueprints(app: Flask) -> None:
     app.register_blueprint(contratos_bp)
     app.register_blueprint(depositos_bp)
     app.register_blueprint(whatsapp_bp)
+    app.register_blueprint(webhook_bp)  # Webhook for delivery/read receipts
     app.register_blueprint(admin_bp)
     app.register_blueprint(backups_bp)
     app.register_blueprint(tenants_bp)

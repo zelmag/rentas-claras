@@ -445,9 +445,34 @@ def init_database():
             sent_at TEXT NOT NULL,
             message_id TEXT,  -- WhatsApp message ID from Meta API
             status TEXT DEFAULT 'sent',  -- 'sent', 'failed', 'delivered', 'read'
+            delivered_at TEXT,  -- Timestamp when delivered
+            read_at TEXT,  -- Timestamp when read
             error_message TEXT,
             FOREIGN KEY (tenant_id) REFERENCES tenants(id),
             UNIQUE(tenant_id, message_type, year, month, day)  -- Prevent double-send same day
+        )
+    """
+    )
+    
+    # Add new columns for delivery tracking (for existing databases)
+    _add_column_if_not_exists(cursor, "message_logs", "delivered_at", "TEXT")
+    _add_column_if_not_exists(cursor, "message_logs", "read_at", "TEXT")
+    
+    # Incoming messages table - stores replies from tenants
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS incoming_messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            wa_message_id TEXT UNIQUE,  -- WhatsApp message ID
+            from_phone TEXT NOT NULL,  -- Phone number of sender
+            tenant_id TEXT,  -- Matched tenant ID (if found)
+            message_type TEXT NOT NULL,  -- 'text', 'image', 'audio', 'document', etc.
+            message_body TEXT,  -- Text content (for text messages)
+            media_id TEXT,  -- Media ID for non-text messages
+            timestamp TEXT NOT NULL,  -- When the message was sent
+            received_at TEXT NOT NULL,  -- When we received it
+            read_by_user INTEGER DEFAULT 0,  -- Has the landlord seen this?
+            FOREIGN KEY (tenant_id) REFERENCES tenants(id)
         )
     """
     )
@@ -1406,9 +1431,14 @@ def reactivate_tenant(tenant_id: str):
     conn.close()
 
 
-def get_last_sync_time() -> Optional[str]:
+def get_last_sync_time(table: str = None) -> Optional[str]:
     """
     Get the timestamp of the most recent database update.
+
+    Args:
+        table: Optional table name to check. If None, checks all relevant tables
+               and returns the most recent update across all of them.
+               Valid values: 'monthly_records', 'tenants', 'message_logs'
 
     Returns:
         ISO timestamp string of last update, or None if no records exist
@@ -1416,11 +1446,26 @@ def get_last_sync_time() -> Optional[str]:
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    # Check monthly_records for most recent update
+    if table:
+        # Check specific table
+        cursor.execute(
+            f"""
+            SELECT MAX(updated_at) as last_update 
+            FROM {table}
+            """
+        )
+        row = cursor.fetchone()
+        conn.close()
+        return row["last_update"] if row and row["last_update"] else None
+
+    # Check all relevant tables and return the most recent
     cursor.execute(
         """
-        SELECT MAX(updated_at) as last_update 
-        FROM monthly_records
+        SELECT MAX(last_update) as last_update FROM (
+            SELECT MAX(updated_at) as last_update FROM monthly_records
+            UNION ALL
+            SELECT MAX(updated_at) as last_update FROM tenants
+        )
         """
     )
 

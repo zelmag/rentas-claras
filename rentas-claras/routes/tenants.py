@@ -12,6 +12,7 @@ from database import (
     deactivate_tenant,
     get_all_properties,
     get_all_tenants,
+    get_last_sync_time,
     get_tenant_by_id,
     reactivate_tenant,
     update_tenant,
@@ -19,6 +20,7 @@ from database import (
 
 from flask import Blueprint, jsonify, render_template, request
 from routes.auth import login_required
+from services.dates import calculate_relative_time
 from services.validation import (
     sanitize_string,
     validate_date_string,
@@ -52,12 +54,18 @@ def tenants_page():
             tenants_by_property[tenant.property_name] = []
         tenants_by_property[tenant.property_name].append(tenant)
 
+    # Get last sync time for sync indicator
+    last_sync = get_last_sync_time()
+    last_sync_relative = calculate_relative_time(last_sync)
+
     return render_template(
         "inquilinos.html",
         tenants=tenants,
         tenants_by_property=tenants_by_property,
         properties=properties,
         total_tenants=len(tenants),
+        last_sync=last_sync,
+        last_sync_relative=last_sync_relative,
         active_tab="inquilinos",
     )
 

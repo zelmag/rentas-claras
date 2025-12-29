@@ -316,7 +316,7 @@
     /* Action Buttons */
     .action-bar {
         position: fixed;
-        bottom: 70px;
+        bottom: 80px;
         left: 0;
         right: 0;
         background: var(--white);
@@ -584,31 +584,6 @@
         border-bottom: none;
     }
 
-    /* ISSUE #12: Copy summary button */
-    .btn-copy-summary {
-        padding: 10px 20px;
-        background: var(--white);
-        border: 1px solid var(--border);
-        border-radius: var(--radius-md);
-        font-weight: 600;
-        font-size: var(--text-sm);
-        cursor: pointer;
-        margin-bottom: 16px;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        transition: all 0.2s;
-    }
-    
-    .btn-copy-summary:hover {
-        background: var(--gray-light);
-    }
-    
-    .btn-copy-summary.copied {
-        background: #DCFCE7;
-        border-color: #22C55E;
-        color: #166534;
-    }
 
     .btn-back {
         padding: 14px 32px;
@@ -674,11 +649,30 @@
         background: var(--gray-light);
     }
 
-    /* POLISH #3: Animation on template select */
+    /* POLISH #3: Animation on template select + enhanced visual distinction */
     .template-option.selected {
         background: var(--green-light);
         border-left: 4px solid var(--green);
         animation: selectPulse 0.3s ease-out;
+        box-shadow: 0 2px 8px rgba(34, 197, 94, 0.2);
+        position: relative;
+    }
+    
+    .template-option.selected::after {
+        content: '✓';
+        position: absolute;
+        top: 14px;
+        right: 16px;
+        width: 24px;
+        height: 24px;
+        background: var(--green);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        font-weight: bold;
     }
     
     @keyframes selectPulse {
@@ -783,10 +777,11 @@
     .bulk-btn {
         padding: 10px 14px;
         border-radius: var(--radius-sm);
-        border: 1px solid var(--border);
-        background: var(--white);
+        border: 2px solid var(--green);
+        background: var(--green-light);
         font-size: var(--text-sm);
-        font-weight: 600;
+        font-weight: 700;
+        color: var(--green-dark);
         cursor: pointer;
         display: flex;
         align-items: center;
@@ -796,8 +791,9 @@
     }
 
     .bulk-btn:hover {
-        background: var(--gray-light);
-        border-color: var(--gray);
+        background: var(--green);
+        color: white;
+        border-color: var(--green-dark);
     }
 
     .bulk-btn:active {
@@ -924,10 +920,77 @@
         color: #166534;
     }
     
+    .sent-detail-value.status-read {
+        color: #1D4ED8;
+    }
+    
+    .sent-detail-value.status-delivered {
+        color: #059669;
+    }
+    
+    .sent-detail-value.status-sent {
+        color: #6B7280;
+    }
+    
     .expand-hint {
         font-size: var(--text-xs);
         color: var(--gray);
         margin-left: 8px;
+    }
+
+    /* Failed message status */
+    .status-failed {
+        color: #DC2626 !important;
+    }
+    
+    .status-failed-badge {
+        background: #FEE2E2;
+        color: #DC2626;
+    }
+    
+    .status-read-badge {
+        background: #DBEAFE;
+        color: #1D4ED8;
+    }
+    
+    .status-delivered-badge {
+        background: #D1FAE5;
+        color: #059669;
+    }
+    
+    /* Retry button */
+    .retry-row {
+        margin-top: 8px;
+        padding-top: 8px;
+        border-top: 1px dashed #FCA5A5;
+    }
+    
+    .btn-retry {
+        background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+        color: white;
+        border: none;
+        padding: 10px 16px;
+        border-radius: var(--radius-sm);
+        font-weight: 700;
+        font-size: var(--text-sm);
+        cursor: pointer;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition: all 0.2s;
+    }
+    
+    .btn-retry:hover {
+        background: linear-gradient(135deg, #D97706 0%, #B45309 100%);
+        transform: scale(1.02);
+    }
+    
+    .btn-retry:disabled {
+        background: #CBD5E0;
+        cursor: not-allowed;
+        transform: none;
     }
 
     /* ========== SINGLE SEND MODAL (ISSUE #6) ========== */
@@ -962,7 +1025,7 @@
 <div class="container">
     <!-- Header -->
     <div class="page-header">
-        <h1 class="page-title">📬 Recordatorios de Renta</h1>
+        <h1 class="page-title">📱 Recordatorios de Renta</h1>
         <p class="page-subtitle">{{ month_name }} {{ year }}</p>
     </div>
 
@@ -1011,33 +1074,6 @@
         📤 Último envío: {{ last_send_time }}
     </div>
 
-    <!-- Test WhatsApp Button (Dev Mode) -->
-    <div style="background: #FEF3C7; border: 2px solid #F59E0B; border-radius: 12px; padding: 16px; margin-bottom: 20px;">
-        <div style="font-weight: 700; color: #92400E; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
-            🧪 Modo Prueba (Templates Pendientes)
-        </div>
-        <div style="font-size: 0.9rem; color: #78350F; margin-bottom: 12px;">
-            Tus templates están pendientes de aprobación. Usa el botón de prueba para verificar que la API funciona.
-        </div>
-        <button id="btnTestWA" onclick="sendTestMessage()" style="
-            background: #25D366;
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 8px;
-            font-weight: 700;
-            font-size: 1rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        ">
-            <span style="font-size: 1.2rem;">📱</span>
-            Enviar "Hello World" a mi teléfono
-        </button>
-        <div id="testResult" style="margin-top: 12px; font-size: 0.9rem; display: none;"></div>
-    </div>
-
     {% if unpaid_tenants %}
     <!-- Template Selector -->
     <div class="template-selector">
@@ -1045,12 +1081,26 @@
             <span class="template-icon">📝</span> Tipo de mensaje
         </div>
         
+        <!-- TEST TEMPLATE - Pre-approved by Meta -->
+        <label class="template-option" data-template="hello_world" id="templateHelloWorld" style="background: #FEF3C7; border-bottom: 2px solid #F59E0B;">
+            <input type="radio" name="template" value="hello_world">
+            <div class="template-content">
+                <div class="template-title">
+                    <span class="template-icon">🧪</span> Prueba (Hello World)
+                    <span class="template-badge" style="background: #FEF3C7; color: #92400E;">✓ Aprobado</span>
+                </div>
+                <div class="template-preview" id="previewHelloWorld">
+                    "Hello World" - Mensaje de prueba pre-aprobado por Meta. Úsalo mientras tus templates personalizados se aprueban.
+                </div>
+            </div>
+        </label>
+        
         <label class="template-option" data-template="recordatorio_renta" id="templateRecordatorioRenta">
             <input type="radio" name="template" value="recordatorio_renta">
             <div class="template-content">
                 <div class="template-title">
                     <span class="template-icon">🌅</span> Recordatorio Amable
-                    <span class="template-badge default" id="badgeMorning">Por defecto</span>
+                    <span class="template-badge pending">⏳ Pendiente</span>
                 </div>
                 <div class="template-preview" id="previewMorning">
                     "Buenos días <strong>{{ unpaid_tenants[0].display_name if unpaid_tenants else 'Inquilino' }}</strong>. Espero esté bien. Le recordamos amablemente el pago de su renta. Monto pendiente: <strong>{{ unpaid_tenants[0].rent_formatted if unpaid_tenants else '$0' }}</strong>. Agradecemos su atención."
@@ -1063,7 +1113,7 @@
             <div class="template-content">
                 <div class="template-title">
                     <span class="template-icon">🌆</span> Recordatorio Tarde (5 PM)
-                    <span class="template-badge auto-selected" id="badgeAfternoon" style="display: none;">Auto-seleccionado</span>
+                    <span class="template-badge pending">⏳ Pendiente</span>
                 </div>
                 <div class="template-preview" id="previewAfternoon">
                     "Buenas tardes <strong>{{ unpaid_tenants[0].display_name if unpaid_tenants else 'Inquilino' }}</strong>. Le recordamos que el pago de su renta por <strong>{{ unpaid_tenants[0].rent_formatted if unpaid_tenants else '$0' }}</strong> sigue pendiente. Le pedimos realizar el pago hoy de ser posible. Gracias."
@@ -1076,7 +1126,7 @@
             <div class="template-content">
                 <div class="template-title">
                     <span class="template-icon">⚠️</span> Aviso con Recargo
-                    <span class="template-badge auto-selected" id="badgeRecargo" style="display: none;">Auto-seleccionado</span>
+                    <span class="template-badge pending">⏳ Pendiente</span>
                 </div>
                 <div class="template-preview" id="previewRecargo">
                     "Buen día <strong>{{ unpaid_tenants[0].display_name if unpaid_tenants else 'Inquilino' }}</strong>. Le informamos que su renta de <strong>{{ unpaid_tenants[0].rent_formatted if unpaid_tenants else '$0' }}</strong> continúa pendiente y a partir de hoy aplica un recargo. Total a pagar: <strong>{{ unpaid_tenants[0].rent_formatted if unpaid_tenants else '$0' }}</strong>. Gracias."
@@ -1132,7 +1182,7 @@
                 <button class="quick-send-btn" 
                         onclick="showSingleSendModal('{{ tenant.id }}', '{{ tenant.display_name }}', '{{ tenant.phone }}', '{{ tenant.rent_formatted }}')" 
                         title="Enviar solo a este inquilino">
-                    📤 Solo este
+                    📤 Enviar
                 </button>
             </div>
         </div>
@@ -1173,7 +1223,7 @@
     </div>
     <div class="tenant-list">
         {% for tenant in already_messaged_today %}
-        <div class="tenant-item sent-today-item" onclick="toggleSentDetails(this)">
+        <div class="tenant-item sent-today-item" onclick="toggleSentDetails(this)" data-tenant-id="{{ tenant.id }}" data-tenant-phone="{{ tenant.phone }}">
             <div class="tenant-info">
                 <div class="tenant-name">{{ tenant.display_name }}</div>
                 <div class="tenant-location">{{ tenant.property_name }} {{ tenant.unit }}</div>
@@ -1181,8 +1231,20 @@
                 <div class="sent-today-details">
                     <div class="sent-detail-row">
                         <span class="sent-detail-label">Hora:</span>
-                        <span class="sent-detail-value">{{ tenant.last_message_time|default('Hoy') }}</span>
+                        <span class="sent-detail-value">{{ tenant.last_message_time }}</span>
                     </div>
+                    <div class="sent-detail-row">
+                        <span class="sent-detail-label">Estado:</span>
+                        <span class="sent-detail-value {% if tenant.status == 'read' %}status-read{% elif tenant.status == 'delivered' %}status-delivered{% elif tenant.status == 'failed' %}status-failed{% else %}status-sent{% endif %}">
+                            {% if tenant.status == 'read' %}✓✓ Leído{% elif tenant.status == 'delivered' %}✓✓ Entregado{% elif tenant.status == 'failed' %}❌ Fallido{% else %}✓ Enviado{% endif %}
+                        </span>
+                    </div>
+                    {% if tenant.has_reply %}
+                    <div class="sent-detail-row">
+                        <span class="sent-detail-label">Respuesta:</span>
+                        <span class="sent-detail-value" style="color: var(--green);">💬 {{ tenant.reply_preview }}</span>
+                    </div>
+                    {% endif %}
                     <div class="sent-detail-row">
                         <span class="sent-detail-label">Plantilla:</span>
                         <span class="sent-detail-value">{{ tenant.last_template|default('Recordatorio') }}</span>
@@ -1191,9 +1253,24 @@
                         <span class="sent-detail-label">Teléfono:</span>
                         <span class="sent-detail-value">{{ tenant.phone }}</span>
                     </div>
+                    {% if tenant.status == 'failed' %}
+                    <div class="sent-detail-row retry-row">
+                        <button class="btn-retry" onclick="retryFailedMessage(event, '{{ tenant.id }}', '{{ tenant.display_name }}')">
+                            🔄 Reintentar envío
+                        </button>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
-            <div class="tenant-status status-sent">Enviado ✓</div>
+            {% if tenant.status == 'failed' %}
+            <div class="tenant-status status-failed-badge">❌ Fallido</div>
+            {% elif tenant.status == 'read' %}
+            <div class="tenant-status status-read-badge">👁️ Leído</div>
+            {% elif tenant.status == 'delivered' %}
+            <div class="tenant-status status-delivered-badge">✓✓ Entregado</div>
+            {% else %}
+            <div class="tenant-status status-sent">✓ Enviado</div>
+            {% endif %}
             <div class="tenant-amount">{{ tenant.rent_formatted }}</div>
         </div>
         {% endfor %}
@@ -1298,17 +1375,34 @@
         <!-- Populated by JavaScript -->
     </div>
 
-    <!-- ISSUE #12: Copy summary button -->
-    <button class="btn-copy-summary" id="btnCopySummary" onclick="copySummaryToClipboard()">
-        📋 Copiar resumen
-    </button>
-
-    <button class="btn-back" onclick="window.location.href='/resumen'">
+    <button class="btn-back" onclick="window.location.href='/recordatorios'">
         Volver al Resumen
     </button>
 </div>
 
 <script>
+// ========== TOGGLE TEST BANNER ==========
+function toggleTestBanner() {
+    const content = document.getElementById('testBannerContent');
+    const collapsed = document.getElementById('testBannerCollapsed');
+    const banner = document.getElementById('testBanner');
+    
+    if (content.style.display === 'none') {
+        // Expand
+        content.style.display = 'block';
+        collapsed.style.display = 'none';
+        banner.style.padding = '16px';
+    } else {
+        // Collapse
+        content.style.display = 'none';
+        collapsed.style.display = 'block';
+        banner.style.padding = '12px 16px';
+    }
+    
+    // Haptic feedback
+    if (navigator.vibrate) navigator.vibrate(15);
+}
+
 // ========== GLOBAL STATE ==========
 let lastSendSummary = null; // For copy functionality
 
@@ -1637,39 +1731,82 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// ========== ISSUE #12: Copy summary to clipboard ==========
-function copySummaryToClipboard() {
-    if (!lastSendSummary) return;
+// ========== RETRY FAILED MESSAGE ==========
+async function retryFailedMessage(event, tenantId, tenantName) {
+    // Prevent the parent onclick from firing
+    event.stopPropagation();
     
-    const sentNames = lastSendSummary.sent.map(t => t.name).join(', ');
-    const failedNames = lastSendSummary.failed.map(t => t.name).join(', ');
+    const btn = event.target;
+    const originalText = btn.innerHTML;
     
-    let summaryText = `📬 Resumen de Envío - RentasClaras\n`;
-    summaryText += `📅 ${lastSendSummary.timestamp}\n`;
-    summaryText += `📝 Plantilla: ${lastSendSummary.template}\n\n`;
-    summaryText += `✅ Enviados (${lastSendSummary.sent.length}): ${sentNames || 'Ninguno'}\n`;
+    // Show loading state
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loading-spinner"></span> Reenviando...';
     
-    if (lastSendSummary.failed.length > 0) {
-        summaryText += `❌ Fallidos (${lastSendSummary.failed.length}): ${failedNames}\n`;
+    // Haptic feedback
+    if (navigator.vibrate) navigator.vibrate(30);
+    
+    // Use the currently selected template from the UI
+    const templateToUse = getSelectedTemplate();
+    
+    try {
+        const response = await fetch('/api/reminders/retry', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                tenant_id: tenantId,
+                template: templateToUse
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Update the UI to show success
+            const tenantItem = btn.closest('.tenant-item');
+            if (tenantItem) {
+                // Update the badge
+                const badge = tenantItem.querySelector('.tenant-status');
+                if (badge) {
+                    badge.className = 'tenant-status status-sent';
+                    badge.textContent = 'Enviado ✓';
+                }
+                
+                // Update the status in the details
+                const statusValue = tenantItem.querySelector('.sent-detail-value.status-failed');
+                if (statusValue) {
+                    statusValue.className = 'sent-detail-value status-sent';
+                    statusValue.innerHTML = '✓ Enviado';
+                }
+                
+                // Remove the retry row
+                const retryRow = btn.closest('.retry-row');
+                if (retryRow) {
+                    retryRow.style.display = 'none';
+                }
+            }
+            
+            // Haptic feedback for success
+            if (navigator.vibrate) navigator.vibrate([50, 30, 50]);
+            
+            // Show a brief success message
+            btn.innerHTML = '✅ ¡Reenviado!';
+            btn.style.background = '#059669';
+            
+        } else {
+            const error = data.error || 'Error desconocido';
+            alert(`Error al reenviar: ${error}`);
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    } catch (error) {
+        console.error('Retry error:', error);
+        alert('Error de conexión. Intenta de nuevo.');
+        btn.innerHTML = originalText;
+        btn.disabled = false;
     }
-    
-    navigator.clipboard.writeText(summaryText).then(() => {
-        const btn = document.getElementById('btnCopySummary');
-        btn.classList.add('copied');
-        btn.innerHTML = '✅ ¡Copiado!';
-        
-        setTimeout(() => {
-            btn.classList.remove('copied');
-            btn.innerHTML = '📋 Copiar resumen';
-        }, 2000);
-        
-        // Haptic feedback
-        if (navigator.vibrate) navigator.vibrate(50);
-    }).catch(err => {
-        console.error('Copy failed:', err);
-        alert('No se pudo copiar. Intenta de nuevo.');
-    });
 }
+
 
 // Initialize on load
 document.addEventListener('DOMContentLoaded', function() {
