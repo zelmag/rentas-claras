@@ -15,7 +15,7 @@ from database import (
     get_monthly_status,
 )
 from routes.auth import login_required
-from services.dates import SPANISH_MONTHS
+from services.dates import get_billing_month, SPANISH_MONTHS
 
 
 dashboard_bp = Blueprint("dashboard", __name__)
@@ -46,10 +46,9 @@ def index():
     mes = MESES[today.month - 1]
     today_formatted = f"{dia_semana.capitalize()} {dia} de {mes}"
     
-    # Current month
-    year = today.year
-    month = today.month
-    month_name = SPANISH_MONTHS[month - 1]
+    # Get billing month from SINGLE SOURCE OF TRUTH
+    # This ensures all pages (dashboard, pagos, state API) use the same month
+    year, month, month_name = get_billing_month(today)
     
     # Get tenants and payment status
     all_tenants = get_all_tenants()

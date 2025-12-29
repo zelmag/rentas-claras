@@ -27,6 +27,7 @@ from services.dates import (
     calculate_relative_time,
     format_date_excel,
     format_date_spanish,
+    get_billing_month,
     get_month_name,
     SPANISH_MONTHS,
 )
@@ -52,17 +53,8 @@ def index():
     """Main payment tracking page."""
     today = datetime.now()
 
-    # AUTO-SWITCH: After day 7, default to next month
-    if today.day > 7:
-        if today.month == 12:
-            default_year = today.year + 1
-            default_month = 1
-        else:
-            default_year = today.year
-            default_month = today.month + 1
-    else:
-        default_year = today.year
-        default_month = today.month
+    # Use shared billing month function (Single Source of Truth)
+    default_year, default_month, _ = get_billing_month(today)
 
     year = request.args.get("year", default_year, type=int)
     month = request.args.get("month", default_month, type=int)

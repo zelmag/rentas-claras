@@ -19,7 +19,7 @@ from database import (
     get_monthly_status,
 )
 from routes.auth import login_required
-from services.dates import SPANISH_MONTHS, calculate_relative_time
+from services.dates import get_billing_month, calculate_relative_time, SPANISH_MONTHS
 
 
 state_bp = Blueprint("state", __name__)
@@ -75,18 +75,9 @@ def get_state_summary():
     }
     """
     today = datetime.now()
-    year = today.year
-    month = today.month
     
-    # Auto-switch: After day 7, use next month as default
-    if today.day > 7:
-        if month == 12:
-            year += 1
-            month = 1
-        else:
-            month += 1
-    
-    month_name = SPANISH_MONTHS[month - 1]
+    # Use shared billing month function (Single Source of Truth)
+    year, month, month_name = get_billing_month(today)
     
     # Get all tenants and payment status
     all_tenants = get_all_tenants()

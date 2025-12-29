@@ -134,6 +134,64 @@ def get_month_name(month: int, capitalize: bool = False) -> str:
     return ""
 
 
+# =============================================================================
+# BILLING MONTH (Single Source of Truth for "current month" across all pages)
+# =============================================================================
+
+# Minimum supported date (when our data starts)
+MIN_BILLING_YEAR = 2026
+MIN_BILLING_MONTH = 1
+
+
+def get_billing_month(reference_date: Optional[datetime] = None) -> tuple[int, int, str]:
+    """
+    Get the current billing month/year for payment tracking.
+    
+    This is the SINGLE SOURCE OF TRUTH for determining which month
+    payments should be tracked for. All pages (pagos, dashboard, contratos, 
+    state API) should use this function.
+    
+    Rules:
+    - After day 7 of any month, auto-switch to NEXT month
+    - Minimum supported date is January 2026 (when our data starts)
+    
+    Args:
+        reference_date: Optional datetime to use instead of now (for testing)
+    
+    Returns:
+        Tuple of (year, month, month_name_spanish)
+    
+    Examples:
+        - Dec 29, 2025 → (2026, 1, "enero") [after day 7, switches to Jan 2026]
+        - Jan 5, 2026 → (2026, 1, "enero") [before day 7, stays on Jan]
+        - Jan 10, 2026 → (2026, 2, "febrero") [after day 7, switches to Feb]
+    """
+    today = reference_date or datetime.now()
+    
+    # Start with current date
+    year = today.year
+    month = today.month
+    
+    # AUTO-SWITCH: After day 7, move to next month
+    if today.day > 7:
+        if month == 12:
+            year += 1
+            month = 1
+        else:
+            month += 1
+    
+    # CLAMP: Ensure we don't go below minimum supported date
+    if year < MIN_BILLING_YEAR:
+        year = MIN_BILLING_YEAR
+        month = MIN_BILLING_MONTH
+    elif year == MIN_BILLING_YEAR and month < MIN_BILLING_MONTH:
+        month = MIN_BILLING_MONTH
+    
+    month_name = SPANISH_MONTHS[month - 1]
+    
+    return (year, month, month_name)
+
+
 def calculate_relative_time(timestamp: Optional[str]) -> Optional[str]:
     """
     Calculate relative time string from ISO timestamp.
