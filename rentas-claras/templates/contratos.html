@@ -188,22 +188,6 @@
             min-height: 64px;
         }
         
-        /* Desktop navigation - inline instead of fixed bottom */
-        .bottom-nav {
-            position: relative;
-            margin-top: 32px;
-            border-radius: 16px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        }
-        
-        .nav-item {
-            padding: 16px;
-            font-size: 1.1rem;
-        }
-        
-        .nav-icon {
-            font-size: 1.8rem;
-        }
         
         /* Modal - larger on desktop */
         .modal-content {
@@ -751,39 +735,7 @@
         background: var(--green);
     }
 
-    /* Bottom Nav */
-    .bottom-nav {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        background: white;
-        display: flex;
-        box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
-        z-index: 100;
-        /* Improved safe area support for older iPhones */
-        padding-bottom: env(safe-area-inset-bottom, 0px);
-        padding-bottom: constant(safe-area-inset-bottom, 0px); /* iOS 11.0-11.2 */
-    }
-
-    .nav-item {
-        flex: 1;
-        padding: 12px;
-        text-align: center;
-        text-decoration: none;
-        color: var(--gray);
-        font-weight: 600;
-        font-size: 0.9rem;
-    }
-
-    .nav-item.active {
-        color: var(--green);
-    }
-
-    .nav-icon {
-        font-size: 1.4rem;
-        margin-bottom: 4px;
-    }
+    /* Bottom Nav - uses shared styles from base.html */
 
     /* Empty state */
     .empty-state {
@@ -803,7 +755,7 @@
     <div class="container">
         <!-- Header -->
         <div class="header">
-            <h1 class="app-title">📄 RentasClaras</h1>
+            <h1 class="app-title">RentasClaras - Contratos</h1>
             
             <!-- Sync indicator with time -->
             <div class="sync-indicator saved" id="syncIndicator">
@@ -861,7 +813,7 @@
                         {% set current_property.value = item.property %}
                         <div class="property-section-header">
                             <div class="property-section-name">
-                                <span>🏢</span>
+                                <span></span>
                                 <span>{{ item.property }}</span>
                             </div>
                         </div>
@@ -877,7 +829,7 @@
                                 <div class="contract-name">{{ tenant.name }}</div>
                                 <div class="contract-unit">{{ tenant.unit }}</div>
                                 <div class="contract-dates">
-                                    📄 {{ tenant.contract_end_formatted }}
+                                    {{ tenant.contract_end_formatted }}
                                 </div>
                             </div>
                             <div class="contract-expiry {{ 'urgent' if tenant.days_until_expiry <= 7 else 'soon' if tenant.days_until_expiry <= 14 else 'ok' }}">
@@ -946,7 +898,7 @@
                 {% endfor %}
             {% else %}
                 <div class="empty-state">
-                    <div class="empty-state-icon">🎉</div>
+                    <div class="empty-state-icon"></div>
                     <div>¡Todo bajo control!</div>
                 </div>
             {% endif %}
@@ -970,7 +922,7 @@
                 {% if renewing_tenants|length > 0 %}
                 <div class="property-section-header" data-color="{{ colors[loop.index0 % 5] }}">
                     <div class="property-section-name">
-                        <span>🏢</span>
+                        <span></span>
                         <span>{{ property_name }}</span>
                     </div>
                 </div>
@@ -1210,7 +1162,7 @@
 
                 // Get contract dates
                 const datesEl = item.querySelector('.contract-dates');
-                const contractDate = datesEl ? datesEl.textContent.replace('📄', '').trim() : '-';
+                const contractDate = datesEl ? datesEl.textContent.trim() : '-';
 
                 // Get expiry badge
                 const expiryEl = item.querySelector('.contract-expiry');
@@ -1273,7 +1225,7 @@
                     </style>
                 </head>
                 <body>
-                    <h1>📄 RentasClaras - Contratos</h1>
+                    <h1>RentasClaras - Contratos</h1>
                     <p style="color: #666;">Generado: ${new Date().toLocaleDateString('es-MX', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
                     
                     <div class="summary-box">
@@ -1298,7 +1250,7 @@
                 
                 html += `
                     <div class="property-section">
-                        <div class="property-header">🏢 ${property}</div>
+                        <div class="property-header">${property}</div>
                         <table>
                             <tr>
                                 <th>Unidad</th>
@@ -1365,7 +1317,7 @@
 
                 // Get contract dates
                 const datesEl = item.querySelector('.contract-dates');
-                const contractDate = datesEl ? datesEl.textContent.replace('📄', '').trim() : '';
+                const contractDate = datesEl ? datesEl.textContent.trim() : '';
 
                 // Get expiry
                 const expiryEl = item.querySelector('.contract-expiry');

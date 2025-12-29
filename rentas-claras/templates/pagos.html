@@ -222,30 +222,6 @@
             min-height: 64px;
         }
         
-        /* Desktop navigation - inline instead of fixed bottom */
-        .bottom-nav {
-            position: relative;
-            margin-top: 32px;
-            border-radius: 16px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            border-top: none;
-        }
-        
-        .nav-item {
-            padding: 18px;
-            font-size: 1.2rem;
-            border-top: none;
-            margin-top: 0;
-        }
-        
-        .nav-item.active {
-            border-radius: 16px;
-            border-top: none;
-        }
-        
-        .nav-icon {
-            font-size: 2rem;
-        }
         
         /* Modal - larger on desktop */
         .modal-content {
@@ -641,26 +617,27 @@
         transform: scale(0.95);
     }
 
-    /* Property Section Header - Color-coded for different properties */
+    /* Property Section Header - CLEAR for 60yr old */
     .property-section-header {
-        color: #555;
-        padding: 14px 20px;
-        font-size: 1rem;
-        font-weight: 700;
+        color: #222;
+        padding: 16px 20px;
+        font-size: 1.1rem;
+        font-weight: 800;
         display: flex;
         justify-content: space-between;
         align-items: center;
         margin-top: 0;
-        background: #f0f0f0;
-        border-bottom: 1px solid #ddd;
+        background: #e8e8e8;
+        border-bottom: 2px solid #ccc;
+        border-left: 5px solid #333;
     }
 
-    /* Different colors for different properties - subtle styling */
-    .property-section-header[data-color="blue"] { border-left: 4px solid #2d5a87; }
-    .property-section-header[data-color="brown"] { border-left: 4px solid #7d5a4a; }
-    .property-section-header[data-color="green"] { border-left: 4px solid #4a7d6a; }
-    .property-section-header[data-color="purple"] { border-left: 4px solid #7d4a7d; }
-    .property-section-header[data-color="gold"] { border-left: 4px solid #7d7d4a; }
+    /* Different colors for different properties - BOLD borders */
+    .property-section-header[data-color="blue"] { border-left: 5px solid #1e4a6f; background: #e8f0f8; }
+    .property-section-header[data-color="brown"] { border-left: 5px solid #5c3d2e; background: #f5ebe8; }
+    .property-section-header[data-color="green"] { border-left: 5px solid #2e5c4a; background: #e8f5ee; }
+    .property-section-header[data-color="purple"] { border-left: 5px solid #5c2e5c; background: #f5e8f5; }
+    .property-section-header[data-color="gold"] { border-left: 5px solid #5c5c2e; background: #f5f5e8; }
 
     .property-section-header:first-child {
         margin-top: 0;
@@ -725,7 +702,8 @@
         z-index: 1000;
         align-items: center;
         justify-content: center;
-        padding: 20px;
+        padding: 12px;
+        overflow-y: auto;
     }
 
     .modal-overlay.show {
@@ -735,11 +713,161 @@
     .modal-content {
         background: white;
         border-radius: 20px;
-        padding: 24px;
+        padding: 20px;
         max-width: 360px;
         width: 100%;
         text-align: center;
         animation: modalPop 0.2s ease-out;
+        max-height: calc(100vh - 24px);
+        overflow-y: auto;
+    }
+    
+    /* Small screens (iPhone SE and smaller) */
+    @media (max-width: 375px) {
+        .modal-overlay {
+            padding: 8px;
+        }
+        
+        .modal-content {
+            padding: 16px;
+            border-radius: 16px;
+            max-width: 100%;
+            max-height: calc(100vh - 16px);
+        }
+        
+        .modal-icon {
+            font-size: 2.5rem;
+            margin-bottom: 8px;
+        }
+        
+        .modal-title {
+            font-size: 1.15rem;
+            margin-bottom: 6px;
+        }
+        
+        .modal-tenant {
+            font-size: 1rem;
+            padding: 10px;
+            margin: 12px 0;
+        }
+        
+        .modal-property {
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+        }
+        
+        .modal-amount {
+            font-size: 1.3rem;
+        }
+        
+        .modal-payment-methods {
+            padding: 12px;
+            margin: 12px 0;
+            gap: 8px;
+        }
+        
+        .modal-payment-methods-label {
+            font-size: 0.9rem;
+            margin-bottom: 4px;
+        }
+        
+        .modal-payment-btn {
+            padding: 12px 16px;
+            font-size: 1rem;
+            min-height: 48px;
+            border-width: 2px;
+        }
+        
+        .optional-extras {
+            margin-top: 12px;
+            padding-top: 12px;
+        }
+        
+        .optional-extras-toggle {
+            padding: 12px;
+            font-size: 0.9rem;
+        }
+        
+        #extraChargesSection,
+        #advancePaymentSection {
+            padding: 12px !important;
+        }
+        
+        #extraChargesSection .visit-btn,
+        #advancePaymentSection button[onclick^="changeAdvanceMonths"] {
+            width: 48px !important;
+            height: 48px !important;
+            font-size: 1.5rem !important;
+        }
+        
+        #visitCount,
+        #advanceMonths {
+            font-size: 2rem !important;
+        }
+        
+        .modal-buttons {
+            margin-top: 16px;
+            gap: 10px;
+        }
+        
+        .modal-btn {
+            padding: 14px;
+            font-size: 1rem;
+            min-height: 50px;
+        }
+    }
+    
+    /* Extra small screens (very old iPhone SE 1st gen - 320px) */
+    @media (max-width: 320px) {
+        .modal-overlay {
+            padding: 4px;
+        }
+        
+        .modal-content {
+            padding: 12px;
+            border-radius: 12px;
+        }
+        
+        .modal-icon {
+            font-size: 2rem;
+            margin-bottom: 6px;
+        }
+        
+        .modal-title {
+            font-size: 1.1rem;
+        }
+        
+        .modal-tenant {
+            font-size: 0.95rem;
+            padding: 8px;
+            margin: 10px 0;
+        }
+        
+        .modal-amount {
+            font-size: 1.2rem;
+        }
+        
+        .modal-payment-methods {
+            padding: 10px;
+            margin: 10px 0;
+            gap: 6px;
+        }
+        
+        .modal-payment-btn {
+            padding: 10px 12px;
+            font-size: 0.95rem;
+            min-height: 44px;
+        }
+        
+        .modal-buttons {
+            gap: 8px;
+        }
+        
+        .modal-btn {
+            padding: 12px;
+            font-size: 0.95rem;
+            min-height: 46px;
+        }
     }
 
     @keyframes modalPop {
@@ -932,50 +1060,7 @@
         background: var(--red);
     }
 
-    /* Bottom Nav - VERY OBVIOUS for 60 yr old */
-    .bottom-nav {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        background: white;
-        display: flex;
-        box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
-        z-index: 100;
-        border-top: 3px solid #e0e0e0;
-        /* Improved safe area support for older iPhones */
-        padding-bottom: env(safe-area-inset-bottom, 0px);
-        padding-bottom: constant(safe-area-inset-bottom, 0px); /* iOS 11.0-11.2 */
-    }
-
-    .nav-item {
-        flex: 1;
-        padding: 14px 12px;
-        text-align: center;
-        text-decoration: none;
-        color: #888;
-        font-weight: 700;
-        font-size: 1rem;
-        transition: all 0.2s;
-        border-top: 4px solid transparent;
-        margin-top: -3px;
-    }
-
-    .nav-item.active {
-        color: var(--green);
-        background: var(--green-light);
-        border-top: 4px solid var(--green);
-        font-weight: 800;
-    }
-
-    .nav-icon {
-        font-size: 1.6rem;
-        margin-bottom: 6px;
-    }
-
-    .nav-item.active .nav-icon {
-        transform: scale(1.15);
-    }
+    /* Bottom Nav - uses shared styles from base.html */
 
     /* Celebration */
     .celebration {
@@ -1081,11 +1166,11 @@
     <div class="container">
         <!-- Header -->
         <div class="header">
-            <h1 class="app-title">🏠 RentasClaras</h1>
+            <h1 class="app-title">RentasClaras</h1>
             
             <!-- Sync indicator with time -->
             <div class="sync-indicator saved" id="syncIndicator">
-                ✓ Guardado
+                Guardado
             </div>
 
             <!-- Month Selector -->
@@ -1133,11 +1218,11 @@
             </div>
 
             <div class="summary-row">
-                <span class="summary-label">✓ Cobrado</span>
+                <span class="summary-label">Cobrado</span>
                 <span class="summary-value green" id="totalPaid">$0</span>
             </div>
             <div class="summary-row">
-                <span class="summary-label">✗ Pendiente</span>
+                <span class="summary-label">Pendiente</span>
                 <span class="summary-value red" id="totalPending">${{ "{:,.0f}".format(total_rent) }}</span>
             </div>
         </div>
@@ -1147,7 +1232,6 @@
         <!-- PENDING Section -->
         <div class="section-header pending" onclick="toggleSection('pending')">
             <div class="section-title">
-                <span>⚠️</span>
                 <span>PENDIENTES</span>
             </div>
             <div style="display: flex; align-items: center; gap: 12px;">
@@ -1163,7 +1247,6 @@
                 <!-- Property Section Header -->
                 <div class="property-section-header" data-color="{{ colors[loop.index0 % 5] }}">
                     <div class="property-section-name">
-                        <span>🏢</span>
                         <span>{{ property_name }}</span>
                     </div>
                     <div class="property-section-amount" data-property-pending="{{ property_name }}">${{ "{:,.0f}".format(pending_tenants|sum(attribute='rent')) }}</div>
@@ -1190,8 +1273,7 @@
             
             {% if unpaid_count == 0 %}
             <div style="padding: 32px; text-align: center; color: var(--gray);">
-                <div style="font-size: 3rem; margin-bottom: 12px;">🎉</div>
-                <div style="font-size: 1.1rem; font-weight: 700;">¡Todos pagaron!</div>
+                <div style="font-size: 1.3rem; font-weight: 700; color: var(--green);">Todos pagaron</div>
             </div>
             {% endif %}
         </div>
@@ -1199,7 +1281,6 @@
         <!-- PAID Section (Collapsed by default) -->
         <div class="section-header paid" onclick="toggleSection('paid')">
             <div class="section-title">
-                <span>✓</span>
                 <span>YA PAGARON</span>
             </div>
             <div style="display: flex; align-items: center; gap: 12px;">
@@ -1215,7 +1296,6 @@
                 <!-- Property Section Header -->
                 <div class="property-section-header" data-color="{{ colors[loop.index0 % 5] }}">
                     <div class="property-section-name">
-                        <span>🏢</span>
                         <span>{{ property_name }}</span>
                     </div>
                     <div class="property-section-amount" data-property-paid="{{ property_name }}">${{ "{:,.0f}".format(paid_tenants|sum(attribute='rent')) }}</div>
@@ -1236,10 +1316,10 @@
                         {% if tenant.payment_method or (tenant.visits and tenant.visits > 0) %}
                         <div class="tenant-meta">
                             {% if tenant.payment_method %}
-                            <span class="tenant-meta-item payment-method">💳 {{ tenant.payment_method }}</span>
+                            <span class="tenant-meta-item payment-method">{{ tenant.payment_method }}</span>
                             {% endif %}
                             {% if tenant.visits and tenant.visits > 0 %}
-                            <span class="tenant-meta-item visits">🏠 {{ tenant.visits }} visita{% if tenant.visits > 1 %}s{% endif %} (+${{ "{:,.0f}".format(tenant.visit_charge) }})</span>
+                            <span class="tenant-meta-item visits">{{ tenant.visits }} visita{% if tenant.visits > 1 %}s{% endif %} (+${{ "{:,.0f}".format(tenant.visit_charge) }})</span>
                             {% endif %}
                         </div>
                         {% endif %}
@@ -1261,11 +1341,9 @@
         <!-- Action Buttons - AT BOTTOM -->
         <div class="action-buttons" style="margin-top: 24px; margin-bottom: 100px;">
             <button class="action-btn print" onclick="printSummary()">
-                <span>🖨️</span>
                 <span>Imprimir</span>
             </button>
             <button class="action-btn excel" onclick="downloadExcel()">
-                <span>📥</span>
                 <span>Excel</span>
             </button>
         </div>
@@ -1276,7 +1354,7 @@
     <!-- Confirmation Modal -->
     <div class="modal-overlay" id="confirmModal">
         <div class="modal-content">
-            <div class="modal-icon" id="modalIcon">💰</div>
+            <div class="modal-icon" id="modalIcon"></div>
             <div class="modal-title" id="modalTitle">¿Confirmar pago?</div>
             <div class="modal-tenant" id="modalTenant">Nombre del inquilino</div>
             <div class="modal-property" id="modalProperty">Propiedad · Unidad</div>
@@ -1285,22 +1363,22 @@
             <!-- Payment Method Selection (only shown when marking as paid) - FIRST, most common action -->
             <div class="modal-payment-methods" id="paymentMethods" style="display: none;">
                 <div class="modal-payment-methods-label">¿Cómo pagó?</div>
-                <button type="button" class="modal-payment-btn" data-method="Efectivo" onclick="selectPaymentMethod('Efectivo')">💵 Efectivo</button>
-                <button type="button" class="modal-payment-btn" data-method="Transferencia" onclick="selectPaymentMethod('Transferencia')">🏦 Transferencia</button>
-                <button type="button" class="modal-payment-btn" data-method="Depósito" onclick="selectPaymentMethod('Depósito')">🏧 Depósito</button>
-                <button type="button" class="modal-payment-btn" data-method="Envío sin tarjeta" onclick="selectPaymentMethod('Envío sin tarjeta')">📲 Envío sin tarjeta</button>
+                <button type="button" class="modal-payment-btn" data-method="Efectivo" onclick="selectPaymentMethod('Efectivo')">Efectivo</button>
+                <button type="button" class="modal-payment-btn" data-method="Transferencia" onclick="selectPaymentMethod('Transferencia')">Transferencia</button>
+                <button type="button" class="modal-payment-btn" data-method="Depósito" onclick="selectPaymentMethod('Depósito')">Deposito</button>
+                <button type="button" class="modal-payment-btn" data-method="Envío sin tarjeta" onclick="selectPaymentMethod('Envío sin tarjeta')">Envio sin tarjeta</button>
             </div>
 
             <!-- Optional Extras (Visitas & Pago Adelantado) - Collapsible, at the bottom -->
             <div class="optional-extras" id="optionalExtras" style="display: none;">
                 <button type="button" class="optional-extras-toggle" onclick="toggleOptionalExtras()">
-                    <span id="optionalExtrasIcon">➕</span>
-                    <span id="optionalExtrasLabel">¿Visitas o pago adelantado? (opcional)</span>
+                    <span id="optionalExtrasIcon">+</span>
+                    <span id="optionalExtrasLabel">Visitas o pago adelantado (opcional)</span>
                 </button>
                 <div class="optional-extras-content" id="optionalExtrasContent">
                     <!-- Extra Charges Section -->
                     <div id="extraChargesSection" style="margin: 12px 0; padding: 16px; background: #FEF3C7; border-radius: 12px; border: 2px solid #F59E0B;">
-                        <div style="font-size: 1.1rem; font-weight: 700; color: #92400E; margin-bottom: 12px;">🏠 ¿Hubo visitas este mes?</div>
+                        <div style="font-size: 1.1rem; font-weight: 700; color: #92400E; margin-bottom: 12px;">Visitas este mes:</div>
                         <div style="display: flex; align-items: center; gap: 16px; justify-content: center;">
                             <button type="button" class="visit-btn" onclick="changeVisits(-1)" style="width: 56px; height: 56px; border-radius: 50%; border: 3px solid #D97706; background: white; font-size: 1.8rem; cursor: pointer;">−</button>
                             <div style="text-align: center;">
@@ -1314,7 +1392,7 @@
 
                     <!-- Advance Payment Section -->
                     <div id="advancePaymentSection" style="margin: 12px 0; padding: 16px; background: #E0E7FF; border-radius: 12px; border: 2px solid #6366F1;">
-                        <div style="font-size: 1.1rem; font-weight: 700; color: #4338CA; margin-bottom: 12px;">📅 ¿Pago adelantado?</div>
+                        <div style="font-size: 1.1rem; font-weight: 700; color: #4338CA; margin-bottom: 12px;">Pago adelantado:</div>
                         <div style="display: flex; align-items: center; gap: 16px; justify-content: center;">
                             <button type="button" onclick="changeAdvanceMonths(-1)" style="width: 56px; height: 56px; border-radius: 50%; border: 3px solid #6366F1; background: white; font-size: 1.8rem; cursor: pointer;">−</button>
                             <div style="text-align: center;">
@@ -1331,7 +1409,7 @@
             
             <div class="modal-buttons">
                 <button class="modal-btn cancel" onclick="closeModal()">Cancelar</button>
-                <button class="modal-btn confirm-paid" id="modalConfirmBtn" onclick="confirmAction()">✓ Ya pagó</button>
+                <button class="modal-btn confirm-paid" id="modalConfirmBtn" onclick="confirmAction()">Si, Ya pago</button>
             </div>
         </div>
     </div>
@@ -1341,7 +1419,7 @@
 
     <!-- Celebration -->
     <div class="celebration" id="celebration">
-        🎉 ¡TODOS PAGARON! 🎉
+        TODOS PAGARON
     </div>
 
     <script>
@@ -1493,8 +1571,8 @@
 
             if (currentlyPaid) {
                 // Currently paid, asking to mark as unpaid
-                icon.textContent = '⚠️';
-                title.textContent = '¿Marcar como pendiente?';
+                icon.textContent = '';
+                title.textContent = 'Marcar como pendiente?';
                 amount.style.color = 'var(--red)';
                 btn.textContent = '✗ No ha pagado';
                 btn.className = 'modal-btn confirm-unpaid';
@@ -1503,8 +1581,8 @@
                 optionalExtrasContent.classList.remove('show');
             } else {
                 // Currently unpaid, asking to mark as paid
-                icon.textContent = '💰';
-                title.textContent = '¿Confirmar pago?';
+                icon.textContent = '';
+                title.textContent = 'Confirmar pago?';
                 amount.style.color = 'var(--green)';
                 btn.textContent = '✓ Ya pagó';
                 btn.className = 'modal-btn confirm-paid';
@@ -1513,7 +1591,7 @@
             }
 
             tenant.textContent = name;
-            property.textContent = `🏢 ${propertyName} · ${unitName}`;
+            property.textContent = `${propertyName} - ${unitName}`;
             const totalWithVisits = rent + extra;
             amount.textContent = '$' + totalWithVisits.toLocaleString();
 
@@ -1644,14 +1722,14 @@
             if (isPaid && selectedPaymentMethod) {
                 const methodDiv = document.createElement('div');
                 methodDiv.style.cssText = 'font-size: 0.85rem; color: var(--green); margin-top: 4px;';
-                methodDiv.textContent = '💳 ' + selectedPaymentMethod;
+                methodDiv.textContent = selectedPaymentMethod;
                 infoDiv.appendChild(methodDiv);
             }
 
             if (isPaid && visits > 0) {
                 const visitsDiv = document.createElement('div');
                 visitsDiv.style.cssText = 'font-size: 0.85rem; color: #92400E; margin-top: 4px; font-weight: 600;';
-                visitsDiv.textContent = `🏠 ${visits} visita${visits > 1 ? 's' : ''} (+$${(visits * VISIT_CHARGE).toLocaleString()})`;
+                visitsDiv.textContent = `${visits} visita${visits > 1 ? 's' : ''} (+$${(visits * VISIT_CHARGE).toLocaleString()})`;
                 infoDiv.appendChild(visitsDiv);
             }
 
@@ -1842,21 +1920,21 @@
                     </style>
                 </head>
                 <body>
-                    <h1>🏠 RentasClaras</h1>
+                    <h1>RentasClaras</h1>
                     <p style="font-size: 1.3rem; font-weight: 700; color: #333;">${monthName} ${currentYear}</p>
                     
                     <div class="summary-box">
                         <div class="summary-item paid">
                             <div class="summary-value" style="color: #0A7A0A;">${paidTotal}</div>
-                            <div class="summary-label">✓ Cobrado (${percent})</div>
+                            <div class="summary-label">Cobrado (${percent})</div>
                         </div>
                         <div class="summary-item pending">
                             <div class="summary-value" style="color: #CC0000;">${pendingTotal}</div>
-                            <div class="summary-label">✗ Pendiente</div>
+                            <div class="summary-label">Pendiente</div>
                         </div>
                         <div class="summary-item total">
                             <div class="summary-value" style="color: #333;">$${grandTotal.toLocaleString()}</div>
-                            <div class="summary-label">📊 Total Rentas</div>
+                            <div class="summary-label">Total Rentas</div>
                         </div>
                     </div>
             `;
@@ -1868,7 +1946,7 @@
                 
                 html += `
                     <div class="property-section">
-                        <div class="property-header">🏢 ${property}</div>
+                        <div class="property-header">${property}</div>
                         <table>
                             <tr>
                                 <th>Unidad</th>
@@ -1885,7 +1963,7 @@
                         <td>${t.unit}</td>
                         <td>${t.name}</td>
                         <td>$${t.rent.toLocaleString()}</td>
-                        <td class="status-pending">✗ Pendiente</td>
+                        <td class="status-pending">Pendiente</td>
                         <td>-</td>
                     </tr>`;
                 });
@@ -1896,7 +1974,7 @@
                         <td>${t.unit}</td>
                         <td>${t.name}</td>
                         <td>$${t.rent.toLocaleString()}</td>
-                        <td class="status-paid">✓ Pagado</td>
+                        <td class="status-paid">Pagado</td>
                         <td>${t.paymentMethod || '-'}</td>
                     </tr>`;
                 });

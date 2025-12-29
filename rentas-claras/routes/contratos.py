@@ -11,6 +11,7 @@ from datetime import datetime, timedelta
 from flask import Blueprint, jsonify, render_template, request
 
 from database import get_all_tenants, update_renewal_status
+from routes.auth import login_required
 from services.dates import (
     format_date_spanish,
     parse_date,
@@ -27,6 +28,7 @@ contratos_bp = Blueprint("contratos", __name__)
 # =============================================================================
 
 @contratos_bp.route("/contratos")
+@login_required
 def contracts():
     """Contract renewal management page."""
     all_tenants = get_all_tenants()
@@ -201,12 +203,14 @@ def contracts():
         upcoming_renewals_by_month=action_needed_renewals_by_month,
         action_needed_count=action_needed_count,
         available_apartments=available_apartments,
+        active_tab="contratos",
     )
 
     return render_template("contratos.html", **template_vars)
 
 
 @contratos_bp.route("/api/renewal", methods=["POST"])
+@login_required
 def update_renewal():
     """Update contract renewal status for a tenant."""
     data = request.json

@@ -11,7 +11,7 @@
     <link rel="manifest" href="/static/manifest.json">
     <meta name="theme-color" content="#0A7A0A">
     
-    {# Shared CSS Variables #}
+    {# Shared CSS Variables and Bottom Nav Styles #}
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         
@@ -19,11 +19,13 @@
             --safe-area-top: env(safe-area-inset-top, 0px);
             --safe-area-bottom: env(safe-area-inset-bottom, 0px);
             --color-primary: #0A7A0A;
+            --color-primary-light: #dcfce7;
             --color-primary-dark: #085A08;
             --color-danger: #CC0000;
             --color-neutral: #333333;
+            --color-gray: #888;
             --color-white: #FFFFFF;
-            --color-border: #CCCCCC;
+            --color-border: #e0e0e0;
         }
         
         html {
@@ -38,6 +40,103 @@
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
         }
+
+        /* ========== SHARED BOTTOM NAV STYLES ========== */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            display: flex;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
+            z-index: 100;
+            border-top: 3px solid var(--color-border);
+            padding-bottom: env(safe-area-inset-bottom, 0px);
+            padding-bottom: constant(safe-area-inset-bottom, 0px);
+        }
+
+        .nav-item {
+            flex: 1;
+            padding: 16px 12px;
+            text-align: center;
+            text-decoration: none;
+            color: #666;
+            font-weight: 700;
+            font-size: 1.1rem;
+            transition: all 0.2s;
+            border-top: 5px solid transparent;
+            margin-top: -3px;
+        }
+
+        .nav-item.active {
+            color: var(--color-primary);
+            background: var(--color-primary-light);
+            border-top: 5px solid var(--color-primary);
+            font-weight: 800;
+        }
+
+        .nav-icon {
+            font-size: 1.8rem;
+            font-weight: 800;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s;
+        }
+        
+        .nav-icon svg {
+            width: 28px;
+            height: 28px;
+        }
+
+        .nav-item.active .nav-icon {
+            transform: scale(1.15);
+        }
+
+        /* Tablet responsive */
+        @media (min-width: 768px) {
+            .nav-item {
+                padding: 18px;
+                font-size: 1.2rem;
+            }
+            .nav-icon {
+                font-size: 2rem;
+            }
+            .nav-icon svg {
+                width: 32px;
+                height: 32px;
+            }
+        }
+
+        /* Desktop responsive - inline nav */
+        @media (min-width: 1024px) {
+            .bottom-nav {
+                position: relative;
+                margin-top: 32px;
+                border-radius: 16px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+                border-top: none;
+            }
+            .nav-item {
+                padding: 20px;
+                font-size: 1.3rem;
+                border-top: none;
+                margin-top: 0;
+            }
+            .nav-item.active {
+                border-radius: 16px;
+                border-top: none;
+            }
+            .nav-icon {
+                font-size: 2.2rem;
+            }
+            .nav-icon svg {
+                width: 36px;
+                height: 36px;
+            }
+        }
     </style>
     
     {# Page-specific styles #}
@@ -49,60 +148,9 @@
 <body>
     {% block body %}{% endblock %}
     
-    {# Bottom Navigation - Shared across main pages #}
+    {# Bottom Navigation - Can be overridden by pages but uses shared partial by default #}
     {% block bottom_nav %}
-    <nav class="bottom-nav" style="
-        display: flex;
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        background: var(--color-white);
-        border-top: 2px solid var(--color-border);
-        padding: 8px;
-        padding-bottom: calc(8px + var(--safe-area-bottom));
-        z-index: 1000;
-        justify-content: space-around;
-        gap: 8px;
-        box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
-    ">
-        <a href="/" class="bottom-nav-item {% if active_tab == 'pagos' %}active{% endif %}" style="
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-decoration: none;
-            color: {% if active_tab == 'pagos' %}var(--color-primary){% else %}var(--color-neutral){% endif %};
-            font-size: 1rem;
-            font-weight: 700;
-            padding: 10px;
-            border-radius: 8px;
-            min-width: 72px;
-            min-height: 56px;
-            {% if active_tab == 'pagos' %}background: rgba(10, 122, 10, 0.1);{% endif %}
-        ">
-            <span style="font-size: 1.5rem; margin-bottom: 2px;">💰</span>
-            <span>Cobrar</span>
-        </a>
-        <a href="/contratos" class="bottom-nav-item {% if active_tab == 'contratos' %}active{% endif %}" style="
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-decoration: none;
-            color: {% if active_tab == 'contratos' %}var(--color-primary){% else %}var(--color-neutral){% endif %};
-            font-size: 1rem;
-            font-weight: 700;
-            padding: 10px;
-            border-radius: 8px;
-            min-width: 72px;
-            min-height: 56px;
-            {% if active_tab == 'contratos' %}background: rgba(10, 122, 10, 0.1);{% endif %}
-        ">
-            <span style="font-size: 1.5rem; margin-bottom: 2px;">📋</span>
-            <span>Contratos</span>
-        </a>
-    </nav>
+    {% include 'partials/bottom_nav.html' %}
     {% endblock %}
     
     {# Page-specific scripts #}
