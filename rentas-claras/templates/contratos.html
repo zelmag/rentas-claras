@@ -598,11 +598,12 @@
     /* Replacement Form */
     .replacement-form {
         margin-top: 16px;
-        padding: 16px;
+        padding: 14px;
         background: #fff5f5;
         border-radius: 12px;
         border: 2px solid var(--red);
         display: none;
+        overflow: hidden;
     }
 
     .replacement-form.show {
@@ -621,8 +622,14 @@
 
     .form-grid {
         display: grid;
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: 1fr;
         gap: 12px;
+    }
+    
+    @media (min-width: 500px) {
+        .form-grid {
+            grid-template-columns: 1fr 1fr;
+        }
     }
 
     .form-group {
@@ -642,10 +649,12 @@
     }
 
     .form-input {
+        width: 100%;
         padding: 12px;
         border: 2px solid #ddd;
         border-radius: 8px;
         font-size: 1rem;
+        box-sizing: border-box;
     }
 
     .form-input:focus {
