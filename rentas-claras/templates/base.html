@@ -153,25 +153,30 @@
             }
         }
 
-        /* Desktop responsive - inline nav */
+        /* Desktop responsive - top nav */
         @media (min-width: 1024px) {
             .bottom-nav {
-                position: relative;
-                margin-top: 32px;
-                border-radius: var(--radius-md);
-                box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-                border: 1px solid var(--border);
+                position: fixed;
+                top: 0;
+                bottom: auto;
+                border-top: none;
+                border-bottom: 1px solid var(--border);
+                box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+                padding-top: env(safe-area-inset-top, 0px);
+                padding-bottom: 0;
             }
             .nav-item {
                 padding: 16px 12px;
                 font-size: 1rem;
                 border-top: none;
+                border-bottom: 3px solid transparent;
                 margin-top: 0;
+                margin-bottom: -1px;
                 gap: 6px;
             }
             .nav-item.active {
-                border-radius: var(--radius-md);
                 border-top: none;
+                border-bottom-color: var(--green);
             }
             .nav-icon {
                 font-size: 1.8rem;
@@ -179,6 +184,11 @@
             .nav-icon svg {
                 width: 32px;
                 height: 32px;
+            }
+            
+            /* Add top padding to body to prevent content from being hidden behind fixed top nav */
+            body {
+                padding-top: 80px;
             }
         }
     </style>
