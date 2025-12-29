@@ -7,9 +7,10 @@ WhatsApp Cloud API integration for sending rent reminders.
 
 from datetime import datetime
 
-from flask import Blueprint, jsonify, request
-
 from database import get_all_tenants, get_monthly_status
+
+from flask import Blueprint, jsonify, request
+from routes.auth import login_required
 from services.dates import SPANISH_MONTHS
 from services.names import extract_display_name
 
@@ -21,7 +22,9 @@ whatsapp_bp = Blueprint("whatsapp", __name__)
 # ROUTES
 # =============================================================================
 
+
 @whatsapp_bp.route("/api/whatsapp/status")
+@login_required
 def whatsapp_status():
     """Check if WhatsApp API is configured."""
     try:
@@ -33,6 +36,7 @@ def whatsapp_status():
 
 
 @whatsapp_bp.route("/api/whatsapp/send-all", methods=["POST"])
+@login_required
 def send_all_whatsapp():
     """
     Send WhatsApp reminders to all unpaid tenants via Meta Cloud API.
@@ -149,6 +153,7 @@ def send_all_whatsapp():
 
 
 @whatsapp_bp.route("/api/whatsapp/send-one", methods=["POST"])
+@login_required
 def send_one_whatsapp():
     """Send WhatsApp reminder to a single tenant."""
     try:

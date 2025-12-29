@@ -5,25 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="RentasClaras">
     <title>{% block title %}RentasClaras{% endblock %}</title>
     <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
     <link rel="apple-touch-icon" href="/static/icon-192.png">
     <link rel="manifest" href="/static/manifest.json">
     <meta name="theme-color" content="#2D6A4F">
-    
+
     {# Google Fonts - Inter for modern, legible typography #}
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    
+
     {# Shared CSS Variables and Bottom Nav Styles #}
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        
+
         :root {
             --safe-area-top: env(safe-area-inset-top, 0px);
             --safe-area-bottom: env(safe-area-inset-bottom, 0px);
-            
+
             /* Modern Muted Color Palette */
             --green: #2D6A4F;
             --green-light: #D8F3DC;
@@ -38,10 +39,10 @@
             --paper: #FAFAFA;
             --border: #E2E8F0;
             --white: #FFFFFF;
-            
+
             /* Focus ring */
             --focus-ring: 0 0 0 3px rgba(45, 106, 79, 0.25);
-            
+
             /* Legacy aliases for compatibility */
             --color-primary: var(--green);
             --color-primary-light: var(--green-light);
@@ -51,8 +52,8 @@
             --color-gray: var(--gray);
             --color-white: var(--white);
             --color-border: var(--border);
-            
-            /* Typography Scale */
+
+        /* Typography Scale */
             --text-xs: 0.8125rem;   /* 13px */
             --text-sm: 0.9375rem;   /* 15px */
             --text-base: 1.0625rem; /* 17px */
@@ -60,17 +61,22 @@
             --text-xl: 1.5rem;      /* 24px */
             --text-2xl: 2rem;       /* 32px */
             --text-3xl: 2.5rem;     /* 40px */
-            
-            /* Spacing */
-            --radius-sm: 8px;
-            --radius-md: 12px;
-            --radius-lg: 16px;
         }
-        
+
+        /* SUGGESTION #1: Increase font size on small screens for 60+ users */
+        @media (max-width: 375px) {
+            :root {
+                --text-xs: 0.875rem;    /* 14px - was 13px */
+                --text-sm: 1rem;        /* 16px - was 15px */
+                --text-base: 1.125rem;  /* 18px - was 17px */
+                --text-lg: 1.375rem;    /* 22px - was 20px */
+            }
+        }
+
         html {
             height: 100%;
         }
-        
+
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: var(--paper);
@@ -82,7 +88,16 @@
             color: #1A202C;
         }
 
-        /* ========== SHARED BOTTOM NAV STYLES ========== */
+        /* ========== BOTTOM NAV - REDESIGNED FOR 60+ LANDLORD ========== */
+        /*
+         * UX Design for elderly landlord:
+         * 1. ALL 5 features visible (no hidden menus - reduces confusion)
+         * 2. Large touch targets (60px+ min height - exceeds WCAG 44px)
+         * 3. Large readable text (13px+ labels)
+         * 4. High contrast colors
+         * 5. Visual hierarchy: Pagos & Contratos emphasized (center, bolder)
+         * 6. Familiar icons + "WhatsApp" label (everyone knows WhatsApp)
+         */
         .bottom-nav {
             position: fixed;
             bottom: 0;
@@ -90,66 +105,150 @@
             right: 0;
             background: var(--white);
             display: flex;
-            box-shadow: 0 -2px 12px rgba(0,0,0,0.08);
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
             z-index: 100;
-            border-top: 1px solid var(--border);
+            border-top: 3px solid var(--border);
             padding-bottom: env(safe-area-inset-bottom, 0px);
             padding-bottom: constant(safe-area-inset-bottom, 0px);
         }
 
+        /* Base nav item - optimized for older users with large touch targets */
         .nav-item {
             flex: 1;
-            padding: 10px 4px;
+            padding: 10px 2px 12px;
+            min-height: 62px;
             text-align: center;
             text-decoration: none;
             color: var(--gray);
             font-weight: 600;
-            font-size: 0.85rem;
-            transition: all 0.2s;
-            border-top: 3px solid transparent;
-            margin-top: -1px;
+            letter-spacing: 0.01em;
+            transition: all 0.15s ease;
+            border-top: 4px solid transparent;
+            margin-top: -3px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 2px;
+            justify-content: center;
+            gap: 3px;
             min-width: 0;
+            -webkit-tap-highlight-color: transparent;
         }
 
+        /* ★ PRIMARY items - visual prominence for Pagos & Contratos */
+        .nav-item.nav-primary {
+            flex: 1.1;
+            background: linear-gradient(180deg, rgba(45, 106, 79, 0.04) 0%, transparent 100%);
+        }
+
+        .nav-item.nav-primary .nav-icon svg {
+            width: 28px;
+            height: 28px;
+            stroke-width: 2.4;
+        }
+
+        .nav-item.nav-primary .nav-label {
+            font-size: 0.8125rem;
+            font-weight: 700;
+            color: var(--green-dark);
+        }
+
+        /* Active state - high visibility green */
         .nav-item.active {
-            color: var(--green);
+            color: var(--green-dark);
             background: var(--green-light);
             border-top-color: var(--green);
-            font-weight: 700;
         }
 
-        .nav-icon {
-            font-size: 1.4rem;
-            line-height: 1;
-            transition: transform 0.2s;
+        .nav-item.active.nav-primary {
+            background: linear-gradient(180deg, var(--green-light) 0%, rgba(216, 243, 220, 0.7) 100%);
+            border-top-color: var(--green-dark);
         }
-        
+
+        .nav-item.active .nav-label {
+            color: var(--green-dark);
+        }
+
+        /* Icons - larger for visibility */
+        .nav-icon {
+            line-height: 1;
+            transition: transform 0.15s ease;
+        }
+
         .nav-icon svg {
             width: 24px;
             height: 24px;
+            stroke-width: 2.2;
         }
 
         .nav-item.active .nav-icon {
             transform: scale(1.1);
         }
 
-        /* Tablet responsive */
-        @media (min-width: 768px) {
+        /* Labels - readable size, truncate if needed */
+        .nav-label {
+            font-size: 0.6875rem;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+            line-height: 1.2;
+        }
+
+        /* Hover/focus states for accessibility */
+        .nav-item:hover:not(.active) {
+            background: rgba(45, 106, 79, 0.06);
+            color: var(--green);
+        }
+
+        .nav-item:focus-visible {
+            outline: none;
+            box-shadow: inset 0 0 0 3px rgba(45, 106, 79, 0.4);
+        }
+
+        /* Larger phones (375px+) - more comfortable sizing */
+        @media (min-width: 375px) {
             .nav-item {
-                padding: 14px 8px;
-                font-size: 0.85rem;
+                padding: 10px 4px 12px;
+                min-height: 64px;
                 gap: 4px;
             }
-            .nav-icon {
-                font-size: 1.6rem;
+            .nav-icon svg {
+                width: 26px;
+                height: 26px;
+            }
+            .nav-item.nav-primary .nav-icon svg {
+                width: 30px;
+                height: 30px;
+            }
+            .nav-label {
+                font-size: 0.75rem;
+            }
+            .nav-item.nav-primary .nav-label {
+                font-size: 0.8125rem;
+            }
+        }
+
+        /* Tablet responsive - even larger targets */
+        @media (min-width: 768px) {
+            .nav-item {
+                padding: 14px 8px 16px;
+                min-height: 72px;
+                gap: 6px;
             }
             .nav-icon svg {
-                width: 28px;
-                height: 28px;
+                width: 30px;
+                height: 30px;
+            }
+            .nav-item.nav-primary .nav-icon svg {
+                width: 34px;
+                height: 34px;
+            }
+            .nav-label {
+                font-size: 0.875rem;
+            }
+            .nav-item.nav-primary .nav-label {
+                font-size: 0.9375rem;
             }
         }
 
@@ -160,56 +259,119 @@
                 top: 0;
                 bottom: auto;
                 border-top: none;
-                border-bottom: 1px solid var(--border);
-                box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+                border-bottom: 3px solid var(--border);
+                box-shadow: 0 4px 20px rgba(0,0,0,0.08);
                 padding-top: env(safe-area-inset-top, 0px);
                 padding-bottom: 0;
             }
             .nav-item {
-                padding: 16px 12px;
-                font-size: 1rem;
+                padding: 16px 12px 18px;
+                min-height: 76px;
                 border-top: none;
-                border-bottom: 3px solid transparent;
+                border-bottom: 4px solid transparent;
                 margin-top: 0;
-                margin-bottom: -1px;
-                gap: 6px;
+                margin-bottom: -3px;
+                gap: 8px;
             }
             .nav-item.active {
                 border-top: none;
                 border-bottom-color: var(--green);
             }
-            .nav-icon {
-                font-size: 1.8rem;
+            .nav-item.active.nav-primary {
+                border-bottom-color: var(--green-dark);
             }
             .nav-icon svg {
                 width: 32px;
                 height: 32px;
             }
-            
-            /* Add top padding to body to prevent content from being hidden behind fixed top nav */
+            .nav-item.nav-primary .nav-icon svg {
+                width: 36px;
+                height: 36px;
+            }
+            .nav-label {
+                font-size: 1rem;
+            }
+            .nav-item.nav-primary .nav-label {
+                font-size: 1.0625rem;
+            }
+
+            /* IMPORTANT: Add top padding to body to prevent content from being hidden behind fixed top nav */
             body {
-                padding-top: 80px;
+                padding-top: 100px !important;
+            }
+
+            /* Also add padding-top to container elements that might override body padding */
+            .container {
+                margin-top: 0;
             }
         }
     </style>
-    
+
     {# Page-specific styles #}
     {% block styles %}{% endblock %}
-    
+
     {# Extra head content (scripts, meta tags, etc.) #}
     {% block head_extra %}{% endblock %}
 </head>
 <body>
     {% block body %}{% endblock %}
-    
+
     {# Bottom Navigation - Can be overridden by pages but uses shared partial by default #}
     {% block bottom_nav %}
     {% include 'partials/bottom_nav.html' %}
     {% endblock %}
-    
+
     {# Central State Management (Single Source of Truth) #}
     <script src="/static/js/state.js"></script>
-    
+
+    {# Service Worker Registration for PWA #}
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/static/js/sw.js', { scope: '/' })
+                .then(reg => console.log('✅ RentasClaras PWA ready'))
+                .catch(err => console.log('⚠️ Service Worker error:', err));
+        }
+
+        // iOS Install Prompt Helper
+        (function() {
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+            const isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
+                                 window.navigator.standalone === true;
+            const hasSeenPrompt = localStorage.getItem('ios-install-prompt-seen');
+
+            if (isIOS && !isStandalone && !hasSeenPrompt) {
+                // Show iOS install hint after 3 seconds
+                setTimeout(() => {
+                    const banner = document.createElement('div');
+                    banner.id = 'ios-install-banner';
+                    banner.innerHTML = `
+                        <div style="position: fixed; bottom: 80px; left: 16px; right: 16px;
+                                    background: white; padding: 16px; border-radius: 12px;
+                                    box-shadow: 0 4px 20px rgba(0,0,0,0.15); z-index: 1000;
+                                    display: flex; align-items: center; gap: 12px;">
+                            <div style="font-size: 2rem;">📱</div>
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; margin-bottom: 4px;">Instalar RentasClaras</div>
+                                <div style="font-size: 0.85rem; color: #666;">
+                                    Toca <strong>Compartir</strong> <span style="font-size: 1.2em;">⬆️</span> y luego <strong>"Agregar a inicio"</strong>
+                                </div>
+                            </div>
+                            <button onclick="this.parentElement.remove(); localStorage.setItem('ios-install-prompt-seen', '1');"
+                                    style="background: none; border: none; font-size: 1.5rem; cursor: pointer; padding: 4px;">✕</button>
+                        </div>
+                    `;
+                    document.body.appendChild(banner);
+
+                    // Auto-dismiss after 10 seconds
+                    setTimeout(() => {
+                        const el = document.getElementById('ios-install-banner');
+                        if (el) el.remove();
+                    }, 10000);
+                }, 3000);
+            }
+        })();
+    </script>
+
     {# Page-specific scripts #}
     {% block scripts %}{% endblock %}
 </body>

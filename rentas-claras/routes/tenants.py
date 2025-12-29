@@ -5,7 +5,7 @@ Tenant Management Blueprint - Add/Edit Tenants & Properties
 Admin page for managing tenants and properties.
 """
 
-from flask import Blueprint, jsonify, render_template, request
+import logging
 
 from database import (
     add_tenant,
@@ -16,9 +16,20 @@ from database import (
     reactivate_tenant,
     update_tenant,
 )
+
+from flask import Blueprint, jsonify, render_template, request
 from routes.auth import login_required
+from services.validation import (
+    sanitize_string,
+    validate_date_string,
+    validate_phone,
+    validate_rent,
+    validate_tenant_create,
+    validate_tenant_id,
+)
 
 
+logger = logging.getLogger(__name__)
 tenants_bp = Blueprint("tenants", __name__)
 
 
@@ -33,14 +44,14 @@ def tenants_page():
     """Tenant management page."""
     tenants = get_all_tenants()
     properties = get_all_properties()
-    
+
     # Group tenants by property
     tenants_by_property = {}
     for tenant in tenants:
         if tenant.property_name not in tenants_by_property:
             tenants_by_property[tenant.property_name] = []
         tenants_by_property[tenant.property_name].append(tenant)
-    
+
     return render_template(
         "inquilinos.html",
         tenants=tenants,
@@ -56,29 +67,38 @@ def tenants_page():
 def api_add_tenant():
     """Add a new tenant."""
     data = request.json
-    
+    if not data:
+        return jsonify({"success": False, "error": "Request body is required"}), 400
+
+    # Validate input data
+    is_valid, error, validated = validate_tenant_create(data)
+    if not is_valid:
+        logger.warning(f"Tenant creation validation failed: {error}")
+        return jsonify({"success": False, "error": error}), 400
+
     try:
         tenant_id = add_tenant(
-            name=data.get("name", "").strip(),
-            property_name=data.get("property_name", "").strip(),
-            unit=data.get("unit", "").strip(),
-            rent=float(data.get("rent", 0)),
-            phone=data.get("phone", "").strip(),
-            contract_start=data.get("contract_start"),
-            contract_end=data.get("contract_end"),
-            emergency_contact=data.get("emergency_contact"),
-            emergency_phone=data.get("emergency_phone"),
-            bank=data.get("bank"),
-            aval_name=data.get("aval_name", "").strip() if data.get("aval_name") else None,
-            aval_phone=data.get("aval_phone", "").strip() if data.get("aval_phone") else None,
-            prorated_first_month=data.get("prorated_first_month", False),
-            prorated_amount=data.get("prorated_amount"),
-            prorated_month=data.get("prorated_month"),
-            prorated_year=data.get("prorated_year"),
+            name=validated["name"],
+            property_name=validated["property_name"],
+            unit=validated["unit"],
+            rent=validated["rent"],
+            phone=validated.get("phone", ""),
+            contract_start=validated.get("contract_start"),
+            contract_end=validated.get("contract_end"),
+            emergency_contact=validated.get("emergency_contact"),
+            emergency_phone=validated.get("emergency_phone"),
+            bank=validated.get("bank"),
+            aval_name=validated.get("aval_name"),
+            aval_phone=validated.get("aval_phone"),
+            prorated_first_month=validated.get("prorated_first_month", False),
+            prorated_amount=validated.get("prorated_amount"),
+            prorated_month=validated.get("prorated_month"),
+            prorated_year=validated.get("prorated_year"),
         )
-        
+
         return jsonify({"success": True, "tenant_id": tenant_id})
     except Exception as e:
+        logger.exception(f"Error adding tenant: {e}")
         return jsonify({"success": False, "error": str(e)}), 400
 
 
@@ -87,26 +107,65 @@ def api_add_tenant():
 def api_update_tenant(tenant_id):
     """Update an existing tenant."""
     data = request.json
-    
+    if not data:
+        return jsonify({"success": False, "error": "Request body is required"}), 400
+
+    # Validate tenant_id
+    is_valid, error = validate_tenant_id(tenant_id)
+    if not is_valid:
+        return jsonify({"success": False, "error": error}), 400
+
+    # Validate individual fields if provided
+    errors = []
+
+    if "name" in data:
+        name = sanitize_string(data.get("name"), max_length=200)
+        if not name:
+            errors.append("name cannot be empty")
+
+    if "phone" in data:
+        is_valid, error = validate_phone(data.get("phone"))
+        if not is_valid:
+            errors.append(error)
+
+    if "rent" in data:
+        is_valid, error = validate_rent(data.get("rent"))
+        if not is_valid:
+            errors.append(error)
+
+    for date_field in ["contract_start", "contract_end"]:
+        if date_field in data:
+            is_valid, error = validate_date_string(data.get(date_field), date_field)
+            if not is_valid:
+                errors.append(error)
+
+    if errors:
+        return jsonify({"success": False, "error": "; ".join(errors)}), 400
+
     try:
         update_tenant(
             tenant_id=tenant_id,
-            name=data.get("name"),
-            phone=data.get("phone"),
-            property_name=data.get("property_name"),
-            unit=data.get("unit"),
-            rent=float(data["rent"]) if "rent" in data else None,
+            name=sanitize_string(data.get("name")),
+            phone=sanitize_string(data.get("phone")),
+            property_name=sanitize_string(data.get("property_name")),
+            unit=sanitize_string(data.get("unit"), max_length=20),
+            rent=(
+                float(data["rent"])
+                if "rent" in data and data["rent"] is not None
+                else None
+            ),
             contract_start=data.get("contract_start"),
             contract_end=data.get("contract_end"),
-            emergency_contact=data.get("emergency_contact"),
-            emergency_phone=data.get("emergency_phone"),
-            bank=data.get("bank"),
-            aval_name=data.get("aval_name"),
-            aval_phone=data.get("aval_phone"),
+            emergency_contact=sanitize_string(data.get("emergency_contact")),
+            emergency_phone=sanitize_string(data.get("emergency_phone")),
+            bank=sanitize_string(data.get("bank"), max_length=50),
+            aval_name=sanitize_string(data.get("aval_name")),
+            aval_phone=sanitize_string(data.get("aval_phone")),
         )
-        
+
         return jsonify({"success": True})
     except Exception as e:
+        logger.exception(f"Error updating tenant: {e}")
         return jsonify({"success": False, "error": str(e)}), 400
 
 
@@ -114,10 +173,16 @@ def api_update_tenant(tenant_id):
 @login_required
 def api_deactivate_tenant(tenant_id):
     """Deactivate (soft-delete) a tenant."""
+    # Validate tenant_id
+    is_valid, error = validate_tenant_id(tenant_id)
+    if not is_valid:
+        return jsonify({"success": False, "error": error}), 400
+
     try:
         deactivate_tenant(tenant_id)
         return jsonify({"success": True})
     except Exception as e:
+        logger.exception(f"Error deactivating tenant: {e}")
         return jsonify({"success": False, "error": str(e)}), 400
 
 
@@ -125,8 +190,14 @@ def api_deactivate_tenant(tenant_id):
 @login_required
 def api_reactivate_tenant(tenant_id):
     """Reactivate a previously deactivated tenant."""
+    # Validate tenant_id
+    is_valid, error = validate_tenant_id(tenant_id)
+    if not is_valid:
+        return jsonify({"success": False, "error": error}), 400
+
     try:
         reactivate_tenant(tenant_id)
         return jsonify({"success": True})
     except Exception as e:
+        logger.exception(f"Error reactivating tenant: {e}")
         return jsonify({"success": False, "error": str(e)}), 400

@@ -47,6 +47,7 @@
     @media (min-width: 1024px) {
         body {
             padding-bottom: 0;
+            /* padding-top handled by base.html */
         }
 
         .container {
@@ -294,8 +295,12 @@
         background: var(--yellow-light);
     }
 
-    .quick-action-icon.inquilinos {
+    .quick-action-icon.depositos {
         background: #E0E7FF;
+    }
+
+    .quick-action-icon.inquilinos {
+        background: #FECACA;
     }
 
     .quick-action-content {
@@ -363,7 +368,7 @@
             transform: translateY(0);
         }
     }
-    
+
     /* Respect reduced motion preference */
     @media (prefers-reduced-motion: reduce) {
         .count-up {
@@ -371,7 +376,7 @@
             opacity: 1;
             transform: none;
         }
-        
+
         .main-stat-progress-fill {
             transition: none;
         }
@@ -400,6 +405,95 @@
 
     .offline-banner.show {
         display: block;
+    }
+
+    /* ========== REMINDER WIDGET ========== */
+    .reminder-widget {
+        background: linear-gradient(135deg, #667EEA 0%, #764BA2 100%);
+        border-radius: var(--radius-lg);
+        padding: 20px;
+        color: white;
+        transition: transform 0.15s, box-shadow 0.15s;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+
+    .reminder-widget:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+    }
+
+    .reminder-widget:active {
+        transform: scale(0.98);
+    }
+
+    .reminder-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+
+    .reminder-icon {
+        font-size: 2rem;
+    }
+
+    .reminder-title-area {
+        flex: 1;
+    }
+
+    .reminder-title {
+        font-size: var(--text-lg);
+        font-weight: 800;
+    }
+
+    .reminder-subtitle {
+        font-size: var(--text-sm);
+        opacity: 0.9;
+    }
+
+    .reminder-badge {
+        background: rgba(255,255,255,0.25);
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: var(--text-xs);
+        font-weight: 700;
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+    }
+
+    .reminder-body {
+        text-align: center;
+        padding: 12px 0;
+    }
+
+    .reminder-amount {
+        font-size: var(--text-2xl);
+        font-weight: 800;
+    }
+
+    .reminder-amount-label {
+        font-size: var(--text-sm);
+        opacity: 0.8;
+    }
+
+    .reminder-action {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        background: rgba(255,255,255,0.2);
+        padding: 12px 16px;
+        border-radius: var(--radius-md);
+        font-weight: 700;
+        margin-top: 12px;
+    }
+
+    .reminder-action:hover {
+        background: rgba(255,255,255,0.3);
     }
 </style>
 {% endblock %}
@@ -485,6 +579,32 @@
             </div>
         </div>
 
+        <!-- Recordatorios Widget - High Visibility -->
+        {% if pending_payments > 0 %}
+        <div class="content-section" id="section-reminders">
+            <a href="/recordatorios" class="reminder-widget" style="text-decoration: none; display: block;">
+                <div class="reminder-header">
+                    <div class="reminder-icon">📬</div>
+                    <div class="reminder-title-area">
+                        <div class="reminder-title">Recordatorios</div>
+                        <div class="reminder-subtitle">{{ pending_payments }} inquilinos sin pagar</div>
+                    </div>
+                    <div class="reminder-badge">HOY</div>
+                </div>
+                <div class="reminder-body">
+                    <div class="reminder-amount">${{ "{:,.0f}".format(pending_amount) }}</div>
+                    <div class="reminder-amount-label">pendiente</div>
+                </div>
+                <div class="reminder-action">
+                    <span>Revisar y Enviar Recordatorios</span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px;">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </div>
+            </a>
+        </div>
+        {% endif %}
+
         <!-- Quick Actions - no section title, more action-oriented -->
         <div class="quick-actions-grid">
             <a href="/" class="quick-action">
@@ -505,6 +625,19 @@
                 <div class="quick-action-content">
                     <div class="quick-action-title">Ver contratos</div>
                     <div class="quick-action-description">Revisar y renovar</div>
+                </div>
+                <div class="quick-action-arrow">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </div>
+            </a>
+
+            <a href="/depositos" class="quick-action">
+                <div class="quick-action-icon depositos">💰</div>
+                <div class="quick-action-content">
+                    <div class="quick-action-title">Depósitos</div>
+                    <div class="quick-action-description">Control de garantías</div>
                 </div>
                 <div class="quick-action-arrow">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -559,7 +692,7 @@
                 element.textContent = target.toLocaleString() + suffix;
                 return;
             }
-            
+
             const duration = 400;  // Fast 400ms instead of 1000ms
             const start = 0;
             const startTime = performance.now();
@@ -581,7 +714,7 @@
         }
 
         // ========== REACTIVE DASHBOARD - SOT INTEGRATION ==========
-        
+
         // Initial values from server (will be updated by SOT)
         let dashboardData = {
             totalCollected: {{ total_collected }},
@@ -685,7 +818,7 @@
 
             RentasState.subscribe((event) => {
                 console.log('📊 Dashboard received state update:', event.type);
-                
+
                 if (event.state) {
                     // Map state data to dashboard format
                     const newData = {

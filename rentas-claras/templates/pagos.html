@@ -87,7 +87,7 @@
     @media (min-width: 1024px) {
         body {
             padding-bottom: 0;
-            padding-top: 90px; /* Space for fixed top nav on desktop */
+            /* padding-top handled by base.html */
         }
 
         .container {
@@ -280,6 +280,39 @@
         font-weight: 800;
         color: var(--green);
         margin: 0 0 8px 0;
+    }
+
+    /* FIX #3: Big month banner for clarity - Don Raúl knows what month he's collecting */
+    .month-banner {
+        background: linear-gradient(135deg, #1A365D 0%, #2C5282 100%);
+        color: white;
+        padding: 12px 20px;
+        border-radius: 12px;
+        text-align: center;
+        margin-bottom: 16px;
+        box-shadow: 0 4px 12px rgba(26, 54, 93, 0.3);
+    }
+
+    .month-banner-label {
+        font-size: var(--text-sm);
+        opacity: 0.9;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .month-banner-value {
+        font-size: var(--text-xl);
+        font-weight: 800;
+        margin-top: 4px;
+    }
+
+    @media (min-width: 768px) {
+        .month-banner {
+            padding: 16px 28px;
+        }
+        .month-banner-value {
+            font-size: 1.8rem;
+        }
     }
 
     .month-selector {
@@ -638,6 +671,45 @@
 
     .tenant-amount.paid {
         color: var(--green);
+    }
+
+    /* FIX #6: Late fee display - make accumulated debt visible */
+    .tenant-late-info {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 6px;
+    }
+
+    .tenant-late-badge {
+        font-size: 0.85rem;
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-weight: 700;
+    }
+
+    .tenant-late-badge.days {
+        background: rgba(155, 44, 44, 0.15);
+        color: var(--red);
+    }
+
+    .tenant-late-badge.fee {
+        background: rgba(245, 158, 11, 0.2);
+        color: #92400E;
+    }
+
+    .tenant-total-owed {
+        font-size: 0.9rem;
+        color: var(--red);
+        font-weight: 700;
+        margin-top: 4px;
+    }
+
+    @media (min-width: 1024px) {
+        .tenant-late-badge {
+            font-size: 1rem;
+            padding: 6px 12px;
+        }
     }
 
     /* Big Toggle Button - 72px for Don Raúl's thick fingers */
@@ -1433,6 +1505,12 @@
 
         {% include 'partials/sync_indicator.html' %}
 
+        <!-- FIX #3: Big Month Banner - Don Raúl always knows what month he's collecting -->
+        <div class="month-banner">
+            <div class="month-banner-label">📅 Cobrando</div>
+            <div class="month-banner-value">{{ month_name }} {{ year }}</div>
+        </div>
+
         <!-- Summary Card -->
         <div class="summary-card">
             <div class="progress-section">
@@ -1497,14 +1575,14 @@
                         <div class="tenant-property">{{ tenant.unit }}</div>
                         {% if tenant.phone %}
                         <div class="tenant-quick-actions">
-                            <a href="https://wa.me/{{ tenant.phone|replace(' ', '')|replace('-', '') }}?text={{ 'Hola ' ~ tenant.name ~ ', te recuerdo que tu renta de ' ~ month_name ~ ' ($' ~ '{:,.0f}'.format(tenant.rent) ~ ') está pendiente. ¡Gracias!'|urlencode }}" 
-                               target="_blank" 
-                               class="quick-action-btn whatsapp" 
+                            <a href="https://wa.me/{{ tenant.phone|replace(' ', '')|replace('-', '') }}?text={{ 'Hola ' ~ tenant.name ~ ', te recuerdo que tu renta de ' ~ month_name ~ ' ($' ~ '{:,.0f}'.format(tenant.rent) ~ ') está pendiente. ¡Gracias!'|urlencode }}"
+                               target="_blank"
+                               class="quick-action-btn whatsapp"
                                onclick="event.stopPropagation();">
                                 📱 WhatsApp
                             </a>
-                            <a href="tel:{{ tenant.phone }}" 
-                               class="quick-action-btn call" 
+                            <a href="tel:{{ tenant.phone }}"
+                               class="quick-action-btn call"
                                onclick="event.stopPropagation();">
                                 📞 Llamar
                             </a>
@@ -1710,12 +1788,12 @@
 
         // SOT Key for this month - NOW DELEGATED TO RentasState
         // RentasState handles all localStorage caching centrally
-        
+
         // Compatibility functions that delegate to RentasState
         function getSOT() {
             const state = RentasState.getState();
             if (!state || !state.payments) return {};
-            
+
             // Convert RentasState format to legacy format
             const sot = {};
             Object.entries(state.payments).forEach(([key, val]) => {
@@ -2634,7 +2712,8 @@
         document.addEventListener('DOMContentLoaded', () => {
             updateSummary();
             updateCounts();
-            updateSyncIndicator(); // Show initial time
+            // REMOVED: updateSyncIndicator() - server already provides correct value via Jinja
+            // Only call updateSyncIndicator() AFTER an actual save operation
             updateOfflineStatus(); // Check offline status
 
             // Auto-expand "YA PAGARON" section if most have paid (>= 70%)

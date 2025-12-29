@@ -5,12 +5,13 @@ Contratos Blueprint - Contract Renewal Management
 Contract renewal tracking page and related API endpoints.
 """
 
+import logging
 from collections import defaultdict
 from datetime import datetime, timedelta
 
-from flask import Blueprint, jsonify, render_template, request
-
 from database import get_all_tenants, update_renewal_status
+
+from flask import Blueprint, jsonify, render_template, request
 from routes.auth import login_required
 from services.dates import (
     format_date_spanish,
@@ -18,14 +19,17 @@ from services.dates import (
     parse_spanish_month_year,
     SPANISH_MONTHS_CAPITALIZED as SPANISH_MONTHS,
 )
+from services.validation import validate_renewal_update
 
 
+logger = logging.getLogger(__name__)
 contratos_bp = Blueprint("contratos", __name__)
 
 
 # =============================================================================
 # ROUTES
 # =============================================================================
+
 
 @contratos_bp.route("/contratos")
 @login_required
@@ -35,6 +39,7 @@ def contracts():
     tenants_by_property = {}
 
     today = datetime.now()
+    today_date = today.date()  # Use date object for consistent comparison
 
     # Count by renewal status (limited to next month for actionable items)
     renewing_count = 0
@@ -49,7 +54,11 @@ def contracts():
         if tenant.contract_end:
             parsed = parse_date(tenant.contract_end)
             if parsed:
-                tenant.days_until_expiry = (parsed - today).days
+                tenant.days_until_expiry = (parsed.date() - today_date).days
+            else:
+                tenant.days_until_expiry = None
+        else:
+            tenant.days_until_expiry = None
 
     # Track upcoming renewals for bird's eye view, grouped by month
     upcoming_by_month = defaultdict(list)
@@ -146,11 +155,11 @@ def contracts():
                     prop_pending += 1
 
         property_stats[prop_name] = {
-            'renewing': prop_renewing,
-            'not_renewing': prop_not_renewing,
-            'pending': prop_pending,
-            'expiring_soon': prop_expiring_soon,
-            'total': len(tenants)
+            "renewing": prop_renewing,
+            "not_renewing": prop_not_renewing,
+            "pending": prop_pending,
+            "expiring_soon": prop_expiring_soon,
+            "total": len(tenants),
         }
 
     # Build list of available apartments (no renovará + no replacement candidate)
@@ -174,7 +183,10 @@ def contracts():
     for month_group in upcoming_renewals_by_month:
         filtered_tenants = []
         for tenant in month_group["tenants"]:
-            if not hasattr(tenant, 'days_until_expiry') or tenant.days_until_expiry > 30:
+            if (
+                not hasattr(tenant, "days_until_expiry")
+                or tenant.days_until_expiry > 30
+            ):
                 continue
 
             needs_action = False
@@ -188,10 +200,9 @@ def contracts():
                 action_needed_count += 1
 
         if filtered_tenants:
-            action_needed_renewals_by_month.append({
-                "month": month_group["month"],
-                "tenants": filtered_tenants
-            })
+            action_needed_renewals_by_month.append(
+                {"month": month_group["month"], "tenants": filtered_tenants}
+            )
 
     template_vars = dict(
         tenants_by_property=tenants_by_property,
@@ -214,20 +225,31 @@ def contracts():
 def update_renewal():
     """Update contract renewal status for a tenant."""
     data = request.json
-    tenant_id = data.get("tenant_id")
+    if not data:
+        return jsonify({"success": False, "error": "Request body is required"}), 400
 
-    update_renewal_status(
-        tenant_id=tenant_id,
-        renewal_status=data.get("renewal_status"),
-        contract_delivered=data.get("contract_delivered"),
-        contract_picked_up=data.get("contract_picked_up"),
-        leaving_date=data.get("leaving_date"),
-        replacement_name=data.get("replacement_name"),
-        replacement_phone=data.get("replacement_phone"),
-        replacement_contract_start=data.get("replacement_contract_start"),
-        replacement_contract_end=data.get("replacement_contract_end"),
-        replacement_aval_name=data.get("replacement_aval_name"),
-        replacement_aval_phone=data.get("replacement_aval_phone"),
-    )
+    # Validate input data
+    is_valid, error, validated = validate_renewal_update(data)
+    if not is_valid:
+        logger.warning(f"Renewal validation failed: {error}")
+        return jsonify({"success": False, "error": error}), 400
 
-    return jsonify({"success": True})
+    try:
+        update_renewal_status(
+            tenant_id=validated["tenant_id"],
+            renewal_status=validated.get("renewal_status"),
+            contract_delivered=validated.get("contract_delivered"),
+            contract_picked_up=validated.get("contract_picked_up"),
+            leaving_date=validated.get("leaving_date"),
+            replacement_name=validated.get("replacement_name"),
+            replacement_phone=validated.get("replacement_phone"),
+            replacement_contract_start=validated.get("replacement_contract_start"),
+            replacement_contract_end=validated.get("replacement_contract_end"),
+            replacement_aval_name=validated.get("replacement_aval_name"),
+            replacement_aval_phone=validated.get("replacement_aval_phone"),
+        )
+
+        return jsonify({"success": True})
+    except Exception as e:
+        logger.exception(f"Error updating renewal: {e}")
+        return jsonify({"success": False, "error": str(e)}), 400

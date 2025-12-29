@@ -1,0 +1,1217 @@
+{% extends "base.html" %}
+
+{% block title %}RentasClaras - Depósitos{% endblock %}
+
+{% block styles %}
+<style>
+    * { box-sizing: border-box; }
+
+    body {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: var(--paper);
+        margin: 0;
+        padding: 0;
+        padding-bottom: 80px;
+    }
+
+    .container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 16px;
+    }
+
+    /* ========== RESPONSIVE DESIGN ========== */
+    @media (min-width: 768px) {
+        .container {
+            max-width: 700px;
+            padding: 24px;
+        }
+
+        .app-title {
+            font-size: 2rem;
+        }
+
+        .summary-card {
+            padding: 28px;
+        }
+
+        .grand-total {
+            font-size: 2.5rem;
+        }
+
+        .deposit-item {
+            padding: 20px 24px;
+        }
+
+        .deposit-amount-input {
+            font-size: 1.3rem;
+        }
+    }
+
+    @media (min-width: 1024px) {
+        body {
+            padding-bottom: 0;
+            /* padding-top handled by base.html */
+        }
+
+        .container {
+            max-width: 900px;
+            padding: 32px;
+        }
+
+        .app-title {
+            font-size: 2.5rem;
+        }
+
+        .summary-card {
+            padding: 32px;
+        }
+
+        .grand-total {
+            font-size: 3rem;
+        }
+
+        .property-header {
+            padding: 18px 28px;
+            font-size: 1.2rem;
+        }
+
+        .deposit-item {
+            padding: 24px 28px;
+            gap: 20px;
+        }
+
+        .tenant-name {
+            font-size: 1.2rem;
+        }
+
+        .deposit-amount-input {
+            font-size: 1.4rem;
+        }
+    }
+
+    /* Header */
+    .header {
+        text-align: center;
+        margin-bottom: 16px;
+    }
+
+    .app-title {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: var(--green);
+        margin: 0 0 8px 0;
+    }
+
+    /* Summary Card - Grand Total */
+    .summary-card {
+        background: linear-gradient(135deg, var(--green) 0%, #086608 100%);
+        border-radius: 16px;
+        padding: 24px;
+        margin-bottom: 16px;
+        text-align: center;
+        color: white;
+    }
+
+    .summary-label {
+        font-size: 1rem;
+        opacity: 0.9;
+        margin-bottom: 8px;
+    }
+
+    .grand-total {
+        font-size: 2rem;
+        font-weight: 800;
+    }
+
+    .tenant-count {
+        font-size: 0.95rem;
+        opacity: 0.85;
+        margin-top: 8px;
+    }
+
+    /* Property Section */
+    .property-section {
+        margin-bottom: 16px;
+        background: white;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .property-header {
+        padding: 14px 20px;
+        font-weight: 700;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        cursor: pointer;
+        color: white;
+    }
+
+    .property-header[data-color="blue"] { background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%); border-left: 8px solid #0d2139; }
+    .property-header[data-color="brown"] { background: linear-gradient(135deg, #5c3d2e 0%, #7d5a4a 100%); border-left: 8px solid #3d271f; }
+    .property-header[data-color="green"] { background: linear-gradient(135deg, #2e5c4a 0%, #4a7d6a 100%); border-left: 8px solid #1e3d31; }
+    .property-header[data-color="purple"] { background: linear-gradient(135deg, #5c2e5c 0%, #7d4a7d 100%); border-left: 8px solid #3d1f3d; }
+    .property-header[data-color="gold"] { background: linear-gradient(135deg, #5c5c2e 0%, #7d7d4a 100%); border-left: 8px solid #3d3d1f; }
+
+    .property-name {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 1.1rem;
+    }
+
+    .property-stats {
+        text-align: right;
+    }
+
+    .property-count {
+        font-size: 0.9rem;
+        opacity: 0.85;
+    }
+
+    .property-total {
+        font-size: 1.1rem;
+        font-weight: 800;
+    }
+
+    .property-arrow {
+        font-size: 1rem;
+        margin-left: 8px;
+        transition: transform 0.3s;
+    }
+
+    .property-arrow.collapsed {
+        transform: rotate(-90deg);
+    }
+
+    /* Deposit List */
+    .deposit-list {
+        background: white;
+    }
+
+    .deposit-list.collapsed {
+        display: none;
+    }
+
+    /* Deposit Item */
+    .deposit-item {
+        padding: 16px 20px;
+        border-bottom: 1px solid #eee;
+        transition: background-color 0.3s;
+    }
+
+    .deposit-item:last-child {
+        border-bottom: none;
+    }
+
+    .deposit-item.paid {
+        background: var(--green-light);
+    }
+
+    .deposit-item.returned {
+        background: #f5f5f5;
+        opacity: 0.7;
+    }
+
+    .deposit-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .unit-badge {
+        background: var(--green);
+        color: white;
+        font-weight: 700;
+        font-size: 1rem;
+        padding: 8px 14px;
+        border-radius: 8px;
+        min-width: 48px;
+        text-align: center;
+    }
+
+    .deposit-item.returned .unit-badge {
+        background: #999;
+    }
+
+    .deposit-info {
+        flex: 1;
+        min-width: 120px;
+    }
+
+    .tenant-name {
+        font-size: 1.05rem;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 4px;
+    }
+
+    .deposit-date {
+        font-size: 0.85rem;
+        color: var(--gray);
+    }
+
+    /* Editable Amount */
+    .deposit-amount-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .deposit-amount-wrapper::before {
+        content: '$';
+        font-size: 1.2rem;
+        font-weight: 800;
+        color: var(--green);
+    }
+
+    .deposit-amount-input {
+        width: 100px;
+        font-size: 1.2rem;
+        font-weight: 800;
+        color: var(--green);
+        border: 2px solid transparent;
+        border-radius: 8px;
+        padding: 6px 8px;
+        background: transparent;
+        text-align: right;
+    }
+
+    .deposit-amount-input:hover {
+        border-color: #ddd;
+        background: white;
+    }
+
+    .deposit-amount-input:focus {
+        outline: none;
+        border-color: var(--green);
+        background: white;
+    }
+
+    .deposit-item.returned .deposit-amount-wrapper::before,
+    .deposit-item.returned .deposit-amount-input {
+        color: #999;
+        text-decoration: line-through;
+    }
+
+    /* Deposit Actions */
+    .deposit-actions {
+        width: 100%;
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px dashed #eee;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .action-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .action-toggle {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        font-size: 0.95rem;
+        color: #555;
+        padding: 8px 12px;
+        border-radius: 8px;
+        border: 2px solid #ddd;
+        background: white;
+        transition: all 0.2s;
+    }
+
+    .action-toggle:hover {
+        border-color: #999;
+    }
+
+    .action-toggle.active {
+        border-color: var(--green);
+        background: var(--green-light);
+        color: var(--green);
+    }
+
+    .action-toggle.returned-toggle.active {
+        border-color: #999;
+        background: #f0f0f0;
+        color: #666;
+    }
+
+    .action-toggle input[type="checkbox"] {
+        width: 28px;
+        height: 28px;
+        accent-color: var(--green);
+    }
+
+    .action-toggle.returned-toggle input[type="checkbox"] {
+        accent-color: #666;
+    }
+
+    /* Date Input */
+    .date-input {
+        padding: 8px 12px;
+        border: 2px solid #ddd;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        background: white;
+    }
+
+    .date-input:focus {
+        outline: none;
+        border-color: var(--green);
+    }
+
+    /* Return Form */
+    .return-details {
+        display: none;
+        margin-top: 10px;
+        padding: 12px;
+        background: #f8f8f8;
+        border-radius: 8px;
+        border: 1px solid #eee;
+    }
+
+    .return-details.show {
+        display: block;
+    }
+
+    .notes-input {
+        width: 100%;
+        padding: 10px;
+        border: 2px solid #ddd;
+        border-radius: 8px;
+        font-size: 0.9rem;
+    }
+
+    .notes-input:focus {
+        outline: none;
+        border-color: var(--green);
+    }
+
+    .notes-label {
+        font-size: 0.85rem;
+        color: var(--gray);
+        margin-bottom: 6px;
+        display: block;
+    }
+
+    /* Status Badges */
+    .status-badge {
+        font-size: 0.75rem;
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-weight: 600;
+    }
+
+    .status-badge.paid {
+        background: var(--green);
+        color: white;
+    }
+
+    .status-badge.pending {
+        background: var(--yellow);
+        color: white;
+    }
+
+    .status-badge.returned {
+        background: #999;
+        color: white;
+    }
+
+    /* Action Buttons */
+    .action-buttons {
+        display: flex;
+        gap: 12px;
+        margin-top: 24px;
+        margin-bottom: 16px;
+    }
+
+    .action-btn {
+        flex: 1;
+        padding: 14px;
+        border-radius: 12px;
+        border: 2px solid;
+        background: white;
+        font-size: 1rem;
+        font-weight: 700;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        min-height: 52px;
+    }
+
+    .action-btn.print {
+        color: #333;
+        border-color: #333;
+    }
+
+    .action-btn.excel {
+        color: #217346;
+        border-color: #217346;
+    }
+
+    /* Toast */
+    .toast {
+        position: fixed;
+        bottom: 100px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #333;
+        color: white;
+        padding: 16px 32px;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 1.1rem;
+        z-index: 1001;
+        opacity: 0;
+        transition: opacity 0.3s;
+        pointer-events: none;
+    }
+
+    .toast.show {
+        opacity: 1;
+    }
+
+    .toast.success {
+        background: var(--green);
+    }
+
+    /* ========== CONFIRMATION MODAL ========== */
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 200;
+        align-items: center;
+        justify-content: center;
+        padding: 16px;
+    }
+
+    .modal-overlay.show {
+        display: flex;
+    }
+
+    .modal {
+        background: white;
+        border-radius: 16px;
+        max-width: 360px;
+        width: 100%;
+        padding: 24px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        text-align: center;
+    }
+
+    .modal-icon {
+        font-size: 3rem;
+        margin-bottom: 16px;
+    }
+
+    .modal-title {
+        font-size: 1.25rem;
+        font-weight: 800;
+        margin-bottom: 8px;
+    }
+
+    .modal-text {
+        font-size: 0.95rem;
+        color: var(--gray);
+        margin-bottom: 20px;
+        line-height: 1.5;
+    }
+
+    .modal-amount {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: var(--green);
+        background: var(--green-light);
+        padding: 12px 20px;
+        border-radius: 12px;
+        margin-bottom: 20px;
+    }
+
+    .modal-buttons {
+        display: flex;
+        gap: 12px;
+    }
+
+    .modal-btn {
+        flex: 1;
+        padding: 14px;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.15s;
+    }
+
+    .modal-btn.cancel {
+        background: white;
+        border: 2px solid #ddd;
+        color: #666;
+    }
+
+    .modal-btn.cancel:hover {
+        background: #f5f5f5;
+    }
+
+    .modal-btn.confirm {
+        background: var(--green);
+        border: none;
+        color: white;
+    }
+
+    .modal-btn.confirm:hover {
+        background: #086608;
+    }
+
+    .modal-btn.confirm.danger {
+        background: #9B2C2C;
+    }
+
+    .modal-btn.confirm.danger:hover {
+        background: #7A2323;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1 class="app-title">💰 Depósitos</h1>
+        </div>
+
+        {% include 'partials/sync_indicator.html' %}
+
+        <!-- Grand Total Summary -->
+        <div class="summary-card">
+            <div class="summary-label">Depósitos Activos</div>
+            <div class="grand-total">${{ "{:,.0f}".format(grand_total) }}</div>
+            <div class="tenant-count">{{ active_count }} inquilinos activos</div>
+            
+            {% if returned_total > 0 %}
+            <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.2); display: flex; justify-content: center; gap: 32px;">
+                <div style="text-align: center;">
+                    <div style="font-size: 0.85rem; opacity: 0.8;">Devueltos</div>
+                    <div style="font-size: 1.25rem; font-weight: 700; opacity: 0.9;">${{ "{:,.0f}".format(returned_total) }}</div>
+                    <div style="font-size: 0.8rem; opacity: 0.7;">{{ returned_count }} inquilinos</div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        {% include 'partials/search_box.html' %}
+
+        <!-- Property Sections -->
+        {% for property_name, tenants in tenants_by_property.items() %}
+        <div class="property-section" data-property="{{ property_name }}">
+            <div class="property-header"
+                 data-color="{{ property_colors[loop.index0 % 5] }}"
+                 onclick="toggleProperty('{{ property_name | replace(' ', '_') }}')">
+                <div class="property-name">
+                    <span>🏠</span>
+                    <span>{{ property_name }}</span>
+                </div>
+                <div class="property-stats">
+                    <div class="property-count">{{ tenants|length }} depósitos</div>
+                    <div class="property-total">${{ "{:,.0f}".format(property_totals[property_name]["total"]) }}</div>
+                </div>
+                <span class="property-arrow" id="arrow-{{ property_name | replace(' ', '_') }}">▼</span>
+            </div>
+            <div class="deposit-list" id="list-{{ property_name | replace(' ', '_') }}">
+                {% for tenant in tenants %}
+                <div class="deposit-item {{ 'paid' if tenant.deposit_paid and not tenant.deposit_returned else '' }} {{ 'returned' if tenant.deposit_returned else '' }}"
+                     data-tenant-id="{{ tenant.id }}"
+                     data-name="{{ tenant.name }}"
+                     data-property="{{ property_name }}"
+                     data-unit="{{ tenant.unit }}"
+                     data-rent="{{ tenant.rent }}">
+
+                    <div class="deposit-row">
+                        <div class="unit-badge">{{ tenant.unit }}</div>
+                        <div class="deposit-info">
+                            <div class="tenant-name">{{ tenant.name }}</div>
+                            <div class="deposit-date">📅 Inicio: {{ tenant.contract_start_formatted }}</div>
+                        </div>
+                        <div class="deposit-amount-wrapper">
+                            <input type="text"
+                                   class="deposit-amount-input"
+                                   id="amount-{{ tenant.id }}"
+                                   value="{{ '{:,.0f}'.format(tenant.deposit_amount) }}"
+                                   onchange="updateAmount('{{ tenant.id }}', this.value)"
+                                   onblur="formatAmountInput(this)">
+                        </div>
+                    </div>
+
+                    <!-- Deposit Actions -->
+                    <div class="deposit-actions">
+                        <div class="action-row">
+                            <!-- Paid Toggle -->
+                            <label class="action-toggle {{ 'active' if tenant.deposit_paid else '' }}" id="paid-toggle-{{ tenant.id }}">
+                                <input type="checkbox"
+                                       {{ 'checked' if tenant.deposit_paid else '' }}
+                                       onchange="togglePaid('{{ tenant.id }}', this.checked)">
+                                <span>✓ Pagado</span>
+                            </label>
+
+                            {% if tenant.deposit_paid %}
+                            <input type="date"
+                                   class="date-input"
+                                   id="paid-date-{{ tenant.id }}"
+                                   value="{{ tenant.deposit_paid_date or '' }}"
+                                   onchange="updatePaidDate('{{ tenant.id }}', this.value)"
+                                   placeholder="Fecha de pago">
+                            {% endif %}
+
+                            <!-- Returned Toggle -->
+                            <label class="action-toggle returned-toggle {{ 'active' if tenant.deposit_returned else '' }}" id="returned-toggle-{{ tenant.id }}">
+                                <input type="checkbox"
+                                       {{ 'checked' if tenant.deposit_returned else '' }}
+                                       onchange="toggleReturned('{{ tenant.id }}', this.checked)">
+                                <span>↩ Devuelto</span>
+                            </label>
+                        </div>
+
+                        <!-- Return Details (shown when returned) -->
+                        <div class="return-details {{ 'show' if tenant.deposit_returned else '' }}" id="return-details-{{ tenant.id }}">
+                            <div class="action-row" style="margin-bottom: 10px;">
+                                <span class="notes-label">Fecha devolución:</span>
+                                <input type="date"
+                                       class="date-input"
+                                       id="returned-date-{{ tenant.id }}"
+                                       value="{{ tenant.deposit_returned_date or '' }}"
+                                       onchange="updateReturnedDate('{{ tenant.id }}', this.value)">
+                            </div>
+                            <label class="notes-label">Notas (deducciones, etc.):</label>
+                            <input type="text"
+                                   class="notes-input"
+                                   id="returned-notes-{{ tenant.id }}"
+                                   value="{{ tenant.deposit_returned_notes or '' }}"
+                                   placeholder="Ej: Se descontó $500 por daños"
+                                   onchange="updateReturnedNotes('{{ tenant.id }}', this.value)">
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <button class="action-btn print" onclick="printSummary()">
+                <span>🖨️</span>
+                <span>Imprimir</span>
+            </button>
+            <button class="action-btn excel" onclick="downloadExcel()">
+                <span>📊</span>
+                <span>Excel</span>
+            </button>
+        </div>
+    </div>
+
+    {% include 'partials/bottom_nav.html' %}
+
+    <!-- Toast -->
+    <div class="toast" id="toast">Guardado</div>
+
+    <!-- Confirmation Modal -->
+    <div class="modal-overlay" id="confirmModal">
+        <div class="modal">
+            <div class="modal-icon" id="modalIcon">⚠️</div>
+            <div class="modal-title" id="modalTitle">Confirmar Acción</div>
+            <div class="modal-text" id="modalText">¿Estás seguro?</div>
+            <div class="modal-amount" id="modalAmount" style="display:none;"></div>
+            <div class="modal-buttons">
+                <button class="modal-btn cancel" onclick="hideConfirmModal()">Cancelar</button>
+                <button class="modal-btn confirm" id="modalConfirmBtn" onclick="confirmModalAction()">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <script>
+        // ========== CONFIRMATION MODAL ==========
+        let pendingModalAction = null;
+
+        function showConfirmModal(config) {
+            // config: { icon, title, text, amount, confirmText, confirmClass, onConfirm }
+            document.getElementById('modalIcon').textContent = config.icon || '⚠️';
+            document.getElementById('modalTitle').textContent = config.title || 'Confirmar';
+            document.getElementById('modalText').innerHTML = config.text || '¿Estás seguro?';
+
+            const amountEl = document.getElementById('modalAmount');
+            if (config.amount) {
+                amountEl.textContent = config.amount;
+                amountEl.style.display = 'block';
+            } else {
+                amountEl.style.display = 'none';
+            }
+
+            const confirmBtn = document.getElementById('modalConfirmBtn');
+            confirmBtn.textContent = config.confirmText || 'Confirmar';
+            confirmBtn.className = 'modal-btn confirm' + (config.confirmClass ? ' ' + config.confirmClass : '');
+
+            pendingModalAction = config.onConfirm;
+            document.getElementById('confirmModal').classList.add('show');
+
+            // Haptic feedback
+            if (navigator.vibrate) navigator.vibrate(30);
+        }
+
+        function hideConfirmModal() {
+            document.getElementById('confirmModal').classList.remove('show');
+            pendingModalAction = null;
+        }
+
+        function confirmModalAction() {
+            if (pendingModalAction) {
+                pendingModalAction();
+            }
+            hideConfirmModal();
+        }
+
+        // Close modal on backdrop click
+        document.getElementById('confirmModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                hideConfirmModal();
+            }
+        });
+
+        // Toggle property section
+        function toggleProperty(propertyId) {
+            const list = document.getElementById('list-' + propertyId);
+            const arrow = document.getElementById('arrow-' + propertyId);
+            list.classList.toggle('collapsed');
+            arrow.classList.toggle('collapsed');
+        }
+
+        // Format amount input (add commas)
+        function formatAmountInput(input) {
+            const value = parseFloat(input.value.replace(/,/g, '')) || 0;
+            input.value = value.toLocaleString('en-US', { maximumFractionDigits: 0 });
+        }
+
+        // Update deposit amount
+        function updateAmount(tenantId, value) {
+            const amount = parseFloat(value.replace(/,/g, '')) || 0;
+
+            saveDeposit(tenantId, { deposit_amount: amount });
+        }
+
+        // Toggle paid status
+        function togglePaid(tenantId, isPaid) {
+            const toggle = document.getElementById('paid-toggle-' + tenantId);
+            const item = document.querySelector(`[data-tenant-id="${tenantId}"]`);
+
+            if (isPaid) {
+                toggle.classList.add('active');
+                if (!item.classList.contains('returned')) {
+                    item.classList.add('paid');
+                }
+            } else {
+                toggle.classList.remove('active');
+                item.classList.remove('paid');
+            }
+
+            // Set today's date if marking as paid
+            const paidDate = isPaid ? new Date().toISOString().split('T')[0] : null;
+
+            saveDeposit(tenantId, {
+                deposit_paid: isPaid,
+                deposit_paid_date: paidDate
+            }, function() {
+                // Update UI after save - add/remove date input dynamically
+                updatePaidDateInput(tenantId, isPaid, paidDate);
+            });
+        }
+
+        // Dynamically add/remove paid date input without page reload
+        function updatePaidDateInput(tenantId, isPaid, paidDate) {
+            const item = document.querySelector(`[data-tenant-id="${tenantId}"]`);
+            const actionRow = item.querySelector('.action-row');
+            const existingDateInput = document.getElementById('paid-date-' + tenantId);
+
+            if (isPaid && !existingDateInput) {
+                // Add date input
+                const dateInput = document.createElement('input');
+                dateInput.type = 'date';
+                dateInput.className = 'date-input';
+                dateInput.id = 'paid-date-' + tenantId;
+                dateInput.value = paidDate || '';
+                dateInput.onchange = function() {
+                    updatePaidDate(tenantId, this.value);
+                };
+
+                // Insert after paid toggle
+                const paidToggle = document.getElementById('paid-toggle-' + tenantId);
+                paidToggle.after(dateInput);
+            } else if (!isPaid && existingDateInput) {
+                // Remove date input
+                existingDateInput.remove();
+            }
+        }
+
+        // Update paid date
+        function updatePaidDate(tenantId, date) {
+            saveDeposit(tenantId, { deposit_paid_date: date });
+        }
+
+        // Toggle returned status - WITH CONFIRMATION
+        function toggleReturned(tenantId, isReturned) {
+            const checkbox = event.target;
+            const item = document.querySelector(`[data-tenant-id="${tenantId}"]`);
+            const tenantName = item.dataset.name;
+            const amountInput = document.getElementById('amount-' + tenantId);
+            const amount = amountInput ? amountInput.value : '0';
+
+            if (isReturned) {
+                // Show confirmation before marking as returned
+                checkbox.checked = false; // Revert until confirmed
+
+                showConfirmModal({
+                    icon: '↩️',
+                    title: '¿Marcar como devuelto?',
+                    text: `Vas a marcar el depósito de <strong>${tenantName}</strong> como devuelto.`,
+                    amount: '$' + amount,
+                    confirmText: 'Sí, Devuelto',
+                    confirmClass: 'danger',
+                    onConfirm: function() {
+                        checkbox.checked = true;
+                        applyReturnedState(tenantId, true);
+                    }
+                });
+            } else {
+                // No confirmation needed for un-returning
+                applyReturnedState(tenantId, false);
+            }
+        }
+
+        // Apply returned state (separated from confirmation)
+        function applyReturnedState(tenantId, isReturned) {
+            const toggle = document.getElementById('returned-toggle-' + tenantId);
+            const details = document.getElementById('return-details-' + tenantId);
+            const item = document.querySelector(`[data-tenant-id="${tenantId}"]`);
+
+            if (isReturned) {
+                toggle.classList.add('active');
+                details.classList.add('show');
+                item.classList.add('returned');
+                item.classList.remove('paid');
+
+                // Set today's date if no date set
+                const dateInput = document.getElementById('returned-date-' + tenantId);
+                if (dateInput && !dateInput.value) {
+                    dateInput.value = new Date().toISOString().split('T')[0];
+                }
+            } else {
+                toggle.classList.remove('active');
+                details.classList.remove('show');
+                item.classList.remove('returned');
+
+                // Restore paid class if still paid
+                const paidToggle = document.getElementById('paid-toggle-' + tenantId);
+                if (paidToggle && paidToggle.classList.contains('active')) {
+                    item.classList.add('paid');
+                }
+            }
+
+            const returnedDate = isReturned ? (document.getElementById('returned-date-' + tenantId)?.value || new Date().toISOString().split('T')[0]) : null;
+
+            saveDeposit(tenantId, {
+                deposit_returned: isReturned,
+                deposit_returned_date: returnedDate
+            }, function() {
+                // Update the grand total display without reloading
+                updateGrandTotal();
+            });
+        }
+
+        // Update returned date
+        function updateReturnedDate(tenantId, date) {
+            saveDeposit(tenantId, { deposit_returned_date: date });
+        }
+
+        // Update returned notes
+        function updateReturnedNotes(tenantId, notes) {
+            saveDeposit(tenantId, { deposit_returned_notes: notes });
+        }
+
+        // Save deposit to server
+        function saveDeposit(tenantId, data, onSuccess) {
+            data.tenant_id = tenantId;
+
+            fetch('/api/deposit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            }).then(res => {
+                if (res.ok) {
+                    showToast('Guardado', 'success');
+                    updateSyncIndicator();
+                    if (onSuccess) onSuccess();
+                } else {
+                    showToast('Error al guardar', '');
+                }
+            }).catch(err => {
+                console.error('Error:', err);
+                showToast('Error al guardar', '');
+            });
+        }
+
+        // Update grand total without page reload
+        function updateGrandTotal() {
+            let total = 0;
+            document.querySelectorAll('.deposit-item').forEach(item => {
+                if (!item.classList.contains('returned')) {
+                    const amountInput = document.getElementById('amount-' + item.dataset.tenantId);
+                    if (amountInput) {
+                        const amount = parseFloat(amountInput.value.replace(/,/g, '')) || 0;
+                        total += amount;
+                    }
+                }
+            });
+
+            // Update the grand total display
+            const grandTotalEl = document.querySelector('.grand-total');
+            if (grandTotalEl) {
+                grandTotalEl.textContent = '$' + total.toLocaleString('en-US', { maximumFractionDigits: 0 });
+            }
+
+            // Also update property totals
+            document.querySelectorAll('.property-section').forEach(section => {
+                let propertyTotal = 0;
+                section.querySelectorAll('.deposit-item').forEach(item => {
+                    if (!item.classList.contains('returned')) {
+                        const amountInput = document.getElementById('amount-' + item.dataset.tenantId);
+                        if (amountInput) {
+                            const amount = parseFloat(amountInput.value.replace(/,/g, '')) || 0;
+                            propertyTotal += amount;
+                        }
+                    }
+                });
+                const totalEl = section.querySelector('.property-total');
+                if (totalEl) {
+                    totalEl.textContent = '$' + propertyTotal.toLocaleString('en-US', { maximumFractionDigits: 0 });
+                }
+            });
+        }
+
+        // Show toast
+        function showToast(message, type) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = 'toast show ' + type;
+            setTimeout(() => toast.classList.remove('show'), 2500);
+        }
+
+        // Filter deposits by search term
+        function filterContracts(term) {
+            term = term.toLowerCase().trim();
+
+            document.querySelectorAll('.deposit-item').forEach(item => {
+                const name = item.dataset.name.toLowerCase();
+                const property = item.dataset.property.toLowerCase();
+                const unit = item.dataset.unit.toLowerCase();
+                const matches = name.includes(term) || property.includes(term) || unit.includes(term);
+                item.style.display = matches ? 'block' : 'none';
+            });
+
+            // Show/hide property sections based on visible deposits
+            document.querySelectorAll('.property-section').forEach(section => {
+                const hasVisible = Array.from(section.querySelectorAll('.deposit-item')).some(
+                    item => item.style.display !== 'none'
+                );
+                section.style.display = hasVisible ? 'block' : 'none';
+            });
+        }
+
+        // Print summary
+        function printSummary() {
+            const grandTotal = '{{ "{:,.0f}".format(grand_total) }}';
+            const totalTenants = {{ total_tenants }};
+
+            let html = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Depósitos - RentasClaras</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }
+                        h1 { color: #0A7A0A; border-bottom: 3px solid #0A7A0A; padding-bottom: 10px; }
+                        .summary { background: #e8f5e9; padding: 20px; border-radius: 8px; margin-bottom: 24px; text-align: center; }
+                        .summary-total { font-size: 2rem; font-weight: 800; color: #0A7A0A; }
+                        .property-section { margin: 24px 0; }
+                        .property-header { background: #333; color: white; padding: 12px 16px; font-weight: 700; }
+                        table { width: 100%; border-collapse: collapse; }
+                        th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #ddd; }
+                        th { background: #f5f5f5; font-weight: 600; }
+                        .amount { font-weight: 700; color: #0A7A0A; text-align: right; }
+                        .returned { color: #999; text-decoration: line-through; }
+                        .status-paid { color: #0A7A0A; font-weight: 600; }
+                        .status-pending { color: #F59E0B; font-weight: 600; }
+                        .status-returned { color: #999; font-weight: 600; }
+                        .footer { margin-top: 30px; color: #666; font-size: 0.9rem; border-top: 1px solid #ddd; padding-top: 15px; }
+                        @media print { body { padding: 10px; } }
+                    </style>
+                </head>
+                <body>
+                    <h1>💰 Depósitos - RentasClaras</h1>
+                    <p style="color: #666;">Generado: ${new Date().toLocaleDateString('es-MX', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+
+                    <div class="summary">
+                        <div>Total en Depósitos</div>
+                        <div class="summary-total">$${grandTotal}</div>
+                        <div>${totalTenants} inquilinos</div>
+                    </div>
+            `;
+
+            // Group deposits by property
+            const properties = {};
+            document.querySelectorAll('.property-section').forEach(section => {
+                const propertyName = section.dataset.property;
+                properties[propertyName] = [];
+
+                section.querySelectorAll('.deposit-item').forEach(item => {
+                    const tenantId = item.dataset.tenantId;
+                    const isPaid = item.classList.contains('paid') || document.getElementById('paid-toggle-' + tenantId)?.classList.contains('active');
+                    const isReturned = item.classList.contains('returned');
+
+                    let status = 'Pendiente';
+                    let statusClass = 'status-pending';
+                    if (isReturned) {
+                        status = 'Devuelto';
+                        statusClass = 'status-returned';
+                    } else if (isPaid) {
+                        status = 'Pagado';
+                        statusClass = 'status-paid';
+                    }
+
+                    // Get dates for PDF
+                    const paidDateEl = document.getElementById('paid-date-' + tenantId);
+                    const returnedDateEl = document.getElementById('returned-date-' + tenantId);
+                    const paidDate = paidDateEl?.value || '';
+                    const returnedDate = returnedDateEl?.value || '';
+
+                    properties[propertyName].push({
+                        unit: item.dataset.unit,
+                        name: item.dataset.name,
+                        amount: document.getElementById('amount-' + tenantId).value,
+                        status: status,
+                        statusClass: statusClass,
+                        isReturned: isReturned,
+                        paidDate: paidDate,
+                        returnedDate: returnedDate
+                    });
+                });
+            });
+
+            // Generate table for each property
+            Object.keys(properties).forEach(property => {
+                const deposits = properties[property];
+
+                html += `
+                    <div class="property-section">
+                        <div class="property-header">🏠 ${property}</div>
+                        <table>
+                            <tr>
+                                <th>Unidad</th>
+                                <th>Inquilino</th>
+                                <th style="text-align: right;">Depósito</th>
+                                <th>Estado</th>
+                                <th>Fecha Recibido</th>
+                                <th>Fecha Devuelto</th>
+                            </tr>
+                `;
+
+                deposits.forEach(d => {
+                    const amountClass = d.isReturned ? 'amount returned' : 'amount';
+                    html += `<tr>
+                        <td><strong>${d.unit}</strong></td>
+                        <td>${d.name}</td>
+                        <td class="${amountClass}">$${d.amount}</td>
+                        <td class="${d.statusClass}">${d.status}</td>
+                        <td>${d.paidDate || '-'}</td>
+                        <td>${d.returnedDate || '-'}</td>
+                    </tr>`;
+                });
+
+                html += `
+                        </table>
+                    </div>
+                `;
+            });
+
+            html += `
+                    <div class="footer">
+                        <strong>Nota:</strong> El depósito por defecto equivale al primer mes de renta.
+                    </div>
+                </body>
+                </html>
+            `;
+
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(html);
+            printWindow.document.close();
+            printWindow.print();
+        }
+
+        // Download Excel
+        function downloadExcel() {
+            const data = [
+                ['Propiedad', 'Unidad', 'Inquilino', 'Monto', 'Estado', 'Fecha Recibido', 'Fecha Devuelto', 'Notas']
+            ];
+
+            document.querySelectorAll('.deposit-item').forEach(item => {
+                const tenantId = item.dataset.tenantId;
+                const isPaid = item.classList.contains('paid') || document.getElementById('paid-toggle-' + tenantId)?.classList.contains('active');
+                const isReturned = item.classList.contains('returned');
+
+                let status = 'Pendiente';
+                if (isReturned) status = 'Devuelto';
+                else if (isPaid) status = 'Pagado';
+
+                const paidDate = document.getElementById('paid-date-' + tenantId)?.value || '';
+                const returnedDate = document.getElementById('returned-date-' + tenantId)?.value || '';
+                const returnedNotes = document.getElementById('returned-notes-' + tenantId)?.value || '';
+
+                data.push([
+                    item.dataset.property,
+                    item.dataset.unit,
+                    item.dataset.name,
+                    '$' + document.getElementById('amount-' + tenantId).value,
+                    status,
+                    paidDate,
+                    returnedDate,
+                    returnedNotes
+                ]);
+            });
+
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Depósitos');
+            XLSX.writeFile(wb, 'Depositos_RentasClaras.xlsx');
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            updateSyncIndicator();
+
+            // Format all amount inputs on load
+            document.querySelectorAll('.deposit-amount-input').forEach(formatAmountInput);
+        });
+    </script>
+{% endblock %}
+
+{% block bottom_nav %}{% endblock %}

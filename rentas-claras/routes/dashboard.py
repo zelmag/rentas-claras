@@ -15,7 +15,7 @@ from database import (
     get_monthly_status,
 )
 from routes.auth import login_required
-from services.dates import get_billing_month, SPANISH_MONTHS
+from services.dates import get_billing_month, SPANISH_MONTHS, SPANISH_DAYS_OF_WEEK
 
 
 dashboard_bp = Blueprint("dashboard", __name__)
@@ -27,7 +27,7 @@ def index():
     """Dashboard home page with overall status."""
     today = datetime.now()
     hour = today.hour
-    
+
     # Time-based greeting in Spanish
     if hour < 12:
         greeting = "Buenos días"
@@ -35,15 +35,11 @@ def index():
         greeting = "Buenas tardes"
     else:
         greeting = "Buenas noches"
-    
-    # Format today's date in Spanish (full format for clarity)
-    DIAS_SEMANA = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo']
-    MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 
-             'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
-    
-    dia_semana = DIAS_SEMANA[today.weekday()]
+
+    # Format today's date in Spanish using centralized constants
+    dia_semana = SPANISH_DAYS_OF_WEEK[today.weekday()]
     dia = today.day
-    mes = MESES[today.month - 1]
+    mes = SPANISH_MONTHS[today.month - 1]
     today_formatted = f"{dia_semana.capitalize()} {dia} de {mes}"
     
     # Get billing month from SINGLE SOURCE OF TRUTH

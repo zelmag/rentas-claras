@@ -48,6 +48,7 @@
     @media (min-width: 1024px) {
         body {
             padding-bottom: 0;
+            /* padding-top handled by base.html */
         }
 
         .container {
@@ -194,11 +195,11 @@
         border-radius: 12px 12px 0 0;
     }
 
-    .property-header[data-color="blue"] { background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%); }
-    .property-header[data-color="brown"] { background: linear-gradient(135deg, #5c3d2e 0%, #7d5a4a 100%); }
-    .property-header[data-color="green"] { background: linear-gradient(135deg, #2e5c4a 0%, #4a7d6a 100%); }
-    .property-header[data-color="purple"] { background: linear-gradient(135deg, #5c2e5c 0%, #7d4a7d 100%); }
-    .property-header[data-color="gold"] { background: linear-gradient(135deg, #5c5c2e 0%, #7d7d4a 100%); }
+    .property-header[data-color="blue"] { background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%); border-left: 8px solid #0d2139; }
+    .property-header[data-color="brown"] { background: linear-gradient(135deg, #5c3d2e 0%, #7d5a4a 100%); border-left: 8px solid #3d271f; }
+    .property-header[data-color="green"] { background: linear-gradient(135deg, #2e5c4a 0%, #4a7d6a 100%); border-left: 8px solid #1e3d31; }
+    .property-header[data-color="purple"] { background: linear-gradient(135deg, #5c2e5c 0%, #7d4a7d 100%); border-left: 8px solid #3d1f3d; }
+    .property-header[data-color="gold"] { background: linear-gradient(135deg, #5c5c2e 0%, #7d7d4a 100%); border-left: 8px solid #3d3d1f; }
 
     .property-header-name {
         display: flex;
@@ -319,7 +320,7 @@
         display: flex;
         flex-direction: column;
     }
-    
+
     .modal-form-scroll {
         flex: 1;
         overflow-y: auto;
@@ -533,6 +534,7 @@
         display: flex;
         gap: 12px;
         padding: 16px 0;
+        padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
         margin-top: 16px;
         background: white;
         position: sticky;
@@ -540,7 +542,7 @@
         border-top: 1px solid #eee;
         z-index: 10;
     }
-    
+
     /* Add space before form buttons so content doesn't run behind */
     .form-buttons::before {
         content: '';
@@ -557,12 +559,12 @@
     .form-buttons .btn {
         flex: 1;
     }
-    
+
     /* Collapsible sections */
     .collapsible-section {
         margin: 16px 0;
     }
-    
+
     .collapsible-toggle {
         display: flex;
         align-items: center;
@@ -578,21 +580,21 @@
         cursor: pointer;
         transition: all 0.2s;
     }
-    
+
     .collapsible-toggle:hover {
         background: #eee;
     }
-    
+
     .collapsible-toggle.active {
         background: var(--green-light);
         border-color: var(--green);
         color: var(--green);
     }
-    
+
     .collapsible-icon {
         font-size: 1.2rem;
     }
-    
+
     .collapsible-content {
         margin-top: 12px;
     }
@@ -1139,7 +1141,7 @@ function showEditModal(tenantId) {
             const section = document.getElementById(sectionId);
             const content = section.querySelector('.collapsible-content');
             const icon = section.querySelector('.collapsible-icon');
-            
+
             if (content.style.display === 'none') {
                 content.style.display = 'block';
                 icon.textContent = '➖';

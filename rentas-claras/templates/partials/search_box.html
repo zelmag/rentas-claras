@@ -1,8 +1,8 @@
-<!-- Search Box - Always visible, shared across all pages -->
+<!-- Search Box - Sticky, shared across all pages (DRY) -->
 <div class="search-box" id="searchBox">
     <div class="search-input-wrapper">
         <span class="search-icon">🔍</span>
-        <input type="text" class="search-input" id="searchInput" placeholder="Buscar inquilino..." oninput="handleSearch(this.value)">
+        <input type="text" class="search-input" id="searchInput" placeholder="Buscar nombre o propiedad..." oninput="handleSearch(this.value)">
         <button type="button" class="search-clear" id="searchClear" onclick="clearSearch()">✕</button>
     </div>
 </div>
@@ -13,15 +13,23 @@
         top: 0;
         z-index: 100;
         background: var(--paper);
-        padding-top: 8px;
-        padding-bottom: 8px;
+        padding-top: 12px;
+        padding-bottom: 12px;
         margin-left: -16px;
         margin-right: -16px;
         padding-left: 16px;
         padding-right: 16px;
         margin-bottom: 8px;
+        /* Subtle shadow when sticky */
+        box-shadow: 0 2px 8px rgba(0,0,0,0);
+        transition: box-shadow 0.2s;
     }
-    
+
+    /* Add shadow when scrolled (via JS) */
+    .search-box.scrolled {
+        box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+    }
+
     /* Responsive adjustments for sticky search */
     @media (min-width: 768px) {
         .search-box {
@@ -31,9 +39,11 @@
             padding-right: 24px;
         }
     }
-    
+
+    /* Desktop: account for top navigation bar */
     @media (min-width: 1024px) {
         .search-box {
+            top: 100px; /* Height of desktop top nav */
             margin-left: -32px;
             margin-right: -32px;
             padding-left: 32px;
@@ -227,14 +237,14 @@
 
     function handleSearch(term) {
         const clearBtn = document.getElementById('searchClear');
-        
+
         // Show/hide clear button based on input value
         if (term && term.length > 0) {
             clearBtn.classList.add('visible');
         } else {
             clearBtn.classList.remove('visible');
         }
-        
+
         // Call page-specific filter function (always call, even with empty string to reset)
         if (typeof filterTenants === 'function') {
             filterTenants(term || '');
@@ -246,17 +256,39 @@
     function clearSearch() {
         const input = document.getElementById('searchInput');
         const clearBtn = document.getElementById('searchClear');
-        
+
         input.value = '';
         clearBtn.classList.remove('visible');
-        
+
         // Explicitly reset all filters by calling with empty string
         if (typeof filterTenants === 'function') {
             filterTenants('');
         } else if (typeof filterContracts === 'function') {
             filterContracts('');
         }
-        
+
         input.focus();
     }
+
+    // Add shadow when search box becomes sticky (scrolled)
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchBox = document.getElementById('searchBox');
+        if (!searchBox) return;
+
+        // Use IntersectionObserver for sticky shadow effect
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                // When the element is at its sticky position (intersecting boundary)
+                searchBox.classList.toggle('scrolled', !entry.isIntersecting);
+            },
+            { threshold: [1], rootMargin: '-1px 0px 0px 0px' }
+        );
+
+        // Create a sentinel element above the search box
+        const sentinel = document.createElement('div');
+        sentinel.style.height = '1px';
+        sentinel.style.marginBottom = '-1px';
+        searchBox.parentNode.insertBefore(sentinel, searchBox);
+        observer.observe(sentinel);
+    });
 </script>

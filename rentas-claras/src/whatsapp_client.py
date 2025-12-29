@@ -67,6 +67,12 @@ TEMPLATE_CONFIG = {
         "description": "Late fee notice - Day 2+",
         "params": ["tenant_name", "base_rent", "total_with_fees"],
     },
+    # Pre-approved test template (every WA Business account has this)
+    "hello_world": {
+        "param_count": 0,
+        "description": "Test template - pre-approved by Meta",
+        "params": [],
+    },
 }
 
 
@@ -447,7 +453,7 @@ class WhatsAppClient:
         Get the status of all message templates.
 
         Args:
-            business_account_id: WhatsApp Business Account ID 
+            business_account_id: WhatsApp Business Account ID
                 (or set WHATSAPP_BUSINESS_ACCOUNT_ID env var)
 
         Returns:
@@ -459,13 +465,13 @@ class WhatsAppClient:
             - REJECTED: Rejected, check rejection reason
         """
         waba_id = business_account_id or os.getenv("WHATSAPP_BUSINESS_ACCOUNT_ID", "")
-        
+
         if not waba_id:
             return {
                 "success": False,
                 "error": "WHATSAPP_BUSINESS_ACCOUNT_ID not configured in .env",
             }
-        
+
         if not self.access_token:
             return {
                 "success": False,
@@ -473,7 +479,7 @@ class WhatsAppClient:
             }
 
         url = f"{self.API_BASE_URL}/{self.API_VERSION}/{waba_id}/message_templates"
-        
+
         try:
             response = requests.get(
                 url,
@@ -481,31 +487,33 @@ class WhatsAppClient:
                 timeout=30,
             )
             data = response.json()
-            
+
             if response.status_code == 200 and "data" in data:
                 templates = []
                 for t in data["data"]:
-                    templates.append({
-                        "name": t.get("name"),
-                        "status": t.get("status"),
-                        "category": t.get("category"),
-                        "language": t.get("language"),
-                        "rejected_reason": t.get("rejected_reason"),
-                    })
-                
+                    templates.append(
+                        {
+                            "name": t.get("name"),
+                            "status": t.get("status"),
+                            "category": t.get("category"),
+                            "language": t.get("language"),
+                            "rejected_reason": t.get("rejected_reason"),
+                        }
+                    )
+
                 logger.info(f"Retrieved {len(templates)} templates")
                 return {
                     "success": True,
                     "templates": templates,
                 }
-            
+
             error_data = data.get("error", {})
             return {
                 "success": False,
                 "error": error_data.get("message", "Unknown error"),
                 "raw_response": data,
             }
-            
+
         except requests.exceptions.RequestException as e:
             return {
                 "success": False,
@@ -580,6 +588,31 @@ def send_rent_reminder(
         to_phone=to_phone,
         tenant_name=tenant_name,
         amount=amount_float,
+    )
+
+
+def send_late_reminder(
+    to_phone: str, tenant_name: str, month: str, amount: str
+) -> WhatsAppResponse:
+    """
+    Send a late payment reminder using 'aviso_recargo' template.
+    (Backward compatible function for scheduler)
+
+    Note: 'month' parameter is ignored in new templates.
+    Uses the same amount for base_rent and total since the amount
+    passed already includes late fees.
+    """
+    # Convert amount string to float if needed
+    try:
+        amount_float = float(amount.replace(",", "").replace("$", ""))
+    except (ValueError, AttributeError):
+        amount_float = 0.0
+
+    return _get_default_client().send_late_fee_notice(
+        to_phone=to_phone,
+        tenant_name=tenant_name,
+        base_rent=amount_float,
+        total_with_fees=amount_float,
     )
 
 

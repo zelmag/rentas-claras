@@ -5,10 +5,9 @@ Pagos Blueprint - Payment Tracking Routes
 Main payment tracking page and related API endpoints.
 """
 
+import logging
 import os
 from datetime import datetime
-
-from flask import Blueprint, jsonify, render_template, request
 
 from database import (
     get_all_tenants,
@@ -18,34 +17,45 @@ from database import (
     get_message_counts_for_month,
     get_monthly_status,
     get_tenant_by_id,
-    Tenant,
+    get_tenants_by_property,
     update_payment_status,
     update_tenant_phone,
 )
+
+from flask import Blueprint, jsonify, render_template, request
 from routes.auth import login_required
 from services.dates import (
     calculate_relative_time,
     format_date_excel,
-    format_date_spanish,
     get_billing_month,
-    get_month_name,
+    MIN_BILLING_MONTH,
+    MIN_BILLING_YEAR,
     SPANISH_MONTHS,
+    SPANISH_MONTHS_CAPITALIZED,
 )
 from services.late_fees import calculate_tenant_late_fee
 from services.messages import create_whatsapp_link, generate_rent_reminder
 from services.names import extract_display_name
+from services.responses import error_response, not_found_response, success_response
+from services.validation import (
+    validate_payment_update,
+    validate_phone,
+    validate_tenant_id,
+)
 
 
+logger = logging.getLogger(__name__)
 pagos_bp = Blueprint("pagos", __name__)
 
-# Test mode configuration
-TEST_MODE = True
+# Test mode configuration - controlled via environment variable
+TEST_MODE = os.environ.get("TEST_MODE", "false").lower() == "true"
 TEST_PHONE = os.environ.get("WHATSAPP_TEST_PHONE", "")
 
 
 # =============================================================================
 # ROUTES
 # =============================================================================
+
 
 @pagos_bp.route("/")
 @login_required
@@ -60,7 +70,7 @@ def index():
     month = request.args.get("month", default_month, type=int)
 
     # Calculate prev/next month for navigation
-    MIN_YEAR = 2026
+    MIN_YEAR = 2025
     MIN_MONTH = 1
 
     if month == 1:
@@ -111,9 +121,7 @@ def index():
 
     # Sort tenants: UNPAID FIRST
     for property_name in tenants_by_property:
-        tenants_by_property[property_name].sort(
-            key=lambda t: (t.paid, t.unit)
-        )
+        tenants_by_property[property_name].sort(key=lambda t: (t.paid, t.unit))
 
     month_name = SPANISH_MONTHS[month - 1]
     available_months = get_available_months()
@@ -135,7 +143,7 @@ def index():
         )
         tenant.days_late = fee_result.days_late
         tenant.late_fee = float(fee_result.total_penalties)  # Renamed in new version
-        tenant.total_owed = float(fee_result.total_due)      # Renamed in new version
+        tenant.total_owed = float(fee_result.total_due)  # Renamed in new version
 
     # Get expiring contracts
     expiring_contracts = get_expiring_contracts(days_ahead=60)
@@ -190,6 +198,7 @@ def index():
 
 
 @pagos_bp.route("/api/message")
+@login_required
 def get_message():
     """Get rent reminder message for a tenant."""
     tenant_id = request.args.get("tenant_id")
@@ -218,6 +227,7 @@ def get_message():
 
 
 @pagos_bp.route("/api/tenants")
+@login_required
 def list_tenants():
     """List all tenants."""
     all_tenants = get_all_tenants()
@@ -238,21 +248,28 @@ def list_tenants():
 
 
 @pagos_bp.route("/api/payment", methods=["POST"])
+@login_required
 def update_payment():
     """Update payment status for a tenant and sync to Excel."""
     data = request.json
-    tenant_id = data.get("tenant_id")
-    paid = data.get("paid", False)
-    payment_method = data.get("payment_method")
-    visits = data.get("visits", 0)
-    visit_charge = data.get("visit_charge", 0.0)
+    if not data:
+        return jsonify({"success": False, "error": "Request body is required"}), 400
+
+    # Validate input data
+    is_valid, error, validated = validate_payment_update(data)
+    if not is_valid:
+        logger.warning(f"Payment validation failed: {error}")
+        return jsonify({"success": False, "error": error}), 400
+
+    tenant_id = validated["tenant_id"]
+    paid = validated["paid"]
+    payment_method = validated.get("payment_method")
+    visits = validated.get("visits", 0)
+    visit_charge = validated.get("visit_charge", 0.0)
+    year = validated["year"]
+    month = validated["month"]
 
     today = datetime.now()
-    
-    # BUG FIX: Use year/month from request if provided, otherwise default to current
-    # This ensures payments for historical/future months are saved correctly
-    year = data.get("year", today.year)
-    month = data.get("month", today.month)
 
     update_payment_status(
         tenant_id=tenant_id,
@@ -281,10 +298,22 @@ def update_payment():
                 client.authenticate()
 
                 spanish_months_cap = [
-                    "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-                    "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
+                    "Enero",
+                    "Febrero",
+                    "Marzo",
+                    "Abril",
+                    "Mayo",
+                    "Junio",
+                    "Julio",
+                    "Agosto",
+                    "Septiembre",
+                    "Octubre",
+                    "Noviembre",
+                    "Diciembre",
                 ]
-                month_name = spanish_months_cap[today.month - 1]
+                month_name = spanish_months_cap[
+                    month - 1
+                ]  # Use request month, not today
 
                 # Calculate total amount including visit charges
                 total_amount = tenant.rent + visit_charge
@@ -306,21 +335,39 @@ def update_payment():
                     notes=f"Marcado pagado desde la vista de tarjetas{' (incluye ' + str(visits) + ' visitas)' if visits > 0 else ''}",
                 )
                 client.add_payment(payment)
-                print(f"✅ Synced payment for {tenant.name} to Excel (${total_amount})")
+                logger.info(
+                    f"Synced payment for {tenant.name} to Excel (${total_amount})"
+                )
         except ImportError as e:
-            print(f"⚠️ Excel sync skipped - missing dependencies: {e}")
+            # Excel client module not available - this is expected in some deployments
+            logger.debug(f"Excel sync skipped - missing dependencies: {e}")
         except Exception as e:
-            print(f"⚠️ Excel sync failed (payment saved locally): {e}")
+            # Log but don't fail - payment was saved locally
+            logger.warning(f"Excel sync failed (payment saved locally): {e}")
 
     return jsonify({"success": True})
 
 
 @pagos_bp.route("/api/phone", methods=["POST"])
+@login_required
 def update_phone():
     """Update phone number for a tenant."""
     data = request.json
+    if not data:
+        return jsonify({"success": False, "error": "Request body is required"}), 400
+
     tenant_id = data.get("tenant_id")
     phone = data.get("phone", "")
+
+    # Validate tenant_id
+    is_valid, error = validate_tenant_id(tenant_id)
+    if not is_valid:
+        return jsonify({"success": False, "error": error}), 400
+
+    # Validate phone format
+    is_valid, error = validate_phone(phone)
+    if not is_valid:
+        return jsonify({"success": False, "error": error}), 400
 
     update_tenant_phone(tenant_id, phone)
 
@@ -328,13 +375,16 @@ def update_phone():
 
 
 @pagos_bp.route("/api/sync-status", methods=["GET"])
+@login_required
 def api_sync_status():
     """Get the last sync time and database health."""
     last_sync = get_last_sync_time()
     last_sync_relative = calculate_relative_time(last_sync)
 
-    return jsonify({
-        "success": True,
-        "last_sync": last_sync,
-        "last_sync_relative": last_sync_relative
-    })
+    return jsonify(
+        {
+            "success": True,
+            "last_sync": last_sync,
+            "last_sync_relative": last_sync_relative,
+        }
+    )

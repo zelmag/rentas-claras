@@ -4,6 +4,11 @@ Date Formatting Services
 
 Utilities for parsing and formatting dates in Spanish.
 Used by pagos and contratos routes.
+
+This is the SINGLE SOURCE OF TRUTH for:
+- Spanish month names
+- Spanish days of week
+- Billing month calculation
 """
 
 from datetime import datetime
@@ -11,7 +16,7 @@ from typing import Optional
 
 
 # =============================================================================
-# CONSTANTS
+# CONSTANTS - Single Source of Truth for Spanish date names
 # =============================================================================
 
 SPANISH_MONTHS = [
@@ -24,6 +29,10 @@ SPANISH_MONTHS_CAPITALIZED = [
     "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
 ]
 
+SPANISH_DAYS_OF_WEEK = [
+    "lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"
+]
+
 SPANISH_MONTH_TO_NUM = {
     "enero": 1, "febrero": 2, "marzo": 3, "abril": 4,
     "mayo": 5, "junio": 6, "julio": 7, "agosto": 8,
@@ -32,8 +41,19 @@ SPANISH_MONTH_TO_NUM = {
 
 
 # =============================================================================
+# BILLING MONTH CONSTANTS (Single Source of Truth)
+# =============================================================================
+
+# Minimum supported date (when our data starts)
+# IMPORTANT: This is the single source of truth - import from here in all modules
+MIN_BILLING_YEAR = 2025
+MIN_BILLING_MONTH = 1
+
+
+# =============================================================================
 # PARSING FUNCTIONS
 # =============================================================================
+
 
 def parse_date(date_str: Optional[str]) -> Optional[datetime]:
     """
@@ -83,6 +103,7 @@ def parse_spanish_month_year(month_str: str) -> datetime:
 # =============================================================================
 # FORMATTING FUNCTIONS
 # =============================================================================
+
 
 def format_date_spanish(date_str: Optional[str]) -> Optional[str]:
     """
@@ -138,40 +159,38 @@ def get_month_name(month: int, capitalize: bool = False) -> str:
 # BILLING MONTH (Single Source of Truth for "current month" across all pages)
 # =============================================================================
 
-# Minimum supported date (when our data starts)
-MIN_BILLING_YEAR = 2026
-MIN_BILLING_MONTH = 1
 
-
-def get_billing_month(reference_date: Optional[datetime] = None) -> tuple[int, int, str]:
+def get_billing_month(
+    reference_date: Optional[datetime] = None,
+) -> tuple[int, int, str]:
     """
     Get the current billing month/year for payment tracking.
-    
+
     This is the SINGLE SOURCE OF TRUTH for determining which month
-    payments should be tracked for. All pages (pagos, dashboard, contratos, 
+    payments should be tracked for. All pages (pagos, dashboard, contratos,
     state API) should use this function.
-    
+
     Rules:
     - After day 7 of any month, auto-switch to NEXT month
-    - Minimum supported date is January 2026 (when our data starts)
-    
+    - Minimum supported date is January 2025 (when our data starts)
+
     Args:
         reference_date: Optional datetime to use instead of now (for testing)
-    
+
     Returns:
         Tuple of (year, month, month_name_spanish)
-    
+
     Examples:
         - Dec 29, 2025 → (2026, 1, "enero") [after day 7, switches to Jan 2026]
         - Jan 5, 2026 → (2026, 1, "enero") [before day 7, stays on Jan]
         - Jan 10, 2026 → (2026, 2, "febrero") [after day 7, switches to Feb]
     """
     today = reference_date or datetime.now()
-    
+
     # Start with current date
     year = today.year
     month = today.month
-    
+
     # AUTO-SWITCH: After day 7, move to next month
     if today.day > 7:
         if month == 12:
@@ -179,16 +198,16 @@ def get_billing_month(reference_date: Optional[datetime] = None) -> tuple[int, i
             month = 1
         else:
             month += 1
-    
+
     # CLAMP: Ensure we don't go below minimum supported date
     if year < MIN_BILLING_YEAR:
         year = MIN_BILLING_YEAR
         month = MIN_BILLING_MONTH
     elif year == MIN_BILLING_YEAR and month < MIN_BILLING_MONTH:
         month = MIN_BILLING_MONTH
-    
+
     month_name = SPANISH_MONTHS[month - 1]
-    
+
     return (year, month, month_name)
 
 
@@ -206,7 +225,7 @@ def calculate_relative_time(timestamp: Optional[str]) -> Optional[str]:
         return None
 
     try:
-        sync_dt = datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
+        sync_dt = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
         diff = datetime.now() - sync_dt.replace(tzinfo=None)
         seconds = diff.total_seconds()
 

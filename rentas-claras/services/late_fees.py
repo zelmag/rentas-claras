@@ -17,32 +17,33 @@ from typing import Optional
 # =============================================================================
 
 from src.late_fees import (
-    # Constants
-    INITIAL_PENALTY_MXN,
-    DAILY_PENALTY_MXN,
-    MAX_DAILY_PENALTY_DAYS,
-    TERMINATION_WARNING_DAY,
-    # Enums
-    PaymentStatus,
-    PropertyType,
-    # Dataclasses
-    LateFeeResult,
-    PropertyConfig,
-    PropertySubtotal,
-    GrandTotal,
-    # Property configurations
-    PROPERTIES,
+    calculate_grand_total,
+    calculate_property_subtotal,
     # Core functions
     calculate_rentas_claras_balance,
     calculate_tenant_utilities,
-    calculate_property_subtotal,
-    calculate_grand_total,
+    DAILY_PENALTY_MXN,
+    format_grand_total,
     # Formatting functions
     format_property_subtotal,
-    format_grand_total,
     # Message generation
     generate_payment_request_message,
     generate_reminder_message,
+    GrandTotal,
+    # Constants
+    INITIAL_PENALTY_MXN,
+    # Dataclasses
+    LateFeeResult,
+    MAX_DAILY_PENALTY_DAYS,
+    MAX_TOTAL_PENALTY_MXN,
+    # Enums
+    PaymentStatus,
+    # Property configurations
+    PROPERTIES,
+    PropertyConfig,
+    PropertySubtotal,
+    PropertyType,
+    TERMINATION_WARNING_DAY,
 )
 
 # =============================================================================
@@ -50,17 +51,18 @@ from src.late_fees import (
 # =============================================================================
 
 INITIAL_PENALTY = int(INITIAL_PENALTY_MXN)  # 500
-DAILY_PENALTY = int(DAILY_PENALTY_MXN)      # 100
+DAILY_PENALTY = int(DAILY_PENALTY_MXN)  # 100
 
 
 # =============================================================================
 # BACKWARD-COMPATIBLE WRAPPER FUNCTIONS
 # =============================================================================
 
+
 def calculate_late_fee(days_late: int) -> float:
     """
     Calculate the late fee based on days late.
-    
+
     BACKWARD COMPATIBILITY WRAPPER.
     Prefer using calculate_rentas_claras_balance() for new code.
 
@@ -99,7 +101,7 @@ def calculate_days_late(
 ) -> int:
     """
     Calculate the number of days late for a given month.
-    
+
     BACKWARD COMPATIBILITY WRAPPER.
     Prefer using calculate_rentas_claras_balance() for new code.
 
@@ -114,7 +116,7 @@ def calculate_days_late(
         Number of days late (0 if not late)
     """
     import calendar
-    
+
     if is_future_month:
         return 0
 
@@ -138,7 +140,7 @@ def calculate_tenant_late_fee(
 ) -> LateFeeResult:
     """
     Calculate late fee for a specific tenant.
-    
+
     BACKWARD COMPATIBILITY WRAPPER.
     This function wraps calculate_rentas_claras_balance() to maintain
     the original interface used by routes/pagos.py.
@@ -163,6 +165,7 @@ def calculate_tenant_late_fee(
     else:
         # Past month - use a high day to get full late fees
         import calendar
+
         effective_day = calendar.monthrange(year, month)[1]
 
     # If paid, return early with zero fees

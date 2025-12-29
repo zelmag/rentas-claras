@@ -11,7 +11,8 @@ This is culturally-aware name processing for:
 - Multiple tenant names (Samantha y Cecilia → Samantha)
 """
 
-from typing import Set
+import re
+from typing import Optional, Set
 
 
 # =============================================================================
@@ -74,8 +75,33 @@ COMPOUND_FIRST_NAMES: Set[str] = {
 
 
 # =============================================================================
+# PHONE VALIDATION (DEPRECATED - Use services/validation.py instead)
+# =============================================================================
+# NOTE: These functions are kept for backward compatibility but new code
+# should use validate_phone() from services/validation.py
+
+
+def validate_phone_number(phone: str) -> tuple[bool, Optional[str]]:
+    """
+    Validate a phone number for WhatsApp messaging.
+    
+    DEPRECATED: Use validate_phone() from services/validation.py instead.
+    This function is kept for backward compatibility.
+
+    Args:
+        phone: Phone number string
+
+    Returns:
+        Tuple of (is_valid, error_message)
+    """
+    from services.validation import validate_phone
+    return validate_phone(phone, required=True)
+
+
+# =============================================================================
 # FUNCTIONS
 # =============================================================================
+
 
 def expand_abbreviated_name(name: str) -> str:
     """

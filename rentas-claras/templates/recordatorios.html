@@ -1,0 +1,1949 @@
+{% extends "base.html" %}
+
+{% block title %}RentasClaras - Recordatorios{% endblock %}
+
+{% block styles %}
+<style>
+    * { box-sizing: border-box; }
+
+    body {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: var(--paper);
+        margin: 0;
+        padding: 0;
+        padding-bottom: 100px;
+    }
+
+    .container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 16px;
+    }
+
+    /* ========== RESPONSIVE DESIGN ========== */
+    @media (min-width: 768px) {
+        .container {
+            max-width: 700px;
+            padding: 24px;
+        }
+    }
+
+    @media (min-width: 1024px) {
+        body {
+            padding-bottom: 0;
+            /* padding-top handled by base.html */
+        }
+        .container {
+            max-width: 800px;
+            padding: 32px;
+        }
+    }
+
+    /* ========== iPhone SE Optimizations (320px width) ========== */
+    @media (max-width: 375px) {
+        .container {
+            padding: 12px;
+        }
+        
+        .template-option {
+            padding: 12px;
+        }
+        
+        .template-preview {
+            font-size: 0.8rem;
+            padding: 6px 8px;
+        }
+        
+        .template-title {
+            font-size: 0.95rem;
+            flex-wrap: wrap;
+        }
+        
+        .template-badge {
+            font-size: 0.65rem;
+        }
+        
+        .summary-card {
+            padding: 16px;
+        }
+        
+        .action-bar-content {
+            gap: 8px;
+        }
+        
+        .action-summary-title {
+            font-size: 0.9rem;
+        }
+        
+        .btn-send {
+            padding: 12px 16px;
+            font-size: 0.9rem;
+        }
+        
+        .bulk-btn {
+            padding: 6px 10px;
+            font-size: 0.8rem;
+        }
+        
+        .context-tip {
+            padding: 10px !important;
+            font-size: 0.85rem !important;
+        }
+    }
+
+    /* Header */
+    .page-header {
+        text-align: center;
+        margin-bottom: 24px;
+    }
+
+    .page-title {
+        font-size: 1.6rem;
+        font-weight: 800;
+        color: var(--green);
+        margin: 0 0 4px 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    .page-subtitle {
+        font-size: var(--text-sm);
+        color: var(--gray);
+    }
+
+    /* Summary Card */
+    .summary-card {
+        background: linear-gradient(135deg, var(--green) 0%, var(--green-dark) 100%);
+        border-radius: var(--radius-lg);
+        padding: 24px;
+        margin-bottom: 20px;
+        color: white;
+        text-align: center;
+    }
+
+    .summary-label {
+        font-size: var(--text-sm);
+        opacity: 0.9;
+        margin-bottom: 4px;
+    }
+
+    .summary-value {
+        font-size: var(--text-2xl);
+        font-weight: 800;
+    }
+
+    .summary-sublabel {
+        font-size: var(--text-sm);
+        opacity: 0.8;
+        margin-top: 4px;
+    }
+
+    .summary-stats {
+        display: flex;
+        justify-content: center;
+        gap: 24px;
+        margin-top: 16px;
+        padding-top: 16px;
+        border-top: 1px solid rgba(255,255,255,0.2);
+    }
+
+    .summary-stat {
+        text-align: center;
+    }
+
+    .summary-stat-value {
+        font-size: var(--text-lg);
+        font-weight: 700;
+    }
+
+    .summary-stat-label {
+        font-size: var(--text-xs);
+        opacity: 0.8;
+    }
+
+    /* ========== CONTEXT TIP (Cognitive Load Reduction) ========== */
+    .context-tip {
+        background: #EBF5FF;
+        border: 1px solid #93C5FD;
+        padding: 12px 16px;
+        border-radius: var(--radius-md);
+        margin-bottom: 16px;
+        font-size: var(--text-sm);
+        color: #1E40AF;
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .context-tip-icon {
+        font-size: 1.2rem;
+        flex-shrink: 0;
+    }
+    
+    .context-tip-text strong {
+        color: #1E3A8A;
+    }
+
+    /* Tenant List */
+    .section-title {
+        font-size: var(--text-base);
+        font-weight: 700;
+        color: #1A202C;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .tenant-list {
+        background: var(--white);
+        border-radius: var(--radius-md);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        border: 1px solid var(--border);
+        overflow: hidden;
+        margin-bottom: 20px;
+    }
+
+    .tenant-item {
+        padding: 16px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .tenant-item:last-child {
+        border-bottom: none;
+    }
+
+    .tenant-checkbox {
+        flex-shrink: 0;
+        margin-top: 2px;
+    }
+
+    /* ISSUE #4: Larger checkboxes (32x32px) */
+    .tenant-checkbox input[type="checkbox"] {
+        width: 32px;
+        height: 32px;
+        accent-color: var(--green);
+        cursor: pointer;
+    }
+
+    .tenant-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .tenant-name {
+        font-weight: 700;
+        color: #1A202C;
+        margin-bottom: 2px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+
+    .tenant-location {
+        font-size: var(--text-sm);
+        color: var(--gray);
+    }
+
+    .tenant-message-preview {
+        font-size: var(--text-xs);
+        color: #718096;
+        margin-top: 8px;
+        padding: 8px 10px;
+        background: var(--gray-light);
+        border-radius: var(--radius-sm);
+        border-left: 3px solid var(--green);
+    }
+
+    .tenant-amount {
+        font-weight: 800;
+        color: var(--green);
+        font-size: var(--text-base);
+        flex-shrink: 0;
+    }
+
+    .tenant-status {
+        flex-shrink: 0;
+        padding: 4px 8px;
+        border-radius: var(--radius-sm);
+        font-size: var(--text-xs);
+        font-weight: 600;
+    }
+
+    .status-ok {
+        background: var(--green-light);
+        color: var(--green-dark);
+    }
+
+    .status-no-phone {
+        background: var(--yellow-light);
+        color: var(--yellow);
+    }
+
+    .status-sent {
+        background: #E0E7FF;
+        color: #3730A3;
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 40px 20px;
+        color: var(--gray);
+    }
+
+    .empty-state-icon {
+        font-size: 3rem;
+        margin-bottom: 12px;
+    }
+
+    .empty-state-text {
+        font-size: var(--text-base);
+        font-weight: 600;
+    }
+
+    .empty-state-subtext {
+        font-size: var(--text-sm);
+        margin-top: 4px;
+    }
+
+    /* Action Buttons */
+    .action-bar {
+        position: fixed;
+        bottom: 70px;
+        left: 0;
+        right: 0;
+        background: var(--white);
+        padding: 16px;
+        padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+        box-shadow: 0 -4px 12px rgba(0,0,0,0.1);
+        border-top: 1px solid var(--border);
+        z-index: 50;
+    }
+
+    @media (min-width: 1024px) {
+        .action-bar {
+            bottom: 0;
+            top: auto;
+        }
+    }
+
+    .action-bar-content {
+        max-width: 600px;
+        margin: 0 auto;
+        display: flex;
+        gap: 12px;
+        align-items: center;
+    }
+
+    .action-summary {
+        flex: 1;
+    }
+
+    .action-summary-title {
+        font-weight: 700;
+        color: #1A202C;
+    }
+
+    .action-summary-subtitle {
+        font-size: var(--text-sm);
+        color: var(--gray);
+    }
+
+    /* POLISH #1: WhatsApp green branding on send button */
+    .btn-send {
+        background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+        color: white;
+        border: none;
+        padding: 14px 28px;
+        border-radius: var(--radius-md);
+        font-weight: 700;
+        font-size: var(--text-base);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s;
+        box-shadow: 0 2px 8px rgba(37, 211, 102, 0.3);
+    }
+
+    .btn-send:hover {
+        background: linear-gradient(135deg, #22C55E 0%, #0D7D6A 100%);
+        transform: scale(1.02);
+        box-shadow: 0 4px 12px rgba(37, 211, 102, 0.4);
+    }
+
+    .btn-send:active {
+        transform: scale(0.98);
+    }
+
+    .btn-send:disabled {
+        background: #CBD5E0;
+        box-shadow: none;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    /* Confirmation Modal */
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 200;
+        align-items: center;
+        justify-content: center;
+        padding: 16px;
+    }
+
+    .modal-overlay.show {
+        display: flex;
+    }
+
+    .modal {
+        background: var(--white);
+        border-radius: var(--radius-lg);
+        max-width: 420px;
+        width: 100%;
+        max-height: 90vh;
+        overflow-y: auto;
+        padding: 24px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+    }
+
+    .modal-icon {
+        text-align: center;
+        font-size: 3rem;
+        margin-bottom: 16px;
+    }
+
+    .modal-title {
+        font-size: var(--text-lg);
+        font-weight: 800;
+        text-align: center;
+        margin-bottom: 8px;
+    }
+
+    .modal-text {
+        font-size: var(--text-sm);
+        color: var(--gray);
+        text-align: center;
+        margin-bottom: 16px;
+    }
+
+    /* ISSUE #1: Message preview in confirmation modal */
+    .modal-message-preview {
+        background: #DCFCE7;
+        border: 1px solid #86EFAC;
+        padding: 12px;
+        border-radius: var(--radius-md);
+        margin-bottom: 16px;
+    }
+    
+    .modal-message-preview-label {
+        font-size: var(--text-xs);
+        font-weight: 700;
+        color: #166534;
+        margin-bottom: 6px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+    
+    .modal-message-preview-text {
+        font-size: var(--text-sm);
+        color: #14532D;
+        font-style: italic;
+        line-height: 1.4;
+        background: white;
+        padding: 10px;
+        border-radius: var(--radius-sm);
+        border-left: 3px solid #22C55E;
+    }
+
+    .modal-recipients {
+        background: var(--gray-light);
+        border-radius: var(--radius-sm);
+        padding: 12px;
+        max-height: 120px;
+        overflow-y: auto;
+        margin-bottom: 16px;
+        font-size: var(--text-sm);
+    }
+
+    .modal-recipient {
+        padding: 4px 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .modal-recipient::before {
+        content: "•";
+        color: var(--green);
+        font-weight: bold;
+    }
+
+    .modal-buttons {
+        display: flex;
+        gap: 12px;
+    }
+
+    .btn-cancel {
+        flex: 1;
+        padding: 14px;
+        border: 1px solid var(--border);
+        background: var(--white);
+        border-radius: var(--radius-md);
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .btn-confirm {
+        flex: 1;
+        padding: 14px;
+        border: none;
+        background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+        color: white;
+        border-radius: var(--radius-md);
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+    .btn-confirm:disabled {
+        background: #CBD5E0;
+        cursor: not-allowed;
+    }
+
+    /* Success State */
+    .success-screen {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: var(--white);
+        z-index: 300;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        padding: 24px;
+        overflow-y: auto;
+    }
+
+    .success-screen.show {
+        display: flex;
+    }
+
+    .success-icon {
+        font-size: 5rem;
+        margin-bottom: 24px;
+        animation: successPop 0.5s ease-out;
+    }
+
+    @keyframes successPop {
+        0% { transform: scale(0); }
+        50% { transform: scale(1.2); }
+        100% { transform: scale(1); }
+    }
+
+    .success-title {
+        font-size: var(--text-xl);
+        font-weight: 800;
+        color: var(--green);
+        margin-bottom: 8px;
+    }
+
+    .success-subtitle {
+        font-size: var(--text-base);
+        color: var(--gray);
+        margin-bottom: 24px;
+    }
+
+    .success-details {
+        background: var(--gray-light);
+        border-radius: var(--radius-md);
+        padding: 16px;
+        width: 100%;
+        max-width: 360px;
+        margin-bottom: 16px;
+    }
+
+    .success-detail-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .success-detail-row:last-child {
+        border-bottom: none;
+    }
+
+    /* ISSUE #12: Copy summary button */
+    .btn-copy-summary {
+        padding: 10px 20px;
+        background: var(--white);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        font-weight: 600;
+        font-size: var(--text-sm);
+        cursor: pointer;
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.2s;
+    }
+    
+    .btn-copy-summary:hover {
+        background: var(--gray-light);
+    }
+    
+    .btn-copy-summary.copied {
+        background: #DCFCE7;
+        border-color: #22C55E;
+        color: #166534;
+    }
+
+    .btn-back {
+        padding: 14px 32px;
+        background: var(--green);
+        color: white;
+        border: none;
+        border-radius: var(--radius-md);
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+    /* Loading state */
+    .loading-spinner {
+        width: 20px;
+        height: 20px;
+        border: 3px solid rgba(255,255,255,0.3);
+        border-top-color: white;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        display: inline-block;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    /* ========== TEMPLATE SELECTOR ========== */
+    .template-selector {
+        background: var(--white);
+        border-radius: var(--radius-md);
+        border: 1px solid var(--border);
+        margin-bottom: 20px;
+        overflow: hidden;
+    }
+
+    .template-selector-header {
+        padding: 12px 16px;
+        background: var(--gray-light);
+        border-bottom: 1px solid var(--border);
+        font-weight: 700;
+        font-size: var(--text-sm);
+        color: var(--gray);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .template-option {
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--border);
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .template-option:last-child {
+        border-bottom: none;
+    }
+
+    .template-option:hover {
+        background: var(--gray-light);
+    }
+
+    /* POLISH #3: Animation on template select */
+    .template-option.selected {
+        background: var(--green-light);
+        border-left: 4px solid var(--green);
+        animation: selectPulse 0.3s ease-out;
+    }
+    
+    @keyframes selectPulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.005); }
+        100% { transform: scale(1); }
+    }
+
+    /* ISSUE #2: Warning separator for recargo template */
+    .template-option.recargo-warning {
+        border-top: 2px solid #F59E0B;
+        margin-top: 4px;
+        position: relative;
+    }
+    
+    .template-option.recargo-warning::before {
+        content: "A partir del día 2";
+        position: absolute;
+        top: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #FEF3C7;
+        color: #92400E;
+        font-size: 0.65rem;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .template-option input[type="radio"] {
+        width: 28px;
+        height: 28px;
+        accent-color: var(--green);
+        flex-shrink: 0;
+        margin-top: 2px;
+    }
+
+    .template-content {
+        flex: 1;
+    }
+
+    .template-title {
+        font-weight: 700;
+        font-size: var(--text-base);
+        color: #1A202C;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 4px;
+    }
+
+    /* POLISH #2: Larger template icons */
+    .template-icon {
+        font-size: 1.5rem;
+    }
+
+    .template-preview {
+        font-size: var(--text-sm);
+        color: var(--gray);
+        line-height: 1.4;
+        background: var(--gray-light);
+        padding: 8px 10px;
+        border-radius: var(--radius-sm);
+        border-left: 3px solid var(--green);
+    }
+
+    .template-option.selected .template-preview {
+        background: rgba(255,255,255,0.7);
+    }
+
+    .template-badge {
+        font-size: var(--text-xs);
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-weight: 600;
+    }
+
+    .template-badge.pending {
+        background: var(--yellow-light);
+        color: var(--yellow);
+    }
+
+    .template-badge.default {
+        background: var(--green-light);
+        color: var(--green-dark);
+    }
+    
+    .template-badge.auto-selected {
+        background: #E0E7FF;
+        color: #3730A3;
+    }
+
+    /* ========== BULK ACTIONS ========== */
+    .bulk-actions {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 12px;
+        flex-wrap: wrap;
+    }
+
+    .bulk-btn {
+        padding: 10px 14px;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border);
+        background: var(--white);
+        font-size: var(--text-sm);
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.15s;
+        min-height: 44px;
+    }
+
+    .bulk-btn:hover {
+        background: var(--gray-light);
+        border-color: var(--gray);
+    }
+
+    .bulk-btn:active {
+        transform: scale(0.98);
+    }
+
+    /* ========== TENANT PHONE - ISSUE #7: Full display ========== */
+    .tenant-phone {
+        font-size: var(--text-sm);
+        color: var(--gray);
+        font-family: 'SF Mono', 'Monaco', monospace;
+        margin-top: 2px;
+    }
+
+    /* ========== QUICK SEND BUTTON - ISSUE #5: Larger size ========== */
+    .quick-send-btn {
+        padding: 10px 14px;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--green);
+        background: var(--white);
+        color: var(--green);
+        font-size: var(--text-sm);
+        font-weight: 600;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: all 0.15s;
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .quick-send-btn:hover {
+        background: var(--green);
+        color: var(--white);
+    }
+
+    .quick-send-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    /* Warning section */
+    .warning-section {
+        margin-bottom: 20px;
+    }
+
+    .warning-card {
+        background: var(--yellow-light);
+        border: 1px solid #F6E05E;
+        border-radius: var(--radius-md);
+        padding: 12px 16px;
+    }
+
+    .warning-title {
+        font-weight: 700;
+        color: var(--yellow);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 4px;
+    }
+
+    .warning-text {
+        font-size: var(--text-sm);
+        color: #744210;
+    }
+
+    /* Info badge */
+    .info-badge {
+        background: #E0E7FF;
+        color: #3730A3;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: var(--text-xs);
+        font-weight: 600;
+    }
+
+    /* Last send info */
+    .last-send-info {
+        text-align: center;
+        padding: 8px;
+        font-size: var(--text-sm);
+        color: var(--gray);
+        margin-bottom: 16px;
+    }
+
+    /* ========== ISSUE #10: Expandable Enviados Hoy ========== */
+    .sent-today-item {
+        cursor: pointer;
+        transition: background 0.15s;
+    }
+    
+    .sent-today-item:hover {
+        background: var(--gray-light);
+    }
+    
+    .sent-today-details {
+        display: none;
+        background: #F0FDF4;
+        padding: 10px 12px;
+        margin: 8px 0 0 0;
+        border-radius: var(--radius-sm);
+        font-size: var(--text-sm);
+        border-left: 3px solid var(--green);
+    }
+    
+    .sent-today-item.expanded .sent-today-details {
+        display: block;
+    }
+    
+    .sent-detail-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 4px 0;
+    }
+    
+    .sent-detail-label {
+        color: var(--gray);
+    }
+    
+    .sent-detail-value {
+        font-weight: 600;
+        color: #166534;
+    }
+    
+    .expand-hint {
+        font-size: var(--text-xs);
+        color: var(--gray);
+        margin-left: 8px;
+    }
+
+    /* ========== SINGLE SEND MODAL (ISSUE #6) ========== */
+    .single-send-modal {
+        max-width: 380px;
+    }
+    
+    .single-send-recipient {
+        background: var(--gray-light);
+        padding: 12px;
+        border-radius: var(--radius-md);
+        margin-bottom: 12px;
+        text-align: center;
+    }
+    
+    .single-send-name {
+        font-weight: 700;
+        font-size: var(--text-lg);
+        color: #1A202C;
+        margin-bottom: 4px;
+    }
+    
+    .single-send-phone {
+        font-family: 'SF Mono', 'Monaco', monospace;
+        font-size: var(--text-base);
+        color: var(--gray);
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container">
+    <!-- Header -->
+    <div class="page-header">
+        <h1 class="page-title">📬 Recordatorios de Renta</h1>
+        <p class="page-subtitle">{{ month_name }} {{ year }}</p>
+    </div>
+
+    {% include 'partials/search_box.html' %}
+
+    <!-- Summary Card -->
+    <div class="summary-card">
+        <div class="summary-label">Por cobrar</div>
+        <div class="summary-value">{{ total_amount_formatted }}</div>
+        <div class="summary-sublabel">de {{ total_pending }} inquilinos</div>
+
+        <div class="summary-stats">
+            <div class="summary-stat">
+                <div class="summary-stat-value">{{ ready_to_send }}</div>
+                <div class="summary-stat-label">Listos</div>
+            </div>
+            <div class="summary-stat">
+                <div class="summary-stat-value">{{ skipped_no_phone|length }}</div>
+                <div class="summary-stat-label">Sin Tel</div>
+            </div>
+            <div class="summary-stat">
+                <div class="summary-stat-value">{{ already_messaged_today|length }}</div>
+                <div class="summary-stat-label">Enviados Hoy</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- COGNITIVE LOAD #2: Contextual guidance based on day of month -->
+    <div class="context-tip" id="contextTip">
+        <span class="context-tip-icon">💡</span>
+        <div class="context-tip-text">
+            <!-- Server-side rendered context tip based on current date -->
+            <span id="contextTipText">
+                {% set day_of_month = now.day if now is defined else 1 %}
+                {% if day_of_month >= 2 %}
+                    <strong>Día {{ day_of_month }} del mes.</strong> A partir del día 2 aplica recargo. Se seleccionó automáticamente el mensaje de aviso con recargo.
+                {% else %}
+                    <strong>Día 1 del mes.</strong> Hoy es día de pago sin recargo. Mensaje amable seleccionado.
+                {% endif %}
+            </span>
+        </div>
+    </div>
+
+    <!-- Last Send Info -->
+    <div class="last-send-info">
+        📤 Último envío: {{ last_send_time }}
+    </div>
+
+    <!-- Test WhatsApp Button (Dev Mode) -->
+    <div style="background: #FEF3C7; border: 2px solid #F59E0B; border-radius: 12px; padding: 16px; margin-bottom: 20px;">
+        <div style="font-weight: 700; color: #92400E; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
+            🧪 Modo Prueba (Templates Pendientes)
+        </div>
+        <div style="font-size: 0.9rem; color: #78350F; margin-bottom: 12px;">
+            Tus templates están pendientes de aprobación. Usa el botón de prueba para verificar que la API funciona.
+        </div>
+        <button id="btnTestWA" onclick="sendTestMessage()" style="
+            background: #25D366;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        ">
+            <span style="font-size: 1.2rem;">📱</span>
+            Enviar "Hello World" a mi teléfono
+        </button>
+        <div id="testResult" style="margin-top: 12px; font-size: 0.9rem; display: none;"></div>
+    </div>
+
+    {% if unpaid_tenants %}
+    <!-- Template Selector -->
+    <div class="template-selector">
+        <div class="template-selector-header">
+            <span class="template-icon">📝</span> Tipo de mensaje
+        </div>
+        
+        <label class="template-option" data-template="recordatorio_renta" id="templateRecordatorioRenta">
+            <input type="radio" name="template" value="recordatorio_renta">
+            <div class="template-content">
+                <div class="template-title">
+                    <span class="template-icon">🌅</span> Recordatorio Amable
+                    <span class="template-badge default" id="badgeMorning">Por defecto</span>
+                </div>
+                <div class="template-preview" id="previewMorning">
+                    "Buenos días <strong>{{ unpaid_tenants[0].display_name if unpaid_tenants else 'Inquilino' }}</strong>. Espero esté bien. Le recordamos amablemente el pago de su renta. Monto pendiente: <strong>{{ unpaid_tenants[0].rent_formatted if unpaid_tenants else '$0' }}</strong>. Agradecemos su atención."
+                </div>
+            </div>
+        </label>
+
+        <label class="template-option" data-template="recordatorio_tarde" id="templateRecordatorioTarde">
+            <input type="radio" name="template" value="recordatorio_tarde">
+            <div class="template-content">
+                <div class="template-title">
+                    <span class="template-icon">🌆</span> Recordatorio Tarde (5 PM)
+                    <span class="template-badge auto-selected" id="badgeAfternoon" style="display: none;">Auto-seleccionado</span>
+                </div>
+                <div class="template-preview" id="previewAfternoon">
+                    "Buenas tardes <strong>{{ unpaid_tenants[0].display_name if unpaid_tenants else 'Inquilino' }}</strong>. Le recordamos que el pago de su renta por <strong>{{ unpaid_tenants[0].rent_formatted if unpaid_tenants else '$0' }}</strong> sigue pendiente. Le pedimos realizar el pago hoy de ser posible. Gracias."
+                </div>
+            </div>
+        </label>
+
+        <label class="template-option recargo-warning" data-template="aviso_recargo" id="templateAvisoRecargo">
+            <input type="radio" name="template" value="aviso_recargo">
+            <div class="template-content">
+                <div class="template-title">
+                    <span class="template-icon">⚠️</span> Aviso con Recargo
+                    <span class="template-badge auto-selected" id="badgeRecargo" style="display: none;">Auto-seleccionado</span>
+                </div>
+                <div class="template-preview" id="previewRecargo">
+                    "Buen día <strong>{{ unpaid_tenants[0].display_name if unpaid_tenants else 'Inquilino' }}</strong>. Le informamos que su renta de <strong>{{ unpaid_tenants[0].rent_formatted if unpaid_tenants else '$0' }}</strong> continúa pendiente y a partir de hoy aplica un recargo. Total a pagar: <strong>{{ unpaid_tenants[0].rent_formatted if unpaid_tenants else '$0' }}</strong>. Gracias."
+                </div>
+            </div>
+        </label>
+    </div>
+
+    <!-- Bulk Actions -->
+    <div class="bulk-actions">
+        <button class="bulk-btn" id="btnSelectAll" onclick="selectAllTenants()">
+            ☑️ Seleccionar todos
+        </button>
+        <button class="bulk-btn" id="btnDeselectAll" onclick="deselectAllTenants()">
+            ☐ Deseleccionar todos
+        </button>
+    </div>
+
+    <!-- Ready to Send Section -->
+    <div class="section-title">
+        ✅ Listos para enviar ({{ unpaid_tenants|length }})
+    </div>
+    <div class="tenant-list" id="tenantList">
+        {% for tenant in unpaid_tenants %}
+        <div class="tenant-item" data-tenant-id="{{ tenant.id }}">
+            <div class="tenant-checkbox">
+                <input type="checkbox"
+                       id="tenant-{{ tenant.id }}"
+                       checked
+                       data-tenant-id="{{ tenant.id }}"
+                       data-tenant-name="{{ tenant.name }}"
+                       data-tenant-display-name="{{ tenant.display_name }}"
+                       data-tenant-phone="{{ tenant.phone }}"
+                       data-tenant-rent="{{ tenant.rent }}"
+                       data-tenant-rent-formatted="{{ tenant.rent_formatted }}">
+            </div>
+            <div class="tenant-info">
+                <div class="tenant-name">
+                    {{ tenant.display_name }}
+                    {% if tenant.messages_sent_this_month > 0 %}
+                    <span class="info-badge">{{ tenant.messages_sent_this_month }} msg este mes</span>
+                    {% endif %}
+                </div>
+                <div class="tenant-location">{{ tenant.property_name }} {{ tenant.unit }}</div>
+                <!-- ISSUE #7: Full phone number display -->
+                <div class="tenant-phone">📱 {{ tenant.phone }}</div>
+                <div class="tenant-message-preview" id="preview-{{ tenant.id }}">
+                    → "Buenos días {{ tenant.display_name }}. Le recordamos el pago de su renta. Monto: {{ tenant.rent_formatted }}"
+                </div>
+            </div>
+            <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
+                <div class="tenant-amount">{{ tenant.rent_formatted }}</div>
+                <button class="quick-send-btn" 
+                        onclick="showSingleSendModal('{{ tenant.id }}', '{{ tenant.display_name }}', '{{ tenant.phone }}', '{{ tenant.rent_formatted }}')" 
+                        title="Enviar solo a este inquilino">
+                    📤 Solo este
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if skipped_no_phone %}
+    <!-- No Phone Warning -->
+    <div class="warning-section">
+        <div class="section-title">
+            ⚠️ Sin teléfono ({{ skipped_no_phone|length }})
+        </div>
+        <div class="warning-card">
+            <div class="warning-title">⚠️ No se pueden enviar</div>
+            <div class="warning-text">Estos inquilinos no tienen número registrado.</div>
+        </div>
+        <div class="tenant-list" style="margin-top: 12px;">
+            {% for tenant in skipped_no_phone %}
+            <div class="tenant-item">
+                <div class="tenant-info">
+                    <div class="tenant-name">{{ tenant.display_name }}</div>
+                    <div class="tenant-location">{{ tenant.property_name }} {{ tenant.unit }}</div>
+                </div>
+                <div class="tenant-status status-no-phone">Sin Tel</div>
+                <div class="tenant-amount">{{ tenant.rent_formatted }}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if already_messaged_today %}
+    <!-- ISSUE #10: Expandable Already Sent Today -->
+    <div class="section-title">
+        📨 Ya enviados hoy ({{ already_messaged_today|length }})
+        <span class="expand-hint">Toca para ver detalles</span>
+    </div>
+    <div class="tenant-list">
+        {% for tenant in already_messaged_today %}
+        <div class="tenant-item sent-today-item" onclick="toggleSentDetails(this)">
+            <div class="tenant-info">
+                <div class="tenant-name">{{ tenant.display_name }}</div>
+                <div class="tenant-location">{{ tenant.property_name }} {{ tenant.unit }}</div>
+                <!-- Expandable details -->
+                <div class="sent-today-details">
+                    <div class="sent-detail-row">
+                        <span class="sent-detail-label">Hora:</span>
+                        <span class="sent-detail-value">{{ tenant.last_message_time|default('Hoy') }}</span>
+                    </div>
+                    <div class="sent-detail-row">
+                        <span class="sent-detail-label">Plantilla:</span>
+                        <span class="sent-detail-value">{{ tenant.last_template|default('Recordatorio') }}</span>
+                    </div>
+                    <div class="sent-detail-row">
+                        <span class="sent-detail-label">Teléfono:</span>
+                        <span class="sent-detail-value">{{ tenant.phone }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="tenant-status status-sent">Enviado ✓</div>
+            <div class="tenant-amount">{{ tenant.rent_formatted }}</div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if not unpaid_tenants and not skipped_no_phone and not already_messaged_today %}
+    <!-- All Paid - Empty State -->
+    <div class="empty-state">
+        <div class="empty-state-icon">🎉</div>
+        <div class="empty-state-text">¡Todos al corriente!</div>
+        <div class="empty-state-subtext">No hay recordatorios pendientes este mes.</div>
+    </div>
+    {% endif %}
+
+    <!-- Spacer for fixed action bar -->
+    <div style="height: 120px;"></div>
+</div>
+
+{% if unpaid_tenants %}
+<!-- Fixed Action Bar -->
+<div class="action-bar">
+    <div class="action-bar-content">
+        <div class="action-summary">
+            <div class="action-summary-title" id="selectedCount">{{ unpaid_tenants|length }} seleccionados</div>
+            <div class="action-summary-subtitle" id="selectedAmount">{{ total_amount_formatted }} por cobrar</div>
+        </div>
+        <button class="btn-send" id="btnSend" {% if not unpaid_tenants %}disabled{% endif %}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+            </svg>
+            Enviar WhatsApp
+        </button>
+    </div>
+</div>
+{% endif %}
+
+<!-- Confirmation Modal (ISSUE #1: with message preview) -->
+<div class="modal-overlay" id="confirmModal">
+    <div class="modal">
+        <div class="modal-icon">📤</div>
+        <div class="modal-title">Confirmar Envío</div>
+        <div class="modal-text">
+            Vas a enviar <strong id="confirmCount">0</strong> mensajes de WhatsApp
+        </div>
+        
+        <!-- ISSUE #1: Message preview -->
+        <div class="modal-message-preview">
+            <div class="modal-message-preview-label">📝 Mensaje a enviar:</div>
+            <div class="modal-message-preview-text" id="confirmMessagePreview">
+                <!-- Populated by JavaScript -->
+            </div>
+        </div>
+        
+        <div class="modal-recipients" id="recipientList">
+            <!-- Populated by JavaScript -->
+        </div>
+        <div class="modal-buttons">
+            <button class="btn-cancel" id="btnCancel">Cancelar</button>
+            <button class="btn-confirm" id="btnConfirm">
+                ✅ Sí, Enviar
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ISSUE #6: Single Send Confirmation Modal -->
+<div class="modal-overlay" id="singleSendModal">
+    <div class="modal single-send-modal">
+        <div class="modal-icon">📤</div>
+        <div class="modal-title">Enviar a un inquilino</div>
+        
+        <div class="single-send-recipient">
+            <div class="single-send-name" id="singleSendName">Nombre</div>
+            <div class="single-send-phone" id="singleSendPhone">📱 +52 xxx</div>
+        </div>
+        
+        <!-- Message preview -->
+        <div class="modal-message-preview">
+            <div class="modal-message-preview-label">📝 Mensaje:</div>
+            <div class="modal-message-preview-text" id="singleSendMessage">
+                <!-- Populated by JavaScript -->
+            </div>
+        </div>
+        
+        <div class="modal-buttons">
+            <button class="btn-cancel" onclick="closeSingleSendModal()">Cancelar</button>
+            <button class="btn-confirm" id="btnSingleConfirm">
+                ✅ Enviar
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Success Screen (ISSUE #3 & #12: with copy summary) -->
+<div class="success-screen" id="successScreen">
+    <div class="success-icon">✅</div>
+    <div class="success-title" id="successTitle">Recordatorios Enviados</div>
+    <div class="success-subtitle" id="successSubtitle">Los mensajes fueron enviados correctamente.</div>
+
+    <div class="success-details" id="successDetails">
+        <!-- Populated by JavaScript -->
+    </div>
+
+    <!-- ISSUE #12: Copy summary button -->
+    <button class="btn-copy-summary" id="btnCopySummary" onclick="copySummaryToClipboard()">
+        📋 Copiar resumen
+    </button>
+
+    <button class="btn-back" onclick="window.location.href='/resumen'">
+        Volver al Resumen
+    </button>
+</div>
+
+<script>
+// ========== GLOBAL STATE ==========
+let lastSendSummary = null; // For copy functionality
+
+// ========== ISSUE #2: Auto-select template based on time/date ==========
+function autoSelectTemplate() {
+    const now = new Date();
+    const dayOfMonth = now.getDate();
+    const hour = now.getHours();
+    
+    let selectedTemplate = 'recordatorio_renta';
+    let contextTipText = '';
+    
+    // Recargo applies from day 2 onwards
+    if (dayOfMonth >= 2) {
+        selectedTemplate = 'aviso_recargo';
+        contextTipText = `<strong>Día ${dayOfMonth} del mes.</strong> A partir del día 2 aplica recargo. Se seleccionó automáticamente el mensaje de aviso con recargo.`;
+        
+        // Show the auto-selected badge
+        document.getElementById('badgeRecargo').style.display = 'inline';
+        document.getElementById('badgeMorning').textContent = '';
+    } else if (hour >= 17) {
+        // After 5 PM on day 1, use afternoon template
+        selectedTemplate = 'recordatorio_tarde';
+        contextTipText = `<strong>Son las ${hour}:${now.getMinutes().toString().padStart(2, '0')}.</strong> Es tarde, se seleccionó el mensaje de "Buenas tardes" automáticamente.`;
+        
+        document.getElementById('badgeAfternoon').style.display = 'inline';
+        document.getElementById('badgeMorning').textContent = '';
+    } else if (hour < 12) {
+        // Morning on day 1
+        selectedTemplate = 'recordatorio_renta';
+        contextTipText = `<strong>Día 1, ${hour < 10 ? 'buenos días' : 'buena mañana'}.</strong> Hoy es día de pago sin recargo. Mensaje amable seleccionado.`;
+    } else {
+        // Afternoon on day 1 but before 5 PM
+        selectedTemplate = 'recordatorio_renta';
+        contextTipText = `<strong>Día 1 del mes.</strong> Aún no aplica recargo. Puedes enviar el recordatorio amable.`;
+    }
+    
+    // Update context tip
+    document.getElementById('contextTipText').innerHTML = contextTipText;
+    
+    // Select the template
+    const templateOption = document.querySelector(`[data-template="${selectedTemplate}"]`);
+    if (templateOption) {
+        document.querySelectorAll('.template-option').forEach(opt => opt.classList.remove('selected'));
+        templateOption.classList.add('selected');
+        templateOption.querySelector('input[type="radio"]').checked = true;
+    }
+    
+    // Update message previews
+    updateMessagePreviews();
+}
+
+// ========== TEST MESSAGE FUNCTION ==========
+async function sendTestMessage() {
+    const btn = document.getElementById('btnTestWA');
+    const resultDiv = document.getElementById('testResult');
+    
+    // Disable button and show loading
+    btn.disabled = true;
+    btn.innerHTML = '<span style="font-size: 1.2rem;">⏳</span> Enviando mensaje...';
+    resultDiv.style.display = 'none';
+    
+    try {
+        const response = await fetch('/api/reminders/test', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                phone: '+447811782597'  // Your UK test phone from .env
+            })
+        });
+        
+        const data = await response.json();
+        
+        resultDiv.style.display = 'block';
+        
+        if (data.success) {
+            resultDiv.innerHTML = `
+                <div style="color: #065F46; background: #D1FAE5; padding: 12px; border-radius: 8px;">
+                    ✅ <strong>¡Éxito!</strong> Mensaje enviado.<br>
+                    <span style="font-size: 0.85rem;">Message ID: ${data.message_id}</span><br>
+                    <span style="font-size: 0.85rem;">📱 Revisa tu WhatsApp - deberías recibir "Hello World!"</span>
+                </div>
+            `;
+            btn.innerHTML = '<span style="font-size: 1.2rem;">✅</span> ¡Enviado!';
+            btn.style.background = '#059669';
+            
+            // Haptic feedback
+            if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+        } else {
+            resultDiv.innerHTML = `
+                <div style="color: #991B1B; background: #FEE2E2; padding: 12px; border-radius: 8px;">
+                    ❌ <strong>Error:</strong> ${data.error}<br>
+                    ${data.error_code ? `<span style="font-size: 0.85rem;">Código: ${data.error_code}</span>` : ''}
+                </div>
+            `;
+            btn.disabled = false;
+            btn.innerHTML = '<span style="font-size: 1.2rem;">📱</span> Enviar "Hello World" a mi teléfono';
+        }
+    } catch (error) {
+        console.error('Test error:', error);
+        resultDiv.style.display = 'block';
+        resultDiv.innerHTML = `
+            <div style="color: #991B1B; background: #FEE2E2; padding: 12px; border-radius: 8px;">
+                ❌ <strong>Error de conexión:</strong> ${error.message}
+            </div>
+        `;
+        btn.disabled = false;
+        btn.innerHTML = '<span style="font-size: 1.2rem;">📱</span> Enviar "Hello World" a mi teléfono';
+    }
+}
+
+// ========== TEMPLATE SELECTOR ==========
+function initTemplateSelector() {
+    const templateOptions = document.querySelectorAll('.template-option');
+    
+    templateOptions.forEach(option => {
+        option.addEventListener('click', function() {
+            // Remove selected class from all
+            templateOptions.forEach(opt => opt.classList.remove('selected'));
+            // Add to clicked one
+            this.classList.add('selected');
+            // Check the radio
+            this.querySelector('input[type="radio"]').checked = true;
+            // Update previews
+            updateMessagePreviews();
+            
+            // Haptic feedback
+            if (navigator.vibrate) navigator.vibrate(20);
+        });
+    });
+}
+
+// Get selected template
+function getSelectedTemplate() {
+    const checked = document.querySelector('input[name="template"]:checked');
+    return checked ? checked.value : 'recordatorio_renta';
+}
+
+// Get template display name
+function getTemplateDisplayName(template) {
+    switch(template) {
+        case 'recordatorio_renta': return 'Recordatorio Amable (Mañana)';
+        case 'recordatorio_tarde': return 'Recordatorio Tarde (5 PM)';
+        case 'aviso_recargo': return 'Aviso con Recargo';
+        default: return template;
+    }
+}
+
+// ISSUE #9: Get personalized message preview
+function getMessagePreview(template, name, amount) {
+    switch(template) {
+        case 'recordatorio_renta':
+            return `Buenos días ${name}. Espero esté bien. Le recordamos amablemente el pago de su renta. Monto pendiente: ${amount}. Agradecemos su atención.`;
+        case 'recordatorio_tarde':
+            return `Buenas tardes ${name}. Le recordamos que el pago de su renta por ${amount} sigue pendiente. Le pedimos realizar el pago hoy de ser posible. Gracias.`;
+        case 'aviso_recargo':
+            return `Buen día ${name}. Le informamos que su renta de ${amount} continúa pendiente y a partir de hoy aplica un recargo. Total a pagar: ${amount}. Gracias.`;
+        default:
+            return `Recordatorio de pago: ${amount}`;
+    }
+}
+
+// Update message previews based on selected template
+function updateMessagePreviews() {
+    const template = getSelectedTemplate();
+    
+    document.querySelectorAll('.tenant-item[data-tenant-id]').forEach(item => {
+        const previewEl = item.querySelector('.tenant-message-preview');
+        if (!previewEl) return;
+        
+        const checkbox = item.querySelector('input[type="checkbox"]');
+        if (!checkbox) return;
+        
+        const name = checkbox.dataset.tenantDisplayName || checkbox.dataset.tenantName;
+        const amount = checkbox.dataset.tenantRentFormatted || checkbox.dataset.tenantRent;
+        
+        const message = getMessagePreview(template, name, amount);
+        previewEl.textContent = `→ "${message}"`;
+    });
+}
+
+// ========== BULK ACTIONS ==========
+function selectAllTenants() {
+    document.querySelectorAll('#tenantList input[type="checkbox"]').forEach(cb => {
+        cb.checked = true;
+    });
+    // Trigger update
+    if (typeof updateSummary === 'function') {
+        updateSummary();
+    }
+    // Also dispatch event for the IIFE listener
+    document.getElementById('tenantList')?.dispatchEvent(new Event('change'));
+    
+    // Haptic feedback
+    if (navigator.vibrate) navigator.vibrate(30);
+}
+
+function deselectAllTenants() {
+    document.querySelectorAll('#tenantList input[type="checkbox"]').forEach(cb => {
+        cb.checked = false;
+    });
+    // Trigger update
+    document.getElementById('tenantList')?.dispatchEvent(new Event('change'));
+    
+    // Haptic feedback
+    if (navigator.vibrate) navigator.vibrate(30);
+}
+
+// ========== ISSUE #10: Toggle sent details ==========
+function toggleSentDetails(element) {
+    element.classList.toggle('expanded');
+    
+    // Haptic feedback
+    if (navigator.vibrate) navigator.vibrate(15);
+}
+
+// ========== ISSUE #6: Single Send Modal ==========
+let pendingSingleSend = null;
+
+function showSingleSendModal(tenantId, name, phone, amount) {
+    pendingSingleSend = { tenantId, name, phone, amount };
+    
+    document.getElementById('singleSendName').textContent = name;
+    document.getElementById('singleSendPhone').textContent = `📱 ${phone}`;
+    
+    const template = getSelectedTemplate();
+    const message = getMessagePreview(template, name, amount);
+    document.getElementById('singleSendMessage').textContent = message;
+    
+    document.getElementById('singleSendModal').classList.add('show');
+    
+    // Haptic feedback
+    if (navigator.vibrate) navigator.vibrate(30);
+}
+
+function closeSingleSendModal() {
+    document.getElementById('singleSendModal').classList.remove('show');
+    pendingSingleSend = null;
+}
+
+async function confirmSingleSend() {
+    if (!pendingSingleSend) return;
+    
+    const btn = document.getElementById('btnSingleConfirm');
+    const originalText = btn.innerHTML;
+    
+    // ISSUE #8: Better loading state
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loading-spinner"></span> Enviando...';
+    
+    try {
+        const response = await fetch('/api/reminders/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                tenant_ids: [pendingSingleSend.tenantId],
+                template: getSelectedTemplate()
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success && data.summary.sent > 0) {
+            closeSingleSendModal();
+            
+            // Update the UI
+            const item = document.querySelector(`.tenant-item[data-tenant-id="${pendingSingleSend.tenantId}"]`);
+            if (item) {
+                item.style.opacity = '0.5';
+                const cb = item.querySelector('input[type="checkbox"]');
+                if (cb) {
+                    cb.checked = false;
+                    cb.disabled = true;
+                }
+                const quickBtn = item.querySelector('.quick-send-btn');
+                if (quickBtn) {
+                    quickBtn.textContent = '✅ Enviado';
+                    quickBtn.disabled = true;
+                    quickBtn.style.background = 'var(--green)';
+                    quickBtn.style.color = 'white';
+                }
+            }
+            
+            // Store for copy functionality
+            lastSendSummary = {
+                sent: [{ name: pendingSingleSend.name }],
+                failed: [],
+                template: getTemplateDisplayName(getSelectedTemplate()),
+                timestamp: new Date().toLocaleString('es-MX')
+            };
+            
+            // Haptic feedback
+            if (navigator.vibrate) navigator.vibrate([50, 30, 50]);
+            
+            // Update summary
+            document.getElementById('tenantList')?.dispatchEvent(new Event('change'));
+        } else {
+            const error = data.details?.failed?.[0]?.error || data.error || 'Error desconocido';
+            alert(`Error: ${error}`);
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    } catch (error) {
+        console.error('Single send error:', error);
+        alert('Error de conexión. Intenta de nuevo.');
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+}
+
+// Add event listener for single send confirm button
+document.addEventListener('DOMContentLoaded', function() {
+    const btnSingleConfirm = document.getElementById('btnSingleConfirm');
+    if (btnSingleConfirm) {
+        btnSingleConfirm.addEventListener('click', confirmSingleSend);
+    }
+    
+    // Close on backdrop click
+    const singleSendModal = document.getElementById('singleSendModal');
+    if (singleSendModal) {
+        singleSendModal.addEventListener('click', (e) => {
+            if (e.target === singleSendModal) {
+                closeSingleSendModal();
+            }
+        });
+    }
+});
+
+// ========== ISSUE #12: Copy summary to clipboard ==========
+function copySummaryToClipboard() {
+    if (!lastSendSummary) return;
+    
+    const sentNames = lastSendSummary.sent.map(t => t.name).join(', ');
+    const failedNames = lastSendSummary.failed.map(t => t.name).join(', ');
+    
+    let summaryText = `📬 Resumen de Envío - RentasClaras\n`;
+    summaryText += `📅 ${lastSendSummary.timestamp}\n`;
+    summaryText += `📝 Plantilla: ${lastSendSummary.template}\n\n`;
+    summaryText += `✅ Enviados (${lastSendSummary.sent.length}): ${sentNames || 'Ninguno'}\n`;
+    
+    if (lastSendSummary.failed.length > 0) {
+        summaryText += `❌ Fallidos (${lastSendSummary.failed.length}): ${failedNames}\n`;
+    }
+    
+    navigator.clipboard.writeText(summaryText).then(() => {
+        const btn = document.getElementById('btnCopySummary');
+        btn.classList.add('copied');
+        btn.innerHTML = '✅ ¡Copiado!';
+        
+        setTimeout(() => {
+            btn.classList.remove('copied');
+            btn.innerHTML = '📋 Copiar resumen';
+        }, 2000);
+        
+        // Haptic feedback
+        if (navigator.vibrate) navigator.vibrate(50);
+    }).catch(err => {
+        console.error('Copy failed:', err);
+        alert('No se pudo copiar. Intenta de nuevo.');
+    });
+}
+
+// Initialize on load
+document.addEventListener('DOMContentLoaded', function() {
+    initTemplateSelector();
+    autoSelectTemplate(); // ISSUE #2: Auto-select based on time/date
+});
+
+// Filter function for search box (DRY - used by partials/search_box.html)
+function filterTenants(term) {
+    term = term.toLowerCase().trim();
+
+    // Filter items in all tenant lists
+    document.querySelectorAll('.tenant-item').forEach(item => {
+        const nameEl = item.querySelector('.tenant-name');
+        const locationEl = item.querySelector('.tenant-location');
+
+        const name = nameEl ? nameEl.textContent.toLowerCase() : '';
+        const location = locationEl ? locationEl.textContent.toLowerCase() : '';
+
+        const matches = name.includes(term) || location.includes(term);
+        item.style.display = matches ? 'flex' : 'none';
+    });
+
+    // Show/hide section titles and tenant-lists based on visible items
+    document.querySelectorAll('.tenant-list').forEach(list => {
+        const hasVisible = Array.from(list.querySelectorAll('.tenant-item')).some(
+            item => item.style.display !== 'none'
+        );
+        list.style.display = hasVisible ? 'block' : 'none';
+
+        // Also hide the section title that precedes this list
+        const prevSibling = list.previousElementSibling;
+        if (prevSibling && prevSibling.classList.contains('section-title')) {
+            prevSibling.style.display = hasVisible ? 'flex' : 'none';
+        }
+    });
+
+    // Handle warning section specially
+    document.querySelectorAll('.warning-section').forEach(section => {
+        const list = section.querySelector('.tenant-list');
+        if (list) {
+            const hasVisible = Array.from(list.querySelectorAll('.tenant-item')).some(
+                item => item.style.display !== 'none'
+            );
+            section.style.display = hasVisible ? 'block' : 'none';
+        }
+    });
+}
+
+(function() {
+    // Elements
+    const tenantList = document.getElementById('tenantList');
+    const btnSend = document.getElementById('btnSend');
+    const confirmModal = document.getElementById('confirmModal');
+    const btnCancel = document.getElementById('btnCancel');
+    const btnConfirm = document.getElementById('btnConfirm');
+    const successScreen = document.getElementById('successScreen');
+    const selectedCountEl = document.getElementById('selectedCount');
+    const selectedAmountEl = document.getElementById('selectedAmount');
+    const confirmCountEl = document.getElementById('confirmCount');
+    const recipientListEl = document.getElementById('recipientList');
+    const successDetailsEl = document.getElementById('successDetails');
+
+    // State
+    let selectedTenants = [];
+
+    // Get all checkboxes
+    function getCheckboxes() {
+        return document.querySelectorAll('#tenantList input[type="checkbox"]');
+    }
+
+    // Update selection summary
+    function updateSummary() {
+        const checkboxes = getCheckboxes();
+        selectedTenants = [];
+        let totalAmount = 0;
+
+        checkboxes.forEach(cb => {
+            if (cb.checked && !cb.disabled) {
+                const item = cb.closest('.tenant-item');
+                const amountText = item.querySelector('.tenant-amount').textContent;
+                const amount = parseFloat(amountText.replace(/[$,]/g, ''));
+
+                selectedTenants.push({
+                    id: cb.dataset.tenantId,
+                    name: cb.dataset.tenantDisplayName || cb.dataset.tenantName,
+                    phone: cb.dataset.tenantPhone,
+                    amount: amount,
+                    rentFormatted: cb.dataset.tenantRentFormatted
+                });
+                totalAmount += amount;
+            }
+        });
+
+        if (selectedCountEl) {
+            selectedCountEl.textContent = `${selectedTenants.length} seleccionados`;
+        }
+        if (selectedAmountEl) {
+            selectedAmountEl.textContent = `$${totalAmount.toLocaleString()} por cobrar`;
+        }
+        if (btnSend) {
+            btnSend.disabled = selectedTenants.length === 0;
+        }
+    }
+
+    // Show confirmation modal
+    function showConfirmModal() {
+        if (selectedTenants.length === 0) return;
+
+        confirmCountEl.textContent = selectedTenants.length;
+
+        // ISSUE #1: Show message preview
+        const template = getSelectedTemplate();
+        const firstTenant = selectedTenants[0];
+        const sampleMessage = getMessagePreview(template, firstTenant.name, firstTenant.rentFormatted || `$${firstTenant.amount.toLocaleString()}`);
+        document.getElementById('confirmMessagePreview').textContent = sampleMessage;
+
+        recipientListEl.innerHTML = selectedTenants.map(t =>
+            `<div class="modal-recipient">${t.name} (${t.phone})</div>`
+        ).join('');
+
+        confirmModal.classList.add('show');
+
+        // Haptic feedback
+        if (navigator.vibrate) navigator.vibrate(30);
+    }
+
+    // Hide confirmation modal
+    function hideConfirmModal() {
+        confirmModal.classList.remove('show');
+    }
+
+    // Send reminders
+    async function sendReminders() {
+        if (selectedTenants.length === 0) return;
+
+        // ISSUE #8: Better loading state
+        btnConfirm.disabled = true;
+        btnConfirm.innerHTML = '<span class="loading-spinner"></span> Enviando mensajes...';
+
+        try {
+            const response = await fetch('/api/reminders/send', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    tenant_ids: selectedTenants.map(t => t.id),
+                    template: getSelectedTemplate()
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                // Show success screen
+                hideConfirmModal();
+                showSuccessScreen(data);
+
+                // Haptic feedback
+                if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+            } else {
+                alert('Error: ' + (data.error || 'No se pudieron enviar los mensajes'));
+                btnConfirm.disabled = false;
+                btnConfirm.innerHTML = '✅ Sí, Enviar';
+            }
+        } catch (error) {
+            console.error('Send error:', error);
+            alert('Error de conexión. Intenta de nuevo.');
+            btnConfirm.disabled = false;
+            btnConfirm.innerHTML = '✅ Sí, Enviar';
+        }
+    }
+
+    // Show success screen
+    function showSuccessScreen(data) {
+        const summary = data.summary;
+        const details = data.details;
+
+        document.getElementById('successTitle').textContent =
+            `${summary.sent} Recordatorio${summary.sent !== 1 ? 's' : ''} Enviado${summary.sent !== 1 ? 's' : ''}`;
+
+        let detailsHtml = '';
+
+        if (summary.sent > 0) {
+            detailsHtml += `
+                <div class="success-detail-row">
+                    <span>✅ Enviados</span>
+                    <strong>${summary.sent}</strong>
+                </div>
+            `;
+        }
+
+        if (summary.failed > 0) {
+            detailsHtml += `
+                <div class="success-detail-row">
+                    <span>❌ Fallidos</span>
+                    <strong>${summary.failed}</strong>
+                </div>
+            `;
+        }
+
+        if (summary.skipped > 0) {
+            detailsHtml += `
+                <div class="success-detail-row">
+                    <span>⏭️ Omitidos</span>
+                    <strong>${summary.skipped}</strong>
+                </div>
+            `;
+        }
+
+        // Show sent names
+        if (details.sent && details.sent.length > 0) {
+            detailsHtml += `<div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border);">`;
+            details.sent.forEach(t => {
+                detailsHtml += `<div style="padding: 4px 0; font-size: var(--text-sm);">✓ ${t.name}</div>`;
+            });
+            detailsHtml += `</div>`;
+        }
+
+        // Show failed names if any
+        if (details.failed && details.failed.length > 0) {
+            detailsHtml += `<div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #FCA5A5;">`;
+            details.failed.forEach(t => {
+                detailsHtml += `<div style="padding: 4px 0; font-size: var(--text-sm); color: #DC2626;">✗ ${t.name}: ${t.error}</div>`;
+            });
+            detailsHtml += `</div>`;
+        }
+
+        successDetailsEl.innerHTML = detailsHtml;
+        
+        // ISSUE #3 & #12: Store for copy functionality
+        lastSendSummary = {
+            sent: details.sent || [],
+            failed: details.failed || [],
+            template: getTemplateDisplayName(getSelectedTemplate()),
+            timestamp: new Date().toLocaleString('es-MX')
+        };
+        
+        successScreen.classList.add('show');
+    }
+
+    // Event listeners
+    if (tenantList) {
+        tenantList.addEventListener('change', updateSummary);
+    }
+
+    if (btnSend) {
+        btnSend.addEventListener('click', showConfirmModal);
+    }
+
+    if (btnCancel) {
+        btnCancel.addEventListener('click', hideConfirmModal);
+    }
+
+    if (btnConfirm) {
+        btnConfirm.addEventListener('click', sendReminders);
+    }
+
+    // Close modal on backdrop click
+    if (confirmModal) {
+        confirmModal.addEventListener('click', (e) => {
+            if (e.target === confirmModal) {
+                hideConfirmModal();
+            }
+        });
+    }
+
+    // Initialize
+    updateSummary();
+})();
+</script>
+{% endblock %}
+
+{% block bottom_nav %}
+{% include 'partials/bottom_nav.html' %}
+{% endblock %}

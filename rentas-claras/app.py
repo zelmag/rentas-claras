@@ -19,24 +19,27 @@ import atexit
 import locale
 import logging
 import os
+import sys
 
 # Load environment variables from .env file BEFORE any other imports
 from dotenv import load_dotenv
-load_dotenv()
 
-from apscheduler.schedulers.background import BackgroundScheduler
-from apscheduler.triggers.cron import CronTrigger
-from flask import Flask
-from pytz import timezone
+load_dotenv()
 
 # Import database module
 from database import init_database, seed_tenants, startup_health_check
-
-# Import scheduler functions
-from src.scheduler import start_scheduler, stop_scheduler
+from flask import Flask
 
 # Import blueprint registration
 from routes import register_blueprints
+
+# Import scheduler functions
+from src.scheduler import (
+    get_scheduler_status,
+    start_scheduler,
+    stop_scheduler,
+    TIMEZONE as MX_TZ,
+)
 
 
 # =============================================================================
@@ -57,7 +60,15 @@ except locale.Error:
 app = Flask(__name__)
 
 # Security: Secret key and PIN protection
-app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-key-change-in-production")
+# CRITICAL: Both SECRET_KEY and RENTASCLARAS_PIN must be set in environment
+SECRET_KEY = os.environ.get("SECRET_KEY")
+if not SECRET_KEY:
+    raise ValueError(
+        "SECRET_KEY environment variable is required for session security. "
+        'Generate with: python -c "import secrets; print(secrets.token_hex(32))"'
+    )
+app.secret_key = SECRET_KEY
+
 RENTASCLARAS_PIN = os.environ.get("RENTASCLARAS_PIN")
 if not RENTASCLARAS_PIN:
     raise ValueError(
@@ -69,7 +80,8 @@ if not RENTASCLARAS_PIN:
 # FEATURE FLAGS - For gradual template migration
 # =============================================================================
 FEATURE_FLAGS = {
-    "use_external_templates": os.environ.get("USE_EXTERNAL_TEMPLATES", "false").lower() == "true",
+    "use_external_templates": os.environ.get("USE_EXTERNAL_TEMPLATES", "false").lower()
+    == "true",
 }
 
 
@@ -93,79 +105,23 @@ register_blueprints(app)
 
 
 # =============================================================================
-# SCHEDULER SETUP (APScheduler for automated rent reminders)
+# SCHEDULER SETUP (Using consolidated scheduler from src/scheduler.py)
 # =============================================================================
 logging.basicConfig(level=logging.INFO)
 scheduler_logger = logging.getLogger("apscheduler")
 scheduler_logger.setLevel(logging.INFO)
 
-# Mexico City timezone (permanent UTC-6 since 2022 - no more DST)
-MX_TZ = timezone("America/Mexico_City")
+# Start the scheduler only if not in reloader process
+# This prevents double-start in Flask debug mode which forks a reloader process
+_is_reloader = os.environ.get("WERKZEUG_RUN_MAIN") != "true" and "flask" in sys.modules
+if not _is_reloader:
+    start_scheduler()
+    scheduler_logger.info("✅ Scheduler started via src/scheduler.py module")
+else:
+    scheduler_logger.info("⏭️ In reloader process - skipping scheduler start")
 
-
-def run_rent_automation(task_name: str):
-    """
-    Wrapper to run rent automation within Flask app context.
-
-    This ensures database connections work properly from background thread.
-    """
-    with app.app_context():
-        from src.tasks import send_rent_reminders
-        scheduler_logger.info(f"🔔 Triggering: {task_name}")
-        result = send_rent_reminders()
-        scheduler_logger.info(f"📊 Result: {result}")
-        return result
-
-
-def run_backup():
-    """Run backup within Flask app context."""
-    with app.app_context():
-        from src.backup import scheduled_backup
-        scheduler_logger.info("🔄 Starting daily database backup...")
-        success = scheduled_backup()
-        if success:
-            scheduler_logger.info("✅ Daily backup completed successfully")
-        else:
-            scheduler_logger.error("❌ Daily backup FAILED - check logs")
-        return success
-
-
-# Initialize the background scheduler
-scheduler = BackgroundScheduler(timezone=MX_TZ)
-
-# Job 1: Day 1 - Monthly rent reminder at 9 AM
-scheduler.add_job(
-    func=run_rent_automation,
-    trigger=CronTrigger(day=1, hour=9, minute=0, timezone=MX_TZ),
-    args=["Day 1 - Monthly Reminder"],
-    id="rent_reminder_day_1",
-    replace_existing=True,
-)
-
-# Job 2: Days 2, 3, 5, 7, 8 - Late payment escalations at 9 AM
-scheduler.add_job(
-    func=run_rent_automation,
-    trigger=CronTrigger(day="2,3,5,7,8", hour=9, minute=0, timezone=MX_TZ),
-    args=["Late Payment Escalation"],
-    id="late_escalation",
-    replace_existing=True,
-)
-
-# Job 3: Daily database backup at 6 AM Mexico City time
-scheduler.add_job(
-    func=run_backup,
-    trigger=CronTrigger(hour=6, minute=0, timezone=MX_TZ),
-    id="daily_backup",
-    name="Daily Database Backup",
-    replace_existing=True,
-)
-
-# Start the scheduler
-scheduler.start()
-scheduler_logger.info("✅ APScheduler started - rent reminders scheduled")
-
-# Store scheduler in app config for access by admin blueprint
-app.config['scheduler'] = scheduler
+# Store scheduler status function in app config for access by admin blueprint
+app.config["get_scheduler_status"] = get_scheduler_status
 
 # Register scheduler shutdown on app exit
 atexit.register(stop_scheduler)
@@ -175,8 +131,8 @@ atexit.register(stop_scheduler)
 # MAIN
 # =============================================================================
 if __name__ == "__main__":
-    # Start the automated reminder scheduler
-    start_scheduler()
+    # Note: Scheduler is already started above at module level.
+    # Don't call start_scheduler() again to avoid duplicate initialization.
 
     print(
         """

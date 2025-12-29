@@ -1,6 +1,19 @@
 <!-- Sync Indicator - Shared across all pages -->
+<!--
+    FIXED BUG: Previously showed current time (Date.now()) on every page load,
+    making it look like data was "just saved" even when nothing changed.
+    Now shows actual last_sync time from the server via data attribute.
+-->
 <div class="sync-indicator-container" style="text-align: center; margin-bottom: 16px;">
-    <span class="sync-indicator" id="syncIndicator">✓ Sincronizado</span>
+    <span class="sync-indicator" id="syncIndicator"
+          data-last-sync="{{ last_sync or '' }}"
+          data-last-sync-relative="{{ last_sync_relative or '' }}">
+        {% if last_sync %}
+            ✓ Guardado {{ last_sync_relative }}
+        {% else %}
+            Sin cambios aún
+        {% endif %}
+    </span>
 </div>
 
 <style>
@@ -29,19 +42,56 @@
 </style>
 
 <script>
+    /**
+     * Update sync indicator to show "just saved" state.
+     * Only call this AFTER an actual save operation!
+     */
     function updateSyncIndicator() {
         const indicator = document.getElementById('syncIndicator');
         if (!indicator) return;
 
+        // Show "just saved" state - only call this after actual saves!
+        indicator.textContent = '✓ Guardado hace unos segundos';
+        indicator.className = 'sync-indicator saved';
+
+        // Store the actual save time for future reference
+        indicator.dataset.lastSync = new Date().toISOString();
+    }
+
+    /**
+     * Refresh the relative time display (e.g., "hace 5 minutos" → "hace 6 minutos")
+     * without changing the actual last sync timestamp.
+     */
+    function refreshSyncIndicatorDisplay() {
+        const indicator = document.getElementById('syncIndicator');
+        if (!indicator) return;
+
+        const lastSync = indicator.dataset.lastSync;
+        if (!lastSync) return;
+
+        // Calculate relative time from stored timestamp
+        const syncDate = new Date(lastSync);
         const now = new Date();
-        const timeStr = now.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
-        const dateStr = now.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' });
-        indicator.textContent = `✓ Guardado ${dateStr}, ${timeStr}`;
+        const diffSeconds = Math.floor((now - syncDate) / 1000);
+
+        let relativeText;
+        if (diffSeconds < 60) {
+            relativeText = 'hace unos segundos';
+        } else if (diffSeconds < 3600) {
+            const minutes = Math.floor(diffSeconds / 60);
+            relativeText = `hace ${minutes} minuto${minutes !== 1 ? 's' : ''}`;
+        } else if (diffSeconds < 86400) {
+            const hours = Math.floor(diffSeconds / 3600);
+            relativeText = `hace ${hours} hora${hours !== 1 ? 's' : ''}`;
+        } else {
+            const days = Math.floor(diffSeconds / 86400);
+            relativeText = `hace ${days} día${days !== 1 ? 's' : ''}`;
+        }
+
+        indicator.textContent = `✓ Guardado ${relativeText}`;
         indicator.className = 'sync-indicator saved';
     }
 
-    // Initialize sync indicator on page load
-    document.addEventListener('DOMContentLoaded', function() {
-        updateSyncIndicator();
-    });
+    // NO automatic update on page load - server already provides correct value!
+    // Only update the indicator when an actual save happens.
 </script>
