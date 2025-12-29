@@ -54,6 +54,7 @@ from flask import (
     Flask,
     jsonify,
     redirect,
+    render_template,
     render_template_string,
     request,
     session,
@@ -92,6 +93,19 @@ def login_required(f):
         return f(*args, **kwargs)
 
     return decorated_function
+
+
+# =============================================================================
+# FEATURE FLAGS - For gradual template migration
+# =============================================================================
+FEATURE_FLAGS = {
+    "use_external_templates": os.environ.get("USE_EXTERNAL_TEMPLATES", "false").lower() == "true",
+}
+
+
+def get_feature_flag(flag_name: str) -> bool:
+    """Check if a feature flag is enabled."""
+    return FEATURE_FLAGS.get(flag_name, False)
 
 
 # Initialize database on startup with health check
@@ -1088,7 +1102,7 @@ HTML_TEMPLATE = """
         
         /* Property sections - responsive */
         .property-section {
-            margin-bottom: var(--space-lg);
+            margin-bottom: 40px;
             background: var(--color-white);
             border-radius: var(--radius-lg);
             box-shadow: 0 2px 8px rgba(0,0,0,0.08);
@@ -7513,7 +7527,7 @@ CONTRACTS_TEMPLATE = """
         
         /* Property section */
         .property-section {
-            margin-bottom: 28px;
+            margin-bottom: 40px;
             background: white;
             border-radius: 16px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.08);
@@ -8038,6 +8052,10 @@ CONTRACTS_TEMPLATE = """
         
         <div class="summary">
             <div class="summary-card">
+                <div class="summary-value green" id="renewingCount">{{ renewing_count }}</div>
+                <div class="summary-label">Renovarán (próx. 30 días)</div>
+            </div>
+            <div class="summary-card">
                 <div class="summary-value red" id="notRenewingCount">{{ not_renewing_count }}</div>
                 <div class="summary-label">No renovarán (próx. 30 días)</div>
             </div>
@@ -8289,7 +8307,17 @@ CONTRACTS_TEMPLATE = """
         {% for property_name, tenants in tenants_by_property.items() %}
         <div class="property-section">
             <div class="property-header">
-                🏢 {{ property_name }} ({{ tenants|length }} unidades)
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                    <span>🏢 {{ property_name }} ({{ tenants|length }} unidades)</span>
+                    {% if property_stats[property_name].expiring_soon > 0 %}
+                    <span style="font-size: 0.85rem; font-weight: 600; opacity: 0.95;">
+                        Próx. 30 días: 
+                        <span style="color: #86efac;">✓{{ property_stats[property_name].renewing }}</span> |
+                        <span style="color: #fca5a5;">✗{{ property_stats[property_name].not_renewing }}</span> |
+                        <span style="color: #fde047;">?{{ property_stats[property_name].pending }}</span>
+                    </span>
+                    {% endif %}
+                </div>
             </div>
             
             {% for tenant in tenants %}
@@ -8979,13 +9007,13 @@ def contracts():
             if parsed_end and parsed_end <= next_month_cutoff:
                 contract_expires_soon = True
         
-        if tenant.renewal_status == "renovará":
-            renewing_count += 1
-        elif tenant.renewal_status == "no_renovará":
-            if contract_expires_soon:
+        # Only count contracts expiring within next 30 days for ALL statuses
+        if contract_expires_soon:
+            if tenant.renewal_status == "renovará":
+                renewing_count += 1
+            elif tenant.renewal_status == "no_renovará":
                 not_renewing_count += 1
-        else:  # pendiente
-            if contract_expires_soon:
+            else:  # pendiente
                 pending_count += 1
 
         # Add to upcoming renewals grouped by month
@@ -9048,6 +9076,40 @@ def contracts():
             )
         )
 
+    # Compute property-level stats for contracts expiring in next 30 days
+    property_stats = {}
+    for prop_name, tenants in tenants_by_property.items():
+        prop_renewing = 0
+        prop_not_renewing = 0
+        prop_pending = 0
+        prop_expiring_soon = 0
+        
+        for tenant in tenants:
+            # Check if contract expires within 30 days
+            expires_soon = False
+            if tenant.contract_end:
+                parsed_end = parse_date(tenant.contract_end)
+                if parsed_end and parsed_end <= next_month_cutoff:
+                    expires_soon = True
+                    prop_expiring_soon += 1
+            
+            # Only count if expiring soon
+            if expires_soon:
+                if tenant.renewal_status == "renovará":
+                    prop_renewing += 1
+                elif tenant.renewal_status == "no_renovará":
+                    prop_not_renewing += 1
+                else:  # pendiente
+                    prop_pending += 1
+        
+        property_stats[prop_name] = {
+            'renewing': prop_renewing,
+            'not_renewing': prop_not_renewing,
+            'pending': prop_pending,
+            'expiring_soon': prop_expiring_soon,
+            'total': len(tenants)
+        }
+
     # Build list of available apartments (no renovará + no replacement candidate)
     available_apartments = []
     for tenant in all_tenants:
@@ -9091,6 +9153,7 @@ def contracts():
     return render_template_string(
         CONTRACTS_TEMPLATE,
         tenants_by_property=tenants_by_property,
+        property_stats=property_stats,
         total_tenants=len(all_tenants),
         renewing_count=renewing_count,
         not_renewing_count=not_renewing_count,
