@@ -299,6 +299,9 @@
         justify-content: center;
         padding: 12px;
         overflow-y: auto;
+        /* Prevent drag/drop behavior on touch devices */
+        touch-action: pan-y;
+        -webkit-overflow-scrolling: touch;
     }
 
     .modal-overlay.show {
@@ -314,6 +317,23 @@
         animation: modalPop 0.2s ease-out;
         max-height: calc(100vh - 24px);
         overflow-y: auto;
+        /* Prevent modal from being dragged */
+        touch-action: pan-y;
+        -webkit-overflow-scrolling: touch;
+        user-select: none;
+        -webkit-user-select: none;
+        -webkit-user-drag: none;
+        -moz-user-drag: none;
+        user-drag: none;
+    }
+    
+    /* Allow text selection in form inputs */
+    .modal-content input,
+    .modal-content select,
+    .modal-content textarea {
+        user-select: text;
+        -webkit-user-select: text;
+        touch-action: auto;
     }
     
     /* Small screens (iPhone SE and smaller) */
@@ -591,7 +611,7 @@
         <!-- Big Add Button -->
         <div class="add-btn-container">
             <button class="btn primary" onclick="showAddModal()">
-                <span style="font-size: 1.5rem;">➕</span>
+                <span style="font-size: 1.5rem;">+</span>
                 <span>Agregar Inquilino</span>
             </button>
         </div>
@@ -632,7 +652,7 @@
                 </div>
                 <div class="tenant-details">
                     {% if tenant.phone %}
-                    <div class="tenant-detail">📱 {{ tenant.phone }}</div>
+                    <div class="tenant-detail">Tel: {{ tenant.phone }}</div>
                     {% endif %}
                     {% if tenant.contract_end %}
                     <div class="tenant-detail">Vence: {{ tenant.contract_end }}</div>
@@ -704,7 +724,7 @@
 
                 <!-- Aval (Guarantor) Section -->
                 <div class="aval-section" style="background: #E0F2FE; padding: 16px; border-radius: 12px; border: 2px solid #0EA5E9; margin: 16px 0;">
-                    <div style="font-size: 1.1rem; font-weight: 700; color: #0369A1; margin-bottom: 12px;">🛡️ Aval (Fiador)</div>
+                    <div style="font-size: 1.1rem; font-weight: 700; color: #0369A1; margin-bottom: 12px;">Aval (Fiador)</div>
                     <div class="form-row">
                         <div class="form-group">
                             <label class="form-label">Nombre del Aval</label>
@@ -732,7 +752,7 @@
                 <div class="form-group" style="background: #FEF3C7; padding: 16px; border-radius: 10px; border: 2px solid #F59E0B; margin-top: 16px;">
                     <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
                         <input type="checkbox" id="proratedCheckbox" style="width: 24px; height: 24px; accent-color: #F59E0B;" onchange="toggleProrated()">
-                        <span style="font-size: 1rem; font-weight: 700; color: #92400E;">📅 ¿Renta prorrateada el primer mes?</span>
+                        <span style="font-size: 1rem; font-weight: 700; color: #92400E;">Renta prorrateada el primer mes?</span>
                     </label>
                     <div id="proratedDetails" style="display: none; margin-top: 12px;">
                         <div class="form-row">
@@ -761,37 +781,37 @@
                         <div class="form-group">
                             <label class="form-label">Monto prorrateado ($)</label>
                             <input type="number" class="form-input" id="proratedAmount" placeholder="Ej: 4500">
-                            <div style="font-size: 0.85rem; color: #92400E; margin-top: 4px;">💡 Si entró el día 15, serían ~50% de la renta normal</div>
+                            <div style="font-size: 0.85rem; color: #92400E; margin-top: 4px;">Si entro el dia 15, serian ~50% de la renta normal</div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Delete Warning (only shown when editing) -->
                 <div class="delete-warning" id="deleteWarning" style="display: none;">
-                    <div class="delete-warning-icon">⚠️</div>
-                    <div class="delete-warning-text">¿Eliminar este inquilino?</div>
+                    <div class="delete-warning-icon"></div>
+                    <div class="delete-warning-text">Eliminar este inquilino?</div>
                     <button type="button" class="btn danger" onclick="deleteTenant()" style="margin-top: 12px;">
-                        🗑️ Sí, Eliminar
+                        Si, Eliminar
                     </button>
                 </div>
 
                 <div class="form-buttons">
                     <button type="button" class="btn secondary" onclick="closeModal()">Cancelar</button>
-                    <button type="submit" class="btn primary">💾 Guardar</button>
+                    <button type="submit" class="btn primary">Guardar</button>
                 </div>
             </form>
         </div>
     </div>
 
     <!-- Toast -->
-    <div class="toast" id="toast">Guardado ✓</div>
+    <div class="toast" id="toast">Guardado</div>
 
     <script>
         let isEditMode = false;
 
         function showAddModal() {
             isEditMode = false;
-            document.getElementById('modalIcon').textContent = '➕';
+            document.getElementById('modalIcon').textContent = '+';
             document.getElementById('modalTitle').textContent = 'Agregar Inquilino';
             document.getElementById('tenantId').value = '';
             document.getElementById('tenantForm').reset();
@@ -810,7 +830,7 @@ function showEditModal(tenantId) {
             isEditMode = true;
             const card = document.querySelector(`[data-tenant-id="${tenantId}"]`);
 
-            document.getElementById('modalIcon').textContent = '✏️';
+            document.getElementById('modalIcon').textContent = '';
             document.getElementById('modalTitle').textContent = 'Editar Inquilino';
             document.getElementById('tenantId').value = tenantId;
             document.getElementById('tenantName').value = card.dataset.name;
