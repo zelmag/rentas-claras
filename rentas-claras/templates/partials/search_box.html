@@ -1,29 +1,70 @@
-<!-- Search Box - Shared across all pages -->
-<div class="search-box">
-    <label class="search-label">🔍 ¿Quién buscas?</label>
-    <div class="search-input-wrapper">
-        <span class="search-icon">🔍</span>
-        <input type="text" class="search-input" id="searchInput" placeholder="Escribe el nombre..." oninput="handleSearch(this.value)">
-        <button type="button" class="search-clear" id="searchClear" onclick="clearSearch()" style="display: none;">✕</button>
+<!-- Search Box - Collapsible, shared across all pages -->
+<div class="search-box" id="searchBox">
+    <!-- Collapsed state: just a button -->
+    <button type="button" class="search-toggle" id="searchToggle" onclick="toggleSearchBox()">
+        <span class="search-toggle-icon">🔍</span>
+        <span class="search-toggle-text">Buscar inquilino...</span>
+    </button>
+    
+    <!-- Expanded state: full search input -->
+    <div class="search-expanded" id="searchExpanded" style="display: none;">
+        <div class="search-input-wrapper">
+            <span class="search-icon">🔍</span>
+            <input type="text" class="search-input" id="searchInput" placeholder="Escribe el nombre..." oninput="handleSearch(this.value)">
+            <button type="button" class="search-clear" id="searchClear" onclick="clearSearch()" style="display: none;">✕</button>
+        </div>
+        <button type="button" class="search-collapse-btn" onclick="collapseSearchBox()">Cerrar</button>
     </div>
 </div>
 
 <style>
     .search-box {
         position: relative;
-        margin-bottom: 20px;
+        margin-bottom: 16px;
+    }
+
+    /* Collapsed toggle button */
+    .search-toggle {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 20px;
+        background: white;
+        border: 3px solid #0A7A0A;
+        border-radius: 12px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #666;
+        cursor: pointer;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        transition: all 0.2s;
+    }
+
+    .search-toggle:hover {
+        border-color: #086608;
+        background: #f9fff9;
+    }
+
+    .search-toggle:active {
+        transform: scale(0.99);
+    }
+
+    .search-toggle-icon {
+        font-size: 1.3rem;
+    }
+
+    .search-toggle-text {
+        flex: 1;
+        text-align: left;
+    }
+
+    /* Expanded search area */
+    .search-expanded {
         background: white;
         border-radius: 16px;
         padding: 16px;
         box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    }
-
-    .search-label {
-        font-size: 1rem;
-        font-weight: 700;
-        color: #333;
-        margin-bottom: 10px;
-        display: block;
     }
 
     .search-input-wrapper {
@@ -35,7 +76,7 @@
         padding: 16px 52px 16px 52px;
         border: 3px solid #0A7A0A;
         border-radius: 12px;
-        font-size: 1.1rem;
+        font-size: 1.15rem;
         background: white;
     }
 
@@ -59,13 +100,13 @@
         right: 12px;
         top: 50%;
         transform: translateY(-50%);
-        width: 36px;
-        height: 36px;
+        width: 40px;
+        height: 40px;
         border-radius: 50%;
         border: none;
         background: #e0e0e0;
         color: #666;
-        font-size: 1.2rem;
+        font-size: 1.3rem;
         font-weight: 700;
         cursor: pointer;
         display: flex;
@@ -83,28 +124,56 @@
         background: #bbb;
     }
 
+    .search-collapse-btn {
+        width: 100%;
+        margin-top: 12px;
+        padding: 12px;
+        border: 2px solid #ddd;
+        border-radius: 10px;
+        background: #f5f5f5;
+        font-size: 1rem;
+        font-weight: 600;
+        color: #666;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .search-collapse-btn:active {
+        background: #e0e0e0;
+    }
+
     /* Responsive */
     @media (min-width: 768px) {
+        .search-toggle {
+            padding: 16px 24px;
+            font-size: 1.2rem;
+        }
+
         .search-input {
             font-size: 1.2rem;
             padding: 18px 56px 18px 56px;
         }
 
         .search-clear {
-            width: 40px;
-            height: 40px;
-            font-size: 1.3rem;
+            width: 44px;
+            height: 44px;
+            font-size: 1.4rem;
             right: 14px;
         }
     }
 
     @media (min-width: 1024px) {
-        .search-box {
-            padding: 20px;
+        .search-toggle {
+            padding: 18px 28px;
+            font-size: 1.3rem;
         }
 
-        .search-label {
-            font-size: 1.2rem;
+        .search-toggle-icon {
+            font-size: 1.5rem;
+        }
+
+        .search-expanded {
+            padding: 20px;
         }
 
         .search-input {
@@ -119,15 +188,54 @@
         }
 
         .search-clear {
-            width: 44px;
-            height: 44px;
-            font-size: 1.4rem;
+            width: 48px;
+            height: 48px;
+            font-size: 1.5rem;
             right: 16px;
+        }
+
+        .search-collapse-btn {
+            padding: 14px;
+            font-size: 1.1rem;
         }
     }
 </style>
 
 <script>
+    function toggleSearchBox() {
+        const toggle = document.getElementById('searchToggle');
+        const expanded = document.getElementById('searchExpanded');
+        
+        toggle.style.display = 'none';
+        expanded.style.display = 'block';
+        
+        // Focus the input
+        setTimeout(() => {
+            document.getElementById('searchInput').focus();
+        }, 100);
+    }
+
+    function collapseSearchBox() {
+        const toggle = document.getElementById('searchToggle');
+        const expanded = document.getElementById('searchExpanded');
+        const input = document.getElementById('searchInput');
+        
+        // Only collapse if search is empty
+        if (input.value.trim() === '') {
+            toggle.style.display = 'flex';
+            expanded.style.display = 'none';
+            
+            // Reset any filters
+            handleSearch('');
+        } else {
+            // If there's a search term, clear it first
+            input.value = '';
+            handleSearch('');
+            toggle.style.display = 'flex';
+            expanded.style.display = 'none';
+        }
+    }
+
     function handleSearch(term) {
         // Show/hide clear button
         const clearBtn = document.getElementById('searchClear');

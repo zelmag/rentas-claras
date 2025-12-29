@@ -1,0 +1,47 @@
+<!-- Sync Indicator - Shared across all pages -->
+<div class="sync-indicator-container" style="text-align: center; margin-bottom: 16px;">
+    <span class="sync-indicator" id="syncIndicator">✓ Sincronizado</span>
+</div>
+
+<style>
+    .sync-indicator {
+        font-size: 0.95rem;
+        color: #666;
+        text-align: center;
+        padding: 6px 12px;
+        background: #F5F5F5;
+        border-radius: 8px;
+        display: inline-block;
+    }
+
+    .sync-indicator.saved {
+        color: #0A7A0A;
+        background: #dcfce7;
+    }
+
+    /* Responsive */
+    @media (min-width: 1024px) {
+        .sync-indicator {
+            font-size: 1.1rem;
+            padding: 8px 16px;
+        }
+    }
+</style>
+
+<script>
+    function updateSyncIndicator() {
+        const indicator = document.getElementById('syncIndicator');
+        if (!indicator) return;
+        
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+        const dateStr = now.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' });
+        indicator.textContent = `✓ Guardado ${dateStr}, ${timeStr}`;
+        indicator.className = 'sync-indicator saved';
+    }
+
+    // Initialize sync indicator on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        updateSyncIndicator();
+    });
+</script>

@@ -301,8 +301,8 @@
     .month-btn {
         background: #333;
         color: white;
-        width: 44px;
-        height: 44px;
+        width: 56px;
+        height: 56px;
         border-radius: 50%;
         border: none;
         display: flex;
@@ -347,7 +347,7 @@
     }
 
     .progress-label {
-        font-size: 1rem;
+        font-size: 1.1rem;
         color: var(--gray);
     }
 
@@ -384,7 +384,7 @@
     }
 
     .summary-label {
-        font-size: 1rem;
+        font-size: 1.1rem;
         color: var(--gray);
     }
 
@@ -551,7 +551,7 @@
     }
 
     .tenant-name {
-        font-size: 1.15rem;
+        font-size: 1.3rem;
         font-weight: 700;
         color: #333;
         margin-bottom: 2px;
@@ -572,7 +572,7 @@
     }
 
     .tenant-amount {
-        font-size: 1.3rem;
+        font-size: 1.5rem;
         font-weight: 800;
         text-align: right;
         min-width: 90px;
@@ -1091,67 +1091,54 @@
         100% { transform: translate(-50%, -50%) scale(1); }
     }
 
-    /* Search - PROMINENT for Don Raúl */
-    .search-box {
-        position: relative;
-        margin-bottom: 20px;
-        background: white;
-        border-radius: 16px;
-        padding: 16px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    /* Motivation toast */
+    .motivation-toast {
+        position: fixed;
+        top: 80px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+        color: white;
+        padding: 12px 24px;
+        border-radius: 30px;
+        font-weight: 700;
+        font-size: 1.1rem;
+        z-index: 1001;
+        opacity: 0;
+        transition: opacity 0.3s;
+        pointer-events: none;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
     }
 
-    .search-label {
-        font-size: 1rem;
-        font-weight: 700;
-        color: #333;
-        margin-bottom: 10px;
+    .motivation-toast.show {
+        opacity: 1;
+    }
+
+    /* Offline indicator */
+    .offline-indicator {
+        position: fixed;
+        bottom: 90px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #333;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        z-index: 1001;
+        display: none;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+
+    .offline-indicator.show {
         display: block;
     }
 
-    .search-input-wrapper {
-        position: relative;
-    }
+    /* Search - PROMINENT for Don Raúl */
+    /* Search styles now loaded from partials/search_box.html */
 
-    .search-input {
-        width: 100%;
-        padding: 16px 20px 16px 52px;
-        border: 3px solid var(--green);
-        border-radius: 12px;
-        font-size: 1.1rem;
-        background: white;
-    }
-
-    .search-input:focus {
-        outline: none;
-        border-color: #086608;
-        box-shadow: 0 0 0 3px rgba(10, 122, 10, 0.2);
-    }
-
-    .search-icon {
-        position: absolute;
-        left: 18px;
-        top: 50%;
-        transform: translateY(-50%);
-        font-size: 1.4rem;
-    }
-
-    /* Sync indicator */
-    .sync-indicator {
-        font-size: 0.95rem;
-        color: var(--gray);
-        text-align: center;
-        margin-bottom: 8px;
-        padding: 6px 12px;
-        background: var(--gray-light);
-        border-radius: 8px;
-        display: inline-block;
-    }
-
-    .sync-indicator.saved {
-        color: var(--green);
-        background: var(--green-light);
-    }
+    /* Sync indicator styles now loaded from partials/sync_indicator.html */
 </style>
 {% endblock %}
 
@@ -1166,12 +1153,7 @@
     <div class="container">
         <!-- Header -->
         <div class="header">
-            <h1 class="app-title">RentasClaras</h1>
-            
-            <!-- Sync indicator with time -->
-            <div class="sync-indicator saved" id="syncIndicator">
-                Guardado
-            </div>
+            <h1 class="app-title">Pagos</h1>
 
             <!-- Month Selector -->
             <div class="month-selector">
@@ -1204,6 +1186,8 @@
             </a>
             {% endif %}
         </div>
+
+        {% include 'partials/sync_indicator.html' %}
 
         <!-- Summary Card -->
         <div class="summary-card">
@@ -1344,7 +1328,7 @@
                 <span>Imprimir</span>
             </button>
             <button class="action-btn excel" onclick="downloadExcel()">
-                <span>Excel</span>
+                <span>📊 Descargar tabla</span>
             </button>
         </div>
     </div>
@@ -1363,10 +1347,10 @@
             <!-- Payment Method Selection (only shown when marking as paid) - FIRST, most common action -->
             <div class="modal-payment-methods" id="paymentMethods" style="display: none;">
                 <div class="modal-payment-methods-label">¿Cómo pagó?</div>
+                <button type="button" class="modal-payment-btn selected" data-method="Envío sin tarjeta" onclick="selectPaymentMethod('Envío sin tarjeta')">Envío sin tarjeta</button>
                 <button type="button" class="modal-payment-btn" data-method="Efectivo" onclick="selectPaymentMethod('Efectivo')">Efectivo</button>
                 <button type="button" class="modal-payment-btn" data-method="Transferencia" onclick="selectPaymentMethod('Transferencia')">Transferencia</button>
-                <button type="button" class="modal-payment-btn" data-method="Depósito" onclick="selectPaymentMethod('Depósito')">Deposito</button>
-                <button type="button" class="modal-payment-btn" data-method="Envío sin tarjeta" onclick="selectPaymentMethod('Envío sin tarjeta')">Envio sin tarjeta</button>
+                <button type="button" class="modal-payment-btn" data-method="Depósito" onclick="selectPaymentMethod('Depósito')">Depósito</button>
             </div>
 
             <!-- Optional Extras (Visitas & Pago Adelantado) - Collapsible, at the bottom -->
@@ -1419,7 +1403,15 @@
 
     <!-- Celebration -->
     <div class="celebration" id="celebration">
-        TODOS PAGARON
+        🎉 ¡TODOS PAGARON! 🎉
+    </div>
+
+    <!-- Progress motivation -->
+    <div class="motivation-toast" id="motivationToast"></div>
+
+    <!-- Offline indicator -->
+    <div class="offline-indicator" id="offlineIndicator">
+        📴 Sin conexión - cambios guardados localmente
     </div>
 
     <script>
@@ -1458,8 +1450,8 @@
             arrow.classList.toggle('collapsed');
         }
 
-        // Selected payment method
-        let selectedPaymentMethod = '';
+        // Selected payment method - default to "Envío sin tarjeta"
+        let selectedPaymentMethod = 'Envío sin tarjeta';
         let currentVisitCount = 0;
         let currentAdvanceMonths = 1;
         const VISIT_CHARGE = 1500; // $1,500 per visit
@@ -1551,8 +1543,8 @@
             const existingMethod = tenantItem ? tenantItem.dataset.paymentMethod : '';
             const existingVisits = parseInt(tenantItem ? tenantItem.dataset.visits : 0) || 0;
 
-            // Reset payment method selection
-            selectedPaymentMethod = existingMethod || '';
+            // Reset payment method selection - default to "Envío sin tarjeta" if no existing method
+            selectedPaymentMethod = existingMethod || 'Envío sin tarjeta';
             document.querySelectorAll('.modal-payment-btn').forEach(btn => {
                 btn.classList.toggle('selected', btn.dataset.method === selectedPaymentMethod);
             });
@@ -1685,6 +1677,11 @@
 
             closeModal();
             updateSummary();
+            
+            // Show motivation after payment
+            if (newPaidStatus) {
+                setTimeout(() => showMotivation(), 500);
+            }
         }
 
         function updateTenantUI(tenantId, isPaid, name, rent, visits = 0) {
@@ -1818,14 +1815,51 @@
             }, 3000);
         }
 
-        function updateSyncIndicator() {
-            const indicator = document.getElementById('syncIndicator');
-            const now = new Date();
-            const timeStr = now.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
-            const dateStr = now.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' });
-            indicator.textContent = `✓ Guardado ${dateStr}, ${timeStr}`;
-            indicator.className = 'sync-indicator saved';
+        // Show progress motivation
+        function showMotivation() {
+            const pendingItems = document.querySelectorAll('#pendingList .tenant-item').length;
+            const paidItems = document.querySelectorAll('#paidList .tenant-item').length;
+            const total = pendingItems + paidItems;
+            
+            if (total === 0) return;
+            
+            const percent = Math.round((paidItems / total) * 100);
+            const motivationToast = document.getElementById('motivationToast');
+            
+            let message = '';
+            if (pendingItems === 0) {
+                return; // Will show celebration instead
+            } else if (pendingItems <= 3 && paidItems > 0) {
+                message = `¡Solo falta${pendingItems === 1 ? '' : 'n'} ${pendingItems}! 💪`;
+            } else if (percent >= 80) {
+                message = `¡Ya va ${percent}%! Casi listo 🔥`;
+            } else if (percent >= 50) {
+                message = `¡Más de la mitad! ${percent}% 👍`;
+            } else {
+                return; // Don't show motivation for early stages
+            }
+            
+            if (message) {
+                motivationToast.textContent = message;
+                motivationToast.classList.add('show');
+                setTimeout(() => motivationToast.classList.remove('show'), 3000);
+            }
         }
+
+        // Offline detection
+        function updateOfflineStatus() {
+            const offlineIndicator = document.getElementById('offlineIndicator');
+            if (!navigator.onLine) {
+                offlineIndicator.classList.add('show');
+            } else {
+                offlineIndicator.classList.remove('show');
+            }
+        }
+
+        window.addEventListener('online', updateOfflineStatus);
+        window.addEventListener('offline', updateOfflineStatus);
+
+        // updateSyncIndicator() is now loaded from partials/sync_indicator.html
 
         function filterTenants(term) {
             term = term.toLowerCase().trim();
@@ -2055,6 +2089,7 @@
             updateSummary();
             updateCounts();
             updateSyncIndicator(); // Show initial time
+            updateOfflineStatus(); // Check offline status
 
             // Auto-expand "YA PAGARON" section if most have paid (>= 70%)
             const pendingItems = document.querySelectorAll('#pendingList .tenant-item').length;
