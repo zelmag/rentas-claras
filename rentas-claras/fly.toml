@@ -11,6 +11,12 @@ primary_region = 'dfw'
 
 [env]
   PORT = '8080'
+  TZ = 'America/Mexico_City'
+
+# Persistent storage for SQLite database
+[mounts]
+  source = "clara_data"
+  destination = "/data"
 
 [http_service]
   internal_port = 8080

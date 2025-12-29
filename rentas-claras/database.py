@@ -124,6 +124,26 @@ def init_database():
     except:
         pass
 
+    # Message logs table - prevents double-sending (idempotency)
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS message_logs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            tenant_id TEXT NOT NULL,
+            message_type TEXT NOT NULL,  -- 'rent_reminder', 'late_day_2', 'late_day_5', etc.
+            year INTEGER NOT NULL,
+            month INTEGER NOT NULL,
+            day INTEGER NOT NULL,
+            sent_at TEXT NOT NULL,
+            message_id TEXT,  -- WhatsApp message ID from Meta API
+            status TEXT DEFAULT 'sent',  -- 'sent', 'failed', 'delivered', 'read'
+            error_message TEXT,
+            FOREIGN KEY (tenant_id) REFERENCES tenants(id),
+            UNIQUE(tenant_id, message_type, year, month, day)  -- Prevent double-send same day
+        )
+    """
+    )
+
     # Monthly records table - tracks payments per month
     cursor.execute(
         """
@@ -965,6 +985,175 @@ def get_expiring_contracts(days_ahead: int = 60) -> List[Dict[str, Any]]:
     
     conn.close()
     return expiring
+
+
+# =============================================================================
+# MESSAGE LOGGING (Idempotency / Anti-Spam)
+# =============================================================================
+
+
+def was_message_sent_today(tenant_id: str, message_type: str) -> bool:
+    """
+    Check if a message of this type was already sent to this tenant today.
+    
+    This prevents double-sending if the scheduler restarts or runs twice.
+    
+    Args:
+        tenant_id: The tenant's ID
+        message_type: Type of message ('rent_reminder', 'late_day_2', etc.)
+    
+    Returns:
+        True if message was already sent today, False otherwise
+    """
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    now = datetime.now()
+    
+    cursor.execute(
+        """
+        SELECT id FROM message_logs
+        WHERE tenant_id = ? AND message_type = ? 
+        AND year = ? AND month = ? AND day = ?
+        """,
+        (tenant_id, message_type, now.year, now.month, now.day)
+    )
+    
+    result = cursor.fetchone()
+    conn.close()
+    
+    return result is not None
+
+
+def log_message_sent(
+    tenant_id: str,
+    message_type: str,
+    message_id: Optional[str] = None,
+    status: str = "sent",
+    error_message: Optional[str] = None
+) -> bool:
+    """
+    Log that a message was sent (or attempted) to a tenant.
+    
+    Args:
+        tenant_id: The tenant's ID
+        message_type: Type of message ('rent_reminder', 'late_day_2', etc.)
+        message_id: WhatsApp message ID from Meta API (optional)
+        status: 'sent', 'failed', 'delivered', 'read'
+        error_message: Error message if failed
+    
+    Returns:
+        True if logged successfully, False if duplicate (already sent today)
+    """
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    now = datetime.now()
+    
+    try:
+        cursor.execute(
+            """
+            INSERT INTO message_logs 
+            (tenant_id, message_type, year, month, day, sent_at, message_id, status, error_message)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                tenant_id,
+                message_type,
+                now.year,
+                now.month,
+                now.day,
+                now.isoformat(),
+                message_id,
+                status,
+                error_message
+            )
+        )
+        conn.commit()
+        conn.close()
+        return True
+    except sqlite3.IntegrityError:
+        # Duplicate - message already sent today
+        conn.close()
+        return False
+
+
+def get_unpaid_tenants_for_reminder(year: int, month: int, message_type: str) -> List[Dict]:
+    """
+    Get tenants who haven't paid AND haven't received this message type today.
+    
+    This is the main query for the scheduler - it handles both payment status
+    AND idempotency in one query.
+    
+    Args:
+        year: Current year
+        month: Current month
+        message_type: Type of reminder to check
+    
+    Returns:
+        List of tenant dicts ready for messaging
+    """
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    today = datetime.now()
+    
+    cursor.execute(
+        """
+        SELECT t.id, t.name, t.phone, t.property_name, t.unit, t.rent,
+               t.contract_start, t.contract_end
+        FROM tenants t
+        LEFT JOIN monthly_records m 
+            ON t.id = m.tenant_id AND m.year = ? AND m.month = ?
+        LEFT JOIN message_logs ml 
+            ON t.id = ml.tenant_id 
+            AND ml.message_type = ?
+            AND ml.year = ? AND ml.month = ? AND ml.day = ?
+        WHERE t.active = 1
+        AND t.phone IS NOT NULL AND t.phone != ''
+        AND COALESCE(m.paid, 0) = 0  -- Not paid
+        AND ml.id IS NULL  -- No message sent today
+        ORDER BY t.property_name, t.unit
+        """,
+        (year, month, message_type, today.year, today.month, today.day)
+    )
+    
+    tenants = []
+    for row in cursor.fetchall():
+        tenants.append({
+            "id": row["id"],
+            "name": row["name"],
+            "phone": row["phone"],
+            "property_name": row["property_name"],
+            "unit": row["unit"],
+            "rent": Decimal(str(row["rent"])),
+            "contract_start": row["contract_start"],
+            "contract_end": row["contract_end"],
+        })
+    
+    conn.close()
+    return tenants
+
+
+def get_message_history(tenant_id: str, limit: int = 10) -> List[Dict]:
+    """Get recent message history for a tenant."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    cursor.execute(
+        """
+        SELECT message_type, year, month, day, sent_at, status, error_message
+        FROM message_logs
+        WHERE tenant_id = ?
+        ORDER BY sent_at DESC
+        LIMIT ?
+        """,
+        (tenant_id, limit)
+    )
+    
+    history = [dict(row) for row in cursor.fetchall()]
+    conn.close()
+    return history
 
 
 # Initialize database when module is imported

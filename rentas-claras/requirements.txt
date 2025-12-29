@@ -5,3 +5,7 @@ flask==3.0.0
 gunicorn==21.2.0
 requests==2.31.0
 python-dotenv==1.0.0
+
+# Scheduler for automated rent reminders
+apscheduler>=3.10.0
+pytz>=2024.1

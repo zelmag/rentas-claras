@@ -87,9 +87,65 @@ def login_required(f):
 init_database()
 seed_tenants()
 
+# =============================================================================
+# SCHEDULER SETUP (APScheduler for automated rent reminders)
+# =============================================================================
+import logging
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.cron import CronTrigger
+from pytz import timezone
+
+# Setup logging for scheduler
+logging.basicConfig(level=logging.INFO)
+scheduler_logger = logging.getLogger("apscheduler")
+scheduler_logger.setLevel(logging.INFO)
+
+# Mexico City timezone (permanent UTC-6 since 2022 - no more DST)
+MX_TZ = timezone("America/Mexico_City")
+
+
+def run_rent_automation(task_name: str):
+    """
+    Wrapper to run rent automation within Flask app context.
+    
+    This ensures database connections work properly from background thread.
+    """
+    with app.app_context():
+        from src.tasks import send_rent_reminders
+        scheduler_logger.info(f"🔔 Triggering: {task_name}")
+        result = send_rent_reminders()
+        scheduler_logger.info(f"📊 Result: {result}")
+        return result
+
+
+# Initialize the background scheduler
+scheduler = BackgroundScheduler(timezone=MX_TZ)
+
+# Job 1: Day 1 - Monthly rent reminder at 9 AM
+scheduler.add_job(
+    func=run_rent_automation,
+    trigger=CronTrigger(day=1, hour=9, minute=0, timezone=MX_TZ),
+    args=["Day 1 - Monthly Reminder"],
+    id="rent_reminder_day_1",
+    replace_existing=True,
+)
+
+# Job 2: Days 2, 3, 5, 7, 8 - Late payment escalations at 9 AM
+scheduler.add_job(
+    func=run_rent_automation,
+    trigger=CronTrigger(day="2,3,5,7,8", hour=9, minute=0, timezone=MX_TZ),
+    args=["Late Payment Escalation"],
+    id="late_escalation",
+    replace_existing=True,
+)
+
+# Start the scheduler
+scheduler.start()
+scheduler_logger.info("✅ APScheduler started - rent reminders scheduled")
+
 # For testing, use your own number
 TEST_MODE = True
-TEST_PHONE = "+447811782597"  # Zelma's UK number for testing
+TEST_PHONE = os.environ.get("WHATSAPP_TEST_PHONE", "")
 
 
 # =============================================================================
@@ -7961,6 +8017,80 @@ def contracts():
         upcoming_renewals_by_month=upcoming_renewals_by_month,
         available_apartments=available_apartments,
     )
+
+
+# =============================================================================
+# ADMIN ROUTES (Manual Testing / Scheduler Trigger)
+# =============================================================================
+
+
+@app.route("/admin/test-scheduler/<secret_key>")
+def admin_test_scheduler(secret_key):
+    """
+    Manually trigger the rent reminder scheduler for testing.
+    
+    Usage: https://your-app.fly.dev/admin/test-scheduler/your-secret-password
+    
+    This lets you test the scheduler without waiting for the actual day/time.
+    Check fly logs to see the output.
+    """
+    # Use the RENTASCLARAS_PIN as the secret key for simplicity
+    if secret_key != RENTASCLARAS_PIN:
+        return jsonify({"error": "Unauthorized"}), 403
+    
+    try:
+        result = run_rent_automation("MANUAL TEST")
+        return jsonify({
+            "status": "triggered",
+            "result": result,
+            "message": "Check fly logs for details"
+        })
+    except Exception as e:
+        return jsonify({"status": "error", "error": str(e)}), 500
+
+
+@app.route("/admin/test-single/<secret_key>/<tenant_id>")
+def admin_test_single(secret_key, tenant_id):
+    """
+    Send a test reminder to a single tenant.
+    
+    Usage: https://your-app.fly.dev/admin/test-single/your-secret-password/MAT-A
+    """
+    if secret_key != RENTASCLARAS_PIN:
+        return jsonify({"error": "Unauthorized"}), 403
+    
+    try:
+        from src.tasks import send_test_reminder
+        result = send_test_reminder(tenant_id, force=True)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"status": "error", "error": str(e)}), 500
+
+
+@app.route("/admin/scheduler-status/<secret_key>")
+def admin_scheduler_status(secret_key):
+    """
+    Check the status of scheduled jobs.
+    
+    Usage: https://your-app.fly.dev/admin/scheduler-status/your-secret-password
+    """
+    if secret_key != RENTASCLARAS_PIN:
+        return jsonify({"error": "Unauthorized"}), 403
+    
+    jobs = []
+    for job in scheduler.get_jobs():
+        jobs.append({
+            "id": job.id,
+            "name": job.name,
+            "next_run": str(job.next_run_time) if job.next_run_time else None,
+            "trigger": str(job.trigger),
+        })
+    
+    return jsonify({
+        "scheduler_running": scheduler.running,
+        "jobs": jobs,
+        "timezone": str(MX_TZ)
+    })
 
 
 # =============================================================================
