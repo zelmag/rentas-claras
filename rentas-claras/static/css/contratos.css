@@ -1,0 +1,1077 @@
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        :root {
+            --safe-area-top: env(safe-area-inset-top, 0px);
+            --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+            --color-primary: #0A7A0A;
+            --color-danger: #CC0000;
+            --color-neutral: #333333;
+            --color-neutral-light: #F5F5F5;
+            --color-white: #FFFFFF;
+            --color-border: #CCCCCC;
+            --color-black: #000000;
+            --color-accent: #0A7A0A;  /* Changed from purple to system green for Don Raúl */
+            --space-sm: 8px;
+            --space-md: 16px;
+            --space-lg: 24px;
+            --space-xl: 32px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --touch-target-min: 48px;
+            --touch-target-lg: 56px;
+        }
+        
+        /* ===========================================
+           UNIFIED SEARCH BAR STYLES
+           Shared between Pagos and Contratos tabs
+           =========================================== */
+        .search-wrapper {
+            position: relative;
+            width: 100%;
+        }
+        
+        .search-input-styled {
+            width: 100%;
+            padding: 16px 48px 16px 48px;
+            font-size: 1.1rem;
+            border: 3px solid var(--color-border);
+            border-radius: var(--radius-md);
+            background: var(--color-white);
+            color: var(--color-black);
+            box-sizing: border-box;
+        }
+        
+        .search-input-styled:focus {
+            outline: none;
+            border-color: var(--color-primary);
+        }
+        
+        .search-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            color: #999;
+            pointer-events: none;
+        }
+        
+        .search-clear-btn {
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 48px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: none;
+            border: none;
+            font-size: 1.3rem;
+            cursor: pointer;
+            color: #666;
+            padding: 0;
+        }
+        
+        .search-clear-btn:hover {
+            color: var(--color-danger);
+        }
+        
+        .search-clear-btn.visible {
+            display: flex;
+        }
+        
+        /* ===========================================
+           PROMINENT SEARCH SECTION STYLES
+           Used for both Pagos and Contratos tabs
+           =========================================== */
+        .prominent-search-section {
+            margin-bottom: 20px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: var(--color-primary);
+            padding: 16px;
+            margin-left: -16px;
+            margin-right: -16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        
+        .prominent-search-label {
+            color: white;
+            font-size: 1.1rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .prominent-search-input {
+            font-size: 1.4rem;
+            padding: 20px 56px 20px 20px;
+            border: 4px solid #065F06;
+            border-radius: 16px;
+            box-shadow: inset 0 2px 8px rgba(0,0,0,0.1);
+            font-weight: 600;
+            background: white;
+        }
+        
+        .prominent-search-clear {
+            font-size: 2rem;
+            width: 56px;
+            color: var(--color-danger);
+            font-weight: bold;
+        }
+        
+        .prominent-search-results {
+            margin-top: 12px;
+            color: white;
+            font-size: 1.2rem;
+            font-weight: 700;
+            display: none;
+            text-align: center;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f0;
+            min-height: 100vh;
+            min-height: -webkit-fill-available;
+            color: #1a1a1a;
+            padding: var(--space-md);
+            padding-top: calc(var(--space-md) + var(--safe-area-top));
+            padding-bottom: calc(80px + var(--safe-area-bottom)); /* Space for bottom nav */
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+        
+        @media (min-width: 768px) {
+            body {
+                padding: var(--space-lg);
+                padding-bottom: var(--space-lg);
+                font-size: 18px;
+            }
+        }
+        
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+        }
+        
+        @media (min-width: 768px) {
+            .container {
+                max-width: 900px;
+            }
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: var(--space-lg);
+            background: var(--color-white);
+            padding: var(--space-md);
+            border-radius: var(--radius-lg);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        
+        @media (min-width: 768px) {
+            header {
+                padding: var(--space-lg);
+                margin-bottom: var(--space-xl);
+            }
+        }
+        
+        h1 {
+            font-size: 1.75rem;
+            margin-bottom: var(--space-sm);
+            color: #000000;
+            font-weight: 800;
+        }
+        
+        @media (min-width: 768px) {
+            h1 {
+                font-size: 2.2rem;
+            }
+        }
+        
+        .subtitle {
+            color: #4a4a4a;
+            font-size: 1rem;
+        }
+        
+        @media (min-width: 768px) {
+            .subtitle {
+                font-size: 1.1rem;
+            }
+        }
+        
+        /* Navigation Tabs - hidden on mobile (use bottom nav) */
+        .nav-tabs {
+            display: none;
+            gap: var(--space-md);
+            justify-content: center;
+            margin-bottom: var(--space-lg);
+        }
+        
+        @media (min-width: 768px) {
+            .nav-tabs {
+                display: flex;
+            }
+        }
+        
+        .nav-tab {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-sm);
+            padding: var(--space-md) var(--space-lg);
+            border-radius: var(--radius-md);
+            text-decoration: none;
+            font-size: 1.1rem;
+            font-weight: 800;
+            transition: all 0.2s;
+            min-height: var(--touch-target-lg);
+            border: 4px solid;
+        }
+        
+        .nav-tab.active {
+            background: var(--color-accent);
+            color: var(--color-white);
+            border-color: var(--color-accent);
+        }
+        
+        .nav-tab:not(.active) {
+            background: var(--color-white);
+            color: var(--color-accent);
+            border-color: var(--color-accent);
+        }
+        
+        .nav-tab:not(.active):hover {
+            background: #f3e8ff;
+        }
+        
+        /* ===========================================
+           TOP NAVBAR - Always visible (UNIFIED with Pagos)
+           =========================================== */
+        .top-navbar {
+            display: flex;
+            gap: var(--space-sm);
+            justify-content: center;
+            margin: var(--space-md) 0;
+            padding: var(--space-sm);
+            background: var(--color-neutral-light);
+            border-radius: var(--radius-lg);
+        }
+        
+        .top-navbar-item {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-sm);
+            flex: 1;
+            padding: var(--space-md) var(--space-lg);
+            border-radius: var(--radius-md);
+            text-decoration: none;
+            font-size: var(--font-size-base);
+            font-weight: 800;
+            transition: all 0.2s;
+            min-height: var(--touch-target-min);
+            border: none;
+            cursor: pointer;
+        }
+        
+        .top-navbar-item.active {
+            background: var(--color-primary);
+            color: var(--color-white);
+            box-shadow: 0 2px 8px rgba(10, 122, 10, 0.3);
+        }
+
+        .top-navbar-item:not(.active) {
+            background: var(--color-white);
+            color: var(--color-neutral);
+        }
+        
+        .top-navbar-item:not(.active):hover {
+            background: var(--color-white);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .top-navbar-icon {
+            font-size: 1.3rem;
+        }
+        
+        @media (min-width: 768px) {
+            .top-navbar {
+                max-width: 500px;
+                margin: var(--space-lg) auto;
+            }
+            
+            .top-navbar-item {
+                font-size: var(--font-size-lg);
+                padding: var(--space-lg) var(--space-xl);
+            }
+            
+            .top-navbar-icon {
+                font-size: 1.5rem;
+            }
+        }
+        
+        /* Bottom Navigation */
+        .bottom-nav {
+            display: flex;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--color-white);
+            border-top: 2px solid #CCCCCC;
+            padding: var(--space-sm);
+            padding-bottom: calc(var(--space-sm) + var(--safe-area-bottom));
+            z-index: 1000;
+            justify-content: space-around;
+            gap: var(--space-sm);
+            box-shadow: 0 -4px 12px rgba(0,0,0,0.1);
+        }
+        
+        @media (min-width: 768px) {
+            .bottom-nav {
+                display: none;
+            }
+        }
+        
+        .bottom-nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            color: var(--color-neutral);
+            font-size: 1rem;
+            font-weight: 700;
+            padding: var(--space-md);
+            border-radius: var(--radius-md);
+            min-width: 72px;
+            min-height: 56px;
+            transition: all 0.2s;
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .bottom-nav-item.active {
+            color: var(--color-accent);
+            background: rgba(124, 58, 237, 0.1);
+        }
+        
+        .bottom-nav-icon {
+            font-size: 1.5rem;
+            margin-bottom: 2px;
+        }
+        
+        /* Summary cards - mobile first (stacked) */
+        .summary {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--space-sm);
+            margin-bottom: var(--space-lg);
+        }
+        
+        @media (min-width: 768px) {
+            .summary {
+                grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+                gap: var(--space-md);
+                margin-bottom: var(--space-xl);
+            }
+        }
+        
+        .summary-card {
+            background: var(--color-white);
+            padding: var(--space-md);
+            border-radius: var(--radius-lg);
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        
+        @media (min-width: 768px) {
+            .summary-card {
+                padding: var(--space-lg);
+            }
+        }
+        
+        .summary-value {
+            font-size: 1.75rem;
+            font-weight: 800;
+        }
+        
+        @media (min-width: 768px) {
+            .summary-value {
+                font-size: 2.2rem;
+            }
+        }
+        
+        .summary-value.green { color: var(--color-primary); }
+        .summary-value.red { color: var(--color-danger); }
+        .summary-value.yellow { color: var(--color-neutral); }
+        
+        .summary-label {
+            color: var(--color-neutral);
+            font-size: 1rem;
+            margin-top: var(--space-sm);
+            font-weight: 700;
+            line-height: 1.3;
+        }
+        
+        @media (min-width: 768px) {
+            .summary-label {
+                font-size: 1.05rem;
+            }
+        }
+        
+        /* Upcoming renewals */
+        .upcoming-section {
+            background: var(--color-white);
+            border-radius: var(--radius-lg);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: var(--space-lg);
+            overflow: hidden;
+        }
+        
+        .upcoming-header {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: var(--color-white);
+            padding: var(--space-md);
+            font-weight: 700;
+            font-size: 1rem;
+        }
+        
+        @media (min-width: 768px) {
+            .upcoming-header {
+                padding: var(--space-md) var(--space-lg);
+                font-size: 1.2rem;
+            }
+        }
+        
+        .upcoming-list {
+            padding: 0;
+        }
+        
+        /* Month section header */
+        .month-section {
+            border-bottom: 3px solid #e5e5e5;
+        }
+        
+        .month-section:last-child {
+            border-bottom: none;
+        }
+        
+        .month-header {
+            background: #f3f4f6;
+            padding: 14px 24px;
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: #1a1a1a;
+            border-bottom: 2px solid #e5e5e5;
+        }
+        
+        .upcoming-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 24px;
+            border-bottom: 2px solid #e5e5e5;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        
+        .upcoming-item:last-child {
+            border-bottom: none;
+        }
+        
+        .upcoming-item.renewing {
+            background: #f0fdf4;
+            border-left: 6px solid #0A7A0A;  /* System green */
+        }
+        
+        .upcoming-item.not-renewing {
+            background: #fef2f2;
+            border-left: 6px solid #CC0000;  /* System red */
+        }
+        
+        .upcoming-item.pending {
+            background: #F5F5F5;  /* Changed to gray - 3-color system */
+            border-left: 6px solid #333333;
+        }
+          
+        /* URGENT: Contracts expiring in <30 days */
+        .upcoming-item.expiring-soon {
+            background: #fef2f2;
+            border-left: 6px solid #CC0000;  /* System red */
+        }
+          
+        .expiring-soon-badge {
+            display: inline-block;
+            background: #dc2626;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            margin-left: 8px;
+        }
+        
+        .upcoming-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex: 1;
+            flex-wrap: wrap;
+        }
+        
+        .upcoming-name {
+            font-size: 1.15rem;
+            color: #1a1a1a;
+            font-weight: 600;
+        }
+        
+        .upcoming-date {
+            font-size: 1.15rem;
+            color: #1a1a1a;
+            font-weight: 700;
+        }
+        
+        .upcoming-status {
+            flex-shrink: 0;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.95rem;
+            font-weight: 700;
+        }
+        
+        .status-badge.green {
+            background: #dcfce7;
+            color: #166534;
+        }
+        
+        .status-badge.red {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+        
+        .status-badge.yellow {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        
+        /* Property section */
+        .property-section {
+            margin-bottom: 40px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+        
+        .property-header {
+            background: var(--color-primary);  /* Changed from purple to green */
+            color: white;
+            padding: 16px 24px;
+            font-weight: 700;
+            font-size: 1.2rem;
+        }
+        
+        /* Contract card */
+        .contract-card {
+            padding: 20px;
+            border-bottom: 2px solid #e5e5e5;
+            background: white;
+        }
+        
+        .contract-card:last-child {
+            border-bottom: none;
+        }
+        
+        .contract-card.renewing {
+            background: #f0fdf4;
+            border-left: 6px solid #0A7A0A;  /* System green */
+        }
+        
+        .contract-card.not-renewing {
+            background: #fef2f2;
+            border-left: 6px solid #CC0000;  /* System red */
+        }
+        
+        .contract-card.pending {
+            background: #F5F5F5;  /* Changed to gray - 3-color system */
+            border-left: 6px solid #333333;
+        }
+        
+        .tenant-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        
+        .tenant-name {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #1a1a1a;
+            text-align: center;  /* Center tenant name horizontally */
+        }
+        
+        .tenant-unit {
+            color: var(--color-primary);  /* Changed from purple to green */
+            font-weight: 700;
+        }
+        
+        .contract-dates {
+            font-size: 1rem;
+            color: #4a4a4a;
+            background: #f3f4f6;
+            padding: 8px 16px;
+            border-radius: 8px;
+        }
+        
+        /* Renewal buttons */
+        .renewal-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+        
+        /* UNIFIED BUTTON STYLES (Contratos page) - matches Pagos for consistency */
+        .status-pill.renewal-btn {
+            display: flex;
+            flex: 1;
+            padding: 14px 20px;
+            border: 3px solid #d4d4d4;
+            border-radius: 12px;
+            background: white;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: 700;
+            transition: all 0.2s;
+            min-height: 56px;
+            text-align: center;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .status-pill.renewal-btn:hover {
+            background: #f5f5f5;
+        }
+        
+        .status-pill.renewal-btn.active-green {
+            background: #dcfce7;
+            border-color: #0A7A0A;
+            color: #0A7A0A;
+        }
+        
+        .status-pill.renewal-btn.active-red {
+            background: #fee2e2;
+            border-color: #CC0000;
+            color: #CC0000;
+        }
+        
+        .status-pill.renewal-btn.active-yellow {
+            background: #F5F5F5;
+            border-color: #333333;
+            color: #333333;
+        }
+        
+        /* Contract tracking */
+        .contract-tracking {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin: 16px 0;
+            padding: 16px;
+            background: #f9fafb;
+            border-radius: 12px;
+        }
+        
+        .tracking-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            font-size: 1.1rem;
+        }
+        
+        .tracking-checkbox input[type="checkbox"] {
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+        }
+        
+        /* Replacement section */
+        .replacement-section {
+            margin-top: 16px;
+            padding: 16px;
+            background: #fef2f2;
+            border-radius: 12px;
+            border: 2px solid #fca5a5;
+        }
+        
+        .replacement-title {
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-bottom: 12px;
+            color: #dc2626;
+        }
+        
+        .replacement-input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #d4d4d4;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            margin-top: 8px;
+        }
+        
+        .replacement-input:focus {
+            outline: none;
+            border-color: var(--color-primary);  /* Changed from purple to green */
+        }
+        
+        /* Available apartments section - Need to show! */
+        .available-section {
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+            margin-bottom: 32px;
+            overflow: hidden;
+        }
+        
+        .available-header {
+            color: white;
+            padding: 20px 24px;
+            font-weight: 800;
+            font-size: 1.3rem;
+        }
+        
+        .available-list {
+            background: white;
+        }
+        
+        .available-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 24px;
+            border-bottom: 2px solid #fee2e2;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        
+        .available-item:last-child {
+            border-bottom: none;
+        }
+        
+        .available-info {
+            flex: 1;
+        }
+        
+        .available-property {
+            font-size: 1.2rem;
+            color: #1a1a1a;
+            margin-bottom: 6px;
+        }
+        
+        .available-tenant {
+            font-size: 1rem;
+            color: #4a4a4a;
+            margin-bottom: 4px;
+        }
+        
+        .available-date {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #dc2626;
+        }
+        
+        .available-actions {
+            flex-shrink: 0;
+        }
+        
+        .call-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 20px;
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 700;
+            text-decoration: none;
+            min-height: 48px;
+        }
+        
+        .call-btn:hover {
+            background: #1d4ed8;
+        }
+        
+        .available-footer {
+            background: #fef2f2;
+            color: #991b1b;
+            padding: 16px 24px;
+            font-size: 1rem;
+            font-weight: 600;
+            text-align: center;
+        }
+        
+        /* Replacement badge in bird's eye view */
+        .replacement-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            margin-left: 8px;
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+        
+        .replacement-badge.needs-candidate {
+            background: #fef3c7;
+            color: #92400e;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+        
+        /* Expandable upcoming items - inline editing from bird's eye view */
+        .upcoming-item {
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .upcoming-item:hover {
+            background: rgba(0,0,0,0.02);
+        }
+        
+        .upcoming-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        
+        .upcoming-expand-form {
+            display: none;
+            padding: 16px 0 8px 0;
+            border-top: 2px dashed #e5e5e5;
+            margin-top: 16px;
+        }
+        
+        .upcoming-item.expanded .upcoming-expand-form {
+            display: block;
+        }
+        
+        .upcoming-item.expanded {
+            background: #fefefe;
+            box-shadow: inset 0 0 0 3px var(--color-primary);  /* Changed from purple to green */
+        }
+        
+        .expand-icon {
+            font-size: 1.2rem;
+            transition: transform 0.2s;
+            color: var(--color-primary);  /* Changed from purple to green */
+            font-weight: bold;
+        }
+        
+        .upcoming-item.expanded .expand-icon {
+            transform: rotate(180deg);
+        }
+        
+        /* Tenant ID badge - prominent for disambiguation */
+        .tenant-id-badge {
+            display: inline-block;
+            background: var(--color-primary);  /* Changed from purple to green */
+            color: white;
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 800;
+            font-family: monospace;
+            margin-right: 8px;
+        }
+        
+        /* Inline form styling for bird's eye view */
+        .inline-renewal-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+        
+        .inline-renewal-btn {
+            flex: 1;
+            min-width: 100px;
+            padding: 10px 16px;
+            border: 2px solid #d4d4d4;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 600;
+            transition: all 0.2s;
+            text-align: center;
+        }
+        
+        .inline-renewal-btn:hover {
+            background: #f5f5f5;
+        }
+        
+        .inline-renewal-btn.active-green {
+            background: #dcfce7;
+            border-color: #0A7A0A;
+            color: #0A7A0A;
+        }
+        
+        .inline-renewal-btn.active-red {
+            background: #fee2e2;
+            border-color: #CC0000;
+            color: #CC0000;
+        }
+        
+        .inline-renewal-btn.active-yellow {
+            background: #F5F5F5;
+            border-color: #333333;
+            color: #333333;
+        }
+        
+        .inline-replacement-section {
+            padding: 12px;
+            background: #fef2f2;
+            border-radius: 8px;
+            border: 2px solid #fca5a5;
+            margin-top: 12px;
+        }
+        
+        .inline-replacement-section.hidden {
+            display: none;
+        }
+        
+        .inline-replacement-title {
+            font-weight: 700;
+            font-size: 1rem;
+            margin-bottom: 10px;
+            color: #dc2626;
+        }
+        
+        .inline-form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        
+        @media (max-width: 600px) {
+            .inline-form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .inline-form-input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #d4d4d4;
+            border-radius: 6px;
+            font-size: 0.95rem;
+        }
+        
+        .inline-form-input:focus {
+            outline: none;
+            border-color: #7c3aed;
+        }
+        
+        .inline-form-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #666;
+            margin-bottom: 4px;
+            display: block;
+        }
+        
+        .inline-form-group {
+            margin-bottom: 8px;
+        }
+        
+        .inline-form-group.full-width {
+            grid-column: 1 / -1;
+        }
+        
+        /* Toast notification */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1a1a1a;
+            color: white;
+            padding: 16px 24px;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            display: none;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        
+        .toast.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+        
+        /* Mobile styles */
+        @media (max-width: 600px) {
+            body {
+                padding: 12px;
+                font-size: 20px;
+            }
+            
+            .tenant-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .renewal-buttons {
+                flex-direction: column;
+            }
+            
+            .renewal-btn {
+                width: 100%;
+                text-align: center;
+            }
+            
+            .summary {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .summary-value {
+                font-size: 2rem;
+            }
+        }

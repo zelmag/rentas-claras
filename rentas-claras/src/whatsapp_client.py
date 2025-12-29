@@ -442,6 +442,76 @@ class WhatsAppClient:
             "api_version": self.API_VERSION,
         }
 
+    def get_template_status(self, business_account_id: Optional[str] = None) -> dict:
+        """
+        Get the status of all message templates.
+
+        Args:
+            business_account_id: WhatsApp Business Account ID 
+                (or set WHATSAPP_BUSINESS_ACCOUNT_ID env var)
+
+        Returns:
+            Dict with templates and their statuses
+
+        Status values:
+            - APPROVED: Ready to use
+            - PENDING: Under review (usually 24-48 hours)
+            - REJECTED: Rejected, check rejection reason
+        """
+        waba_id = business_account_id or os.getenv("WHATSAPP_BUSINESS_ACCOUNT_ID", "")
+        
+        if not waba_id:
+            return {
+                "success": False,
+                "error": "WHATSAPP_BUSINESS_ACCOUNT_ID not configured in .env",
+            }
+        
+        if not self.access_token:
+            return {
+                "success": False,
+                "error": "WHATSAPP_ACCESS_TOKEN not configured in .env",
+            }
+
+        url = f"{self.API_BASE_URL}/{self.API_VERSION}/{waba_id}/message_templates"
+        
+        try:
+            response = requests.get(
+                url,
+                headers=self._get_headers(),
+                timeout=30,
+            )
+            data = response.json()
+            
+            if response.status_code == 200 and "data" in data:
+                templates = []
+                for t in data["data"]:
+                    templates.append({
+                        "name": t.get("name"),
+                        "status": t.get("status"),
+                        "category": t.get("category"),
+                        "language": t.get("language"),
+                        "rejected_reason": t.get("rejected_reason"),
+                    })
+                
+                logger.info(f"Retrieved {len(templates)} templates")
+                return {
+                    "success": True,
+                    "templates": templates,
+                }
+            
+            error_data = data.get("error", {})
+            return {
+                "success": False,
+                "error": error_data.get("message", "Unknown error"),
+                "raw_response": data,
+            }
+            
+        except requests.exceptions.RequestException as e:
+            return {
+                "success": False,
+                "error": str(e),
+            }
+
     def send_test_message(self, to_phone: str) -> WhatsAppResponse:
         """
         Send a test rent reminder to verify API configuration.
