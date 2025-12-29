@@ -2126,6 +2126,45 @@ HTML_TEMPLATE = """
         }
 
         /* ===========================================
+           MOBILE EXCEL TABLE OPTIMIZATION
+           Compact styles for small screens
+           =========================================== */
+        @media (max-width: 600px) {
+            .excel-table {
+                font-size: 0.85rem;
+            }
+            
+            .excel-table th,
+            .excel-table td {
+                padding: 8px 6px;
+                font-size: 0.85rem;
+            }
+            
+            .excel-table th {
+                font-size: 0.8rem;
+            }
+            
+            /* Reduce button size in table */
+            .tenant-status-btn-table {
+                min-height: 44px;
+                padding: 6px 10px;
+                font-size: 0.9rem;
+            }
+            
+            /* Hide MULTA column on very small screens to fit */
+            .excel-table th:nth-child(4),
+            .excel-table td:nth-child(4) {
+                display: none;
+            }
+            
+            /* Adjust property header on mobile */
+            .excel-table th[colspan] {
+                font-size: 1.1rem !important;
+                padding: 6px 10px !important;
+            }
+        }
+
+        /* ===========================================
            LEGACY MOBILE OVERRIDES REMOVED
            Now using mobile-first approach - base styles ARE mobile
            Only tablet/desktop use @media (min-width: ...)
@@ -2315,6 +2354,31 @@ HTML_TEMPLATE = """
         
         .payment-toggle-label.unpaid {
             color: #CC0000;
+        }
+        
+        /* Mobile: Larger toggle for better touch targets (44px+ recommended) */
+        @media (max-width: 768px) {
+            .payment-toggle {
+                width: 72px;
+                height: 40px;
+            }
+            
+            .payment-toggle .slider {
+                border-radius: 40px;
+            }
+            
+            .payment-toggle .slider:before {
+                height: 32px;
+                width: 32px;
+            }
+            
+            .payment-toggle input:checked + .slider:before {
+                transform: translateX(32px);
+            }
+            
+            .payment-toggle-label {
+                font-size: 1.1rem;
+            }
         }
         
         /* UNIFIED BUTTON STYLES - payment-btn (Pagos) and renewal-btn (Contratos)
@@ -3255,9 +3319,12 @@ HTML_TEMPLATE = """
         <script>
             // Load and display last saved timestamp on page load
             (function() {
+                console.log('Page load: Loading last saved timestamp from localStorage...');
                 const savedTime = localStorage.getItem('lastSavedTime');
+                console.log('Page load: savedTime from localStorage =', savedTime);
                 if (savedTime) {
                     const date = new Date(parseInt(savedTime));
+                    console.log('Page load: Parsed date =', date);
                     const now = new Date();
                     const isToday = date.toDateString() === now.toDateString();
                     const yesterday = new Date(now);
@@ -3273,10 +3340,16 @@ HTML_TEMPLATE = """
                         dayStr = date.toLocaleDateString('es-MX', { weekday: 'short', day: 'numeric', month: 'short' });
                     }
                     const timeStr = date.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+                    const displayText = '✓ Guardado: ' + dayStr + ' ' + timeStr;
+                    console.log('Page load: displayText =', displayText);
                     const textEl = document.getElementById('lastSavedText');
+                    console.log('Page load: textEl found =', !!textEl);
                     if (textEl) {
-                        textEl.textContent = '✓ Guardado: ' + dayStr + ' ' + timeStr;
+                        textEl.textContent = displayText;
+                        console.log('Page load: Updated lastSavedText to:', textEl.textContent);
                     }
+                } else {
+                    console.log('Page load: No savedTime found in localStorage, showing default "Listo"');
                 }
             })();
         </script>
@@ -3449,24 +3522,23 @@ HTML_TEMPLATE = """
             {% for property_name, tenants in tenants_by_property.items() %}
             <div class="excel-property-section" style="margin-bottom: 32px;">
                 <!-- Property Header - Excel style -->
-                <table class="excel-table" style="margin-bottom: 0; min-width: 950px;">
+                <table class="excel-table" style="margin-bottom: 0;">
                     <thead>
                         <tr>
-                            <th colspan="5" style="background: white; border: none; font-size: 1.4rem; text-align: left; padding: 8px 16px;">
+                            <th colspan="4" style="background: white; border: none; font-size: 1.4rem; text-align: left; padding: 8px 16px;">
                                 {{ property_name }}
                             </th>
                             <th colspan="4" style="background: white; border: none; font-style: italic; text-align: right;">{{ month_name }}</th>
                         </tr>
                         <tr>
                             <th style="width: 40px; text-align: center;"></th>
-                            <th style="min-width: 150px;">Nombre</th>
-                            <th style="text-align: right; min-width: 80px;">Renta</th>
-                            <th style="text-align: center; min-width: 70px; background: #FFF3CD; color: #856404;">DÍAS</th>
-                            <th style="text-align: right; min-width: 80px; background: #FFF3CD; color: #856404;">MULTA</th>
-                            <th style="text-align: right; min-width: 100px; font-weight: 800;">TOTAL</th>
-                            <th style="text-align: right; min-width: 80px;">Pagado</th>
-                            <th style="text-align: center; width: 50px;" title="Mensajes enviados este mes">📨</th>
-                            <th style="text-align: center; width: 80px;">Estado</th>
+                            <th style="min-width: 120px;">Nombre</th>
+                            <th style="text-align: right; min-width: 70px;">Renta</th>
+                            <th style="text-align: right; min-width: 70px; background: #FFF3CD; color: #856404;">MULTA</th>
+                            <th style="text-align: right; min-width: 80px; font-weight: 800;">TOTAL</th>
+                            <th style="text-align: right; min-width: 70px;">Pagado</th>
+                            <th style="text-align: center; width: 40px;" title="Mensajes enviados este mes">📨</th>
+                            <th style="text-align: center; width: 70px;">Estado</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -3478,10 +3550,6 @@ HTML_TEMPLATE = """
                                 {% if not tenant.phone %}<span style="color: #CC0000; font-size: 0.8rem;"> ⚠️</span>{% endif %}
                             </td>
                             <td class="rent-cell" style="{% if not tenant.paid %}color: #CC0000;{% endif %}">${{ "{:,.0f}".format(tenant.rent) }}</td>
-                            <!-- DÍAS SIN PAGAR column - hidden after day 7 -->
-                            <td style="text-align: center; font-weight: 700; {% if not tenant.paid and tenant.days_late >= 7 and tenant.days_late <= 7 %}background: #FEE2E2; color: #CC0000;{% elif not tenant.paid and tenant.days_late >= 2 and tenant.days_late <= 7 %}background: #FEF3C7; color: #B45309;{% elif not tenant.paid and tenant.days_late >= 1 and tenant.days_late <= 7 %}background: #FFF3CD; color: #856404;{% elif not tenant.paid and tenant.days_late == 0 %}background: #DCFCE7; color: #0A7A0A;{% endif %}">
-                                {% if tenant.paid %}—{% elif tenant.days_late == 0 %}✓{% elif tenant.days_late > 7 %}—{% else %}{{ tenant.days_late }}{% endif %}
-                            </td>
                             <!-- MULTA column -->
                             <td style="text-align: right; font-weight: 700; {% if tenant.late_fee > 0 %}color: #CC0000;{% else %}color: #666;{% endif %}">
                                 {% if tenant.paid %}—{% elif tenant.late_fee > 0 %}+${{ "{:,.0f}".format(tenant.late_fee) }}{% else %}$0{% endif %}
@@ -3518,7 +3586,6 @@ HTML_TEMPLATE = """
                             <td></td>
                             <td>{{ property_name }}</td>
                             <td class="rent-cell" style="border-top: 2px solid #333;">${{ "{:,.0f}".format(tenants|sum(attribute='rent')) }}</td>
-                            <td style="border-top: 2px solid #333;"></td>
                             <td style="border-top: 2px solid #333; text-align: right; color: #CC0000;">+${{ "{:,.0f}".format(tenants|rejectattr('paid')|sum(attribute='late_fee')) }}</td>
                             <td style="border-top: 2px solid #333; text-align: right; font-weight: 800; color: #CC0000;">${{ "{:,.0f}".format(tenants|rejectattr('paid')|sum(attribute='total_owed')) }}</td>
                             <td class="property-total-paid" data-property="{{ property_name }}" style="text-align: right; color: #0A7A0A; border-top: 2px solid #333;">${{ "{:,.0f}".format(tenants|selectattr('paid')|sum(attribute='rent')) }}</td>
@@ -4354,6 +4421,9 @@ HTML_TEMPLATE = """
                 showPersistentConfirmation(`${tenantName} marcado como PENDIENTE`, 'unpaid');
             }
             
+            // Update last saved immediately for instant user feedback
+            updateLastSaved();
+            
             // Save to database
             fetch('/api/payment', {
                 method: 'POST',
@@ -4366,7 +4436,6 @@ HTML_TEMPLATE = """
             }).then(response => {
                 if (response.ok) {
                     console.log(`Guardado: ${tenantId} = ${isPaid ? 'pagado' : 'pendiente'}`);
-                    updateLastSaved();
                 }
             }).catch(err => {
                 console.error('Error guardando, guardando localmente:', err);
@@ -4431,6 +4500,9 @@ HTML_TEMPLATE = """
                 showPersistentConfirmation(`${tenantName} marcado como PENDIENTE`, 'unpaid');
             }
             
+            // Update last saved immediately for instant user feedback
+            updateLastSaved();
+            
             // Save to database
             fetch('/api/payment', {
                 method: 'POST',
@@ -4443,7 +4515,6 @@ HTML_TEMPLATE = """
             }).then(response => {
                 if (response.ok) {
                     console.log(`Guardado: ${tenantId} = ${isPaid ? 'pagado' : 'pendiente'}`);
-                    updateLastSaved();
                 }
             }).catch(err => {
                 console.error('Error guardando, guardando localmente:', err);
@@ -4525,6 +4596,9 @@ HTML_TEMPLATE = """
                 }
             }
             
+            // Update last saved immediately for instant user feedback
+            updateLastSaved();
+            
             // Save to database with loading state
             fetch('/api/payment', {
                 method: 'POST',
@@ -4537,7 +4611,6 @@ HTML_TEMPLATE = """
             }).then(response => {
                 if (response.ok) {
                     console.log(`Guardado: ${tenantId} = ${isPaid ? 'pagado' : 'pendiente'}`);
-                    updateLastSaved();
                 }
             }).catch(err => {
                 console.error('Error guardando, guardando localmente:', err);
@@ -5445,23 +5518,30 @@ HTML_TEMPLATE = """
         // =============================================
         
         function updateLastSaved() {
+            console.log('updateLastSaved() called');
             const el = document.getElementById('lastSaved');
             const textEl = document.getElementById('lastSavedText');
+            console.log('Elements found:', { el: !!el, textEl: !!textEl });
             const now = new Date();
             
             // Save timestamp to localStorage for persistence across page reloads
             localStorage.setItem('lastSavedTime', now.getTime().toString());
+            console.log('Saved to localStorage:', now.getTime().toString());
             
             // Format the time display
             const timeStr = now.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
             const displayText = '✓ Guardado: Hoy ' + timeStr;
+            console.log('Display text:', displayText);
             
             if (el && textEl) {
                 textEl.textContent = displayText;
-                el.style.display = 'flex';
+                console.log('Updated textEl.textContent to:', textEl.textContent);
             } else if (el) {
                 el.textContent = displayText;
                 el.style.color = '#0A7A0A';
+                console.log('Updated el.textContent to:', el.textContent);
+            } else {
+                console.error('ERROR: Could not find lastSaved elements!');
             }
         }
         
@@ -7712,10 +7792,6 @@ CONTRACTS_TEMPLATE = """
         </header>
         
         <div class="summary">
-            <div class="summary-card">
-                <div class="summary-value green" id="renewingCount">{{ renewing_count }}</div>
-                <div class="summary-label">Renovarán</div>
-            </div>
             <div class="summary-card">
                 <div class="summary-value red" id="notRenewingCount">{{ not_renewing_count }}</div>
                 <div class="summary-label">No renovarán</div>
