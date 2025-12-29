@@ -1417,12 +1417,17 @@ def contracts():
     # Filter upcoming renewals to only show "action needed" items:
     # - no_renovará WITHOUT a candidate (needs attention)
     # - pendiente (needs decision)
+    # - ONLY contracts expiring within the next 30 days
     # Exclude renovará (already handled, no action needed)
     action_needed_renewals_by_month = []
     action_needed_count = 0
     for month_group in upcoming_renewals_by_month:
         filtered_tenants = []
         for tenant in month_group["tenants"]:
+            # Only include contracts expiring within next 30 days
+            if not hasattr(tenant, 'days_until_expiry') or tenant.days_until_expiry > 30:
+                continue
+            
             needs_action = False
             if tenant.renewal_status == "pendiente":
                 needs_action = True
