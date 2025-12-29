@@ -21,7 +21,13 @@ from typing import Optional
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
-from pytz import timezone
+
+# Use Python 3.9+ zoneinfo instead of pytz (more reliable)
+try:
+    from zoneinfo import ZoneInfo
+except ImportError:
+    # Fallback for Python < 3.9
+    from backports.zoneinfo import ZoneInfo
 
 # =============================================================================
 # LOGGING
@@ -37,8 +43,8 @@ logger = logging.getLogger("RentasScheduler")
 # CONFIGURATION
 # =============================================================================
 
-# Timezone for Mexico
-TIMEZONE = timezone(os.getenv("SCHEDULER_TIMEZONE", "America/Mexico_City"))
+# Timezone for Mexico (using zoneinfo instead of pytz)
+TIMEZONE = ZoneInfo(os.getenv("SCHEDULER_TIMEZONE", "America/Mexico_City"))
 
 # Enable/disable scheduler (useful for testing)
 SCHEDULER_ENABLED = os.getenv("SCHEDULER_ENABLED", "true").lower() == "true"

@@ -9,8 +9,36 @@
 
 <style>
     .search-box {
-        position: relative;
-        margin-bottom: 16px;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        background: var(--paper);
+        padding-top: 8px;
+        padding-bottom: 8px;
+        margin-left: -16px;
+        margin-right: -16px;
+        padding-left: 16px;
+        padding-right: 16px;
+        margin-bottom: 8px;
+    }
+    
+    /* Responsive adjustments for sticky search */
+    @media (min-width: 768px) {
+        .search-box {
+            margin-left: -24px;
+            margin-right: -24px;
+            padding-left: 24px;
+            padding-right: 24px;
+        }
+    }
+    
+    @media (min-width: 1024px) {
+        .search-box {
+            margin-left: -32px;
+            margin-right: -32px;
+            padding-left: 32px;
+            padding-right: 32px;
+        }
     }
 
     /* Collapsed toggle button */
