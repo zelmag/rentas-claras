@@ -350,15 +350,15 @@
         justify-content: space-between;
         align-items: center;
         margin-top: 8px;
+        background: linear-gradient(135deg, #333 0%, #555 100%);
     }
 
-    /* Different colors for different properties */
-    .property-section-header:nth-of-type(1) { background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%); }
-    .property-section-header:nth-of-type(2) { background: linear-gradient(135deg, #5c3d2e 0%, #7d5a4a 100%); }
-    .property-section-header:nth-of-type(3) { background: linear-gradient(135deg, #2e5c4a 0%, #4a7d6a 100%); }
-    .property-section-header:nth-of-type(4) { background: linear-gradient(135deg, #5c2e5c 0%, #7d4a7d 100%); }
-    .property-section-header:nth-of-type(5) { background: linear-gradient(135deg, #5c5c2e 0%, #7d7d4a 100%); }
-    .property-section-header:nth-of-type(n+6) { background: linear-gradient(135deg, #333 0%, #555 100%); }
+    /* Different colors for different properties - using data attribute */
+    .property-section-header[data-color="blue"] { background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%); }
+    .property-section-header[data-color="brown"] { background: linear-gradient(135deg, #5c3d2e 0%, #7d5a4a 100%); }
+    .property-section-header[data-color="green"] { background: linear-gradient(135deg, #2e5c4a 0%, #4a7d6a 100%); }
+    .property-section-header[data-color="purple"] { background: linear-gradient(135deg, #5c2e5c 0%, #7d4a7d 100%); }
+    .property-section-header[data-color="gold"] { background: linear-gradient(135deg, #5c5c2e 0%, #7d7d4a 100%); }
 
     .property-section-header:first-child {
         margin-top: 0;
@@ -786,11 +786,12 @@
             </div>
         </div>
         <div class="tenant-list" id="pendingList">
+            {% set colors = ['blue', 'brown', 'green', 'purple', 'gold'] %}
             {% for property_name, tenants in tenants_by_property.items() %}
                 {% set pending_tenants = tenants|rejectattr('paid')|list %}
                 {% if pending_tenants|length > 0 %}
                 <!-- Property Section Header -->
-                <div class="property-section-header">
+                <div class="property-section-header" data-color="{{ colors[loop.index0 % 5] }}">
                     <div class="property-section-name">
                         <span>🏢</span>
                         <span>{{ property_name }}</span>
@@ -837,11 +838,12 @@
             </div>
         </div>
         <div class="tenant-list collapsed" id="paidList">
+            {% set colors = ['blue', 'brown', 'green', 'purple', 'gold'] %}
             {% for property_name, tenants in tenants_by_property.items() %}
                 {% set paid_tenants = tenants|selectattr('paid')|list %}
                 {% if paid_tenants|length > 0 %}
                 <!-- Property Section Header -->
-                <div class="property-section-header">
+                <div class="property-section-header" data-color="{{ colors[loop.index0 % 5] }}">
                     <div class="property-section-name">
                         <span>🏢</span>
                         <span>{{ property_name }}</span>
@@ -856,12 +858,16 @@
                      data-property="{{ property_name }}"
                      data-unit="{{ tenant.unit }}"
                      data-payment-method="{{ tenant.payment_method or '' }}"
+                     data-visits="{{ tenant.visits or 0 }}"
                      data-paid="true">
                     <div class="tenant-info" onclick="showConfirmModal('{{ tenant.id }}', '{{ tenant.name }}', {{ tenant.rent }}, true)">
                         <div class="tenant-name">{{ tenant.name }}</div>
                         <div class="tenant-property">{{ tenant.unit }}</div>
                         {% if tenant.payment_method %}
                         <div style="font-size: 0.85rem; color: var(--green); margin-top: 4px;">💳 {{ tenant.payment_method }}</div>
+                        {% endif %}
+                        {% if tenant.visits and tenant.visits > 0 %}
+                        <div style="font-size: 0.85rem; color: #92400E; margin-top: 4px; font-weight: 600;">🏠 {{ tenant.visits }} visita{% if tenant.visits > 1 %}s{% endif %} (+${{ "{:,.0f}".format(tenant.visit_charge) }})</div>
                         {% endif %}
                     </div>
                     <div class="tenant-amount paid" onclick="showConfirmModal('{{ tenant.id }}', '{{ tenant.name }}', {{ tenant.rent }}, true)">${{ "{:,.0f}".format(tenant.rent) }}</div>
@@ -912,6 +918,20 @@
             <div class="modal-property" id="modalProperty">Propiedad · Unidad</div>
             <div class="modal-amount" id="modalAmount">$0</div>
             
+            <!-- Extra Charges Section -->
+            <div id="extraChargesSection" style="display: none; margin: 16px 0; padding: 12px; background: #FEF3C7; border-radius: 10px; border: 2px solid #F59E0B;">
+                <div style="font-size: 1rem; font-weight: 600; color: #92400E; margin-bottom: 10px;">🏠 ¿Hubo visitas este mes?</div>
+                <div style="display: flex; align-items: center; gap: 12px; justify-content: center;">
+                    <button type="button" class="visit-btn" onclick="changeVisits(-1)" style="width: 48px; height: 48px; border-radius: 50%; border: 2px solid #D97706; background: white; font-size: 1.5rem; cursor: pointer;">−</button>
+                    <div style="text-align: center;">
+                        <div id="visitCount" style="font-size: 2rem; font-weight: 800; color: #92400E;">0</div>
+                        <div style="font-size: 0.85rem; color: #92400E;">visitas</div>
+                    </div>
+                    <button type="button" class="visit-btn" onclick="changeVisits(1)" style="width: 48px; height: 48px; border-radius: 50%; border: 2px solid #D97706; background: white; font-size: 1.5rem; cursor: pointer;">+</button>
+                </div>
+                <div id="visitCharge" style="font-size: 1rem; font-weight: 700; color: #92400E; text-align: center; margin-top: 8px;">$0 extra</div>
+            </div>
+
             <!-- Payment Method Selection (only shown when marking as paid) -->
             <div class="modal-payment-methods" id="paymentMethods" style="display: none;">
             <div style="width: 100%; text-align: center; font-size: 1rem; font-weight: 600; color: var(--gray); margin-bottom: 10px;">¿Cómo pagó?</div>
@@ -974,12 +994,27 @@
 
         // Selected payment method
         let selectedPaymentMethod = '';
+        let currentVisitCount = 0;
+        const VISIT_CHARGE = 1500; // $1,500 per visit
 
         function selectPaymentMethod(method) {
             selectedPaymentMethod = method;
             document.querySelectorAll('.modal-payment-btn').forEach(btn => {
                 btn.classList.toggle('selected', btn.dataset.method === method);
             });
+        }
+
+        function changeVisits(delta) {
+            currentVisitCount = Math.max(0, currentVisitCount + delta);
+            document.getElementById('visitCount').textContent = currentVisitCount;
+            const extra = currentVisitCount * VISIT_CHARGE;
+            document.getElementById('visitCharge').textContent = currentVisitCount > 0 ? `+$${extra.toLocaleString()} extra` : '$0 extra';
+            
+            // Update modal amount to show total
+            if (pendingAction) {
+                const total = pendingAction.rent + extra;
+                document.getElementById('modalAmount').textContent = '$' + total.toLocaleString();
+            }
         }
 
         // Show confirmation modal
@@ -992,18 +1027,26 @@
             const amount = document.getElementById('modalAmount');
             const btn = document.getElementById('modalConfirmBtn');
             const paymentMethods = document.getElementById('paymentMethods');
+            const extraChargesSection = document.getElementById('extraChargesSection');
 
             // Get tenant item for property/unit info
             const tenantItem = document.querySelector(`[data-tenant-id="${tenantId}"]`);
             const propertyName = tenantItem ? tenantItem.dataset.property : '';
             const unitName = tenantItem ? tenantItem.dataset.unit : '';
             const existingMethod = tenantItem ? tenantItem.dataset.paymentMethod : '';
+            const existingVisits = parseInt(tenantItem ? tenantItem.dataset.visits : 0) || 0;
 
             // Reset payment method selection
             selectedPaymentMethod = existingMethod || '';
             document.querySelectorAll('.modal-payment-btn').forEach(btn => {
                 btn.classList.toggle('selected', btn.dataset.method === selectedPaymentMethod);
             });
+
+            // Reset visits counter
+            currentVisitCount = existingVisits;
+            document.getElementById('visitCount').textContent = currentVisitCount;
+            const extra = currentVisitCount * VISIT_CHARGE;
+            document.getElementById('visitCharge').textContent = currentVisitCount > 0 ? `+$${extra.toLocaleString()} extra` : '$0 extra';
 
             if (currentlyPaid) {
                 // Currently paid, asking to mark as unpaid
@@ -1013,6 +1056,7 @@
                 btn.textContent = '✗ No ha pagado';
                 btn.className = 'modal-btn confirm-unpaid';
                 paymentMethods.style.display = 'none';
+                extraChargesSection.style.display = 'none';
             } else {
                 // Currently unpaid, asking to mark as paid
                 icon.textContent = '💰';
@@ -1021,11 +1065,13 @@
                 btn.textContent = '✓ Ya pagó';
                 btn.className = 'modal-btn confirm-paid';
                 paymentMethods.style.display = 'block';
+                extraChargesSection.style.display = 'block';
             }
 
             tenant.textContent = name;
             property.textContent = `🏢 ${propertyName} · ${unitName}`;
-            amount.textContent = '$' + rent.toLocaleString();
+            const totalWithVisits = rent + extra;
+            amount.textContent = '$' + totalWithVisits.toLocaleString();
 
             pendingAction = { tenantId, name, rent, newPaidStatus: !currentlyPaid, property: propertyName, unit: unitName };
             modal.classList.add('show');
@@ -1040,25 +1086,34 @@
             if (!pendingAction) return;
 
             const { tenantId, name, rent, newPaidStatus } = pendingAction;
+            const visitExtra = currentVisitCount * VISIT_CHARGE;
+            const totalPaid = rent + visitExtra;
 
             // Update SOT
             updateSOT(tenantId, newPaidStatus);
 
-            // Update UI
-            updateTenantUI(tenantId, newPaidStatus, name, rent);
+            // Update UI with visit info
+            updateTenantUI(tenantId, newPaidStatus, name, rent, currentVisitCount);
 
-            // Save to server (include payment method)
+            // Save to server (include payment method and visits)
             fetch('/api/payment', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
                     tenant_id: tenantId, 
                     paid: newPaidStatus,
-                    payment_method: newPaidStatus ? selectedPaymentMethod : ''
+                    payment_method: newPaidStatus ? selectedPaymentMethod : '',
+                    visits: newPaidStatus ? currentVisitCount : 0,
+                    visit_charge: visitExtra,
+                    year: currentYear,
+                    month: currentMonth
                 })
             }).then(res => {
                 if (res.ok) {
-                    showToast(newPaidStatus ? `¡${name} pagó!` : `${name} pendiente`, newPaidStatus ? 'success' : 'pending');
+                    const msg = newPaidStatus 
+                        ? (visitExtra > 0 ? `¡${name} pagó $${totalPaid.toLocaleString()}!` : `¡${name} pagó!`)
+                        : `${name} pendiente`;
+                    showToast(msg, newPaidStatus ? 'success' : 'pending');
                     updateSyncIndicator();
                 }
             }).catch(err => {
@@ -1070,7 +1125,7 @@
             updateSummary();
         }
 
-        function updateTenantUI(tenantId, isPaid, name, rent) {
+        function updateTenantUI(tenantId, isPaid, name, rent, visits = 0) {
             // Find the tenant item
             const item = document.querySelector(`[data-tenant-id="${tenantId}"]`);
             if (!item) return;
@@ -1090,14 +1145,17 @@
             newItem.className = 'tenant-item ' + (isPaid ? 'paid' : 'pending');
             newItem.dataset.paid = isPaid.toString();
             newItem.dataset.paymentMethod = isPaid ? selectedPaymentMethod : '';
+            newItem.dataset.visits = isPaid ? visits.toString() : '0';
             newItem.onclick = function() {
                 showConfirmModal(tenantId, name, rent, isPaid);
             };
             
-            // Update payment method display for paid items
+            // Update payment method and visits display for paid items
             const infoDiv = newItem.querySelector('.tenant-info');
             const existingMethodDiv = infoDiv.querySelector('[style*="color: var(--green)"]');
             if (existingMethodDiv) existingMethodDiv.remove();
+            const existingVisitsDiv = infoDiv.querySelector('[style*="color: #92400E"]');
+            if (existingVisitsDiv) existingVisitsDiv.remove();
             
             if (isPaid && selectedPaymentMethod) {
                 const methodDiv = document.createElement('div');
@@ -1106,14 +1164,23 @@
                 infoDiv.appendChild(methodDiv);
             }
 
+            if (isPaid && visits > 0) {
+                const visitsDiv = document.createElement('div');
+                visitsDiv.style.cssText = 'font-size: 0.85rem; color: #92400E; margin-top: 4px; font-weight: 600;';
+                visitsDiv.textContent = `🏠 ${visits} visita${visits > 1 ? 's' : ''} (+$${(visits * VISIT_CHARGE).toLocaleString()})`;
+                infoDiv.appendChild(visitsDiv);
+            }
+
             // Update toggle button
             const toggleBtn = newItem.querySelector('.toggle-btn');
             toggleBtn.className = 'toggle-btn ' + (isPaid ? 'paid' : 'pending');
             toggleBtn.textContent = isPaid ? '✓' : '✗';
 
-            // Update amount styling
+            // Update amount styling and value (include visits)
             const amountEl = newItem.querySelector('.tenant-amount');
             amountEl.className = 'tenant-amount ' + (isPaid ? 'paid' : 'pending');
+            const totalAmount = rent + (isPaid ? visits * VISIT_CHARGE : 0);
+            amountEl.textContent = '$' + totalAmount.toLocaleString();
 
             // Insert the item
             if (propertySubtotal) {

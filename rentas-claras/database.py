@@ -303,6 +303,8 @@ def init_database():
             payment_method TEXT,
             amount_paid REAL,
             notes TEXT,
+            visits INTEGER DEFAULT 0,
+            visit_charge REAL DEFAULT 0,
             created_at TEXT DEFAULT CURRENT_TIMESTAMP,
             updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (tenant_id) REFERENCES tenants(id),
@@ -310,6 +312,16 @@ def init_database():
         )
     """
     )
+
+    # Add visits columns if they don't exist (for existing databases)
+    try:
+        cursor.execute("ALTER TABLE monthly_records ADD COLUMN visits INTEGER DEFAULT 0")
+    except:
+        pass
+    try:
+        cursor.execute("ALTER TABLE monthly_records ADD COLUMN visit_charge REAL DEFAULT 0")
+    except:
+        pass
 
     conn.commit()
     conn.close()
@@ -924,6 +936,8 @@ def update_payment_status(
     payment_method: Optional[str] = None,
     amount_paid: Optional[float] = None,
     notes: Optional[str] = None,
+    visits: int = 0,
+    visit_charge: float = 0.0,
 ):
     """Update or create a monthly payment record."""
     conn = get_db_connection()
@@ -931,13 +945,15 @@ def update_payment_status(
 
     cursor.execute(
         """
-        INSERT INTO monthly_records (tenant_id, year, month, paid, payment_method, amount_paid, notes, payment_date)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO monthly_records (tenant_id, year, month, paid, payment_method, amount_paid, notes, payment_date, visits, visit_charge)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(tenant_id, year, month) DO UPDATE SET
             paid = excluded.paid,
             payment_method = COALESCE(excluded.payment_method, payment_method),
             amount_paid = COALESCE(excluded.amount_paid, amount_paid),
             notes = COALESCE(excluded.notes, notes),
+            visits = excluded.visits,
+            visit_charge = excluded.visit_charge,
             payment_date = CASE WHEN excluded.paid = 1 THEN COALESCE(payment_date, datetime('now')) ELSE NULL END,
             updated_at = datetime('now')
     """,
@@ -950,6 +966,8 @@ def update_payment_status(
             amount_paid,
             notes,
             datetime.now().isoformat() if paid else None,
+            visits if paid else 0,
+            visit_charge if paid else 0.0,
         ),
     )
 
@@ -968,7 +986,9 @@ def get_monthly_status(year: int, month: int) -> Dict[str, Dict]:
         SELECT t.id, t.name, t.phone, t.property_name, t.unit, t.rent,
                t.emergency_contact, t.emergency_phone, t.contract_start, t.contract_end,
                COALESCE(m.paid, 0) as paid,
-               m.payment_method, m.payment_date, m.amount_paid, m.notes
+               m.payment_method, m.payment_date, m.amount_paid, m.notes,
+               COALESCE(m.visits, 0) as visits,
+               COALESCE(m.visit_charge, 0) as visit_charge
         FROM tenants t
         LEFT JOIN monthly_records m ON t.id = m.tenant_id AND m.year = ? AND m.month = ?
         WHERE t.active = 1

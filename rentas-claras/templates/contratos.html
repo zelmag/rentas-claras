@@ -896,10 +896,14 @@
 
         // Update replacement info
         function updateReplacement(tenantId, field, value) {
-            fetch('/api/replacement', {
+            // Build the request body with the dynamic field name
+            const requestBody = { tenant_id: tenantId };
+            requestBody[field] = value;
+            
+            fetch('/api/renewal', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ tenant_id: tenantId, field: field, value: value })
+                body: JSON.stringify(requestBody)
             }).then(res => {
                 if (res.ok) {
                     showToast('Guardado', 'success');
@@ -910,10 +914,18 @@
 
         // Update tracking checkboxes
         function updateTracking(tenantId, type, checked) {
-            fetch('/api/contract-tracking', {
+            // Build the request body based on tracking type
+            const requestBody = { tenant_id: tenantId };
+            if (type === 'delivered') {
+                requestBody.contract_delivered = checked;
+            } else if (type === 'picked_up') {
+                requestBody.contract_picked_up = checked;
+            }
+            
+            fetch('/api/renewal', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ tenant_id: tenantId, type: type, value: checked })
+                body: JSON.stringify(requestBody)
             }).then(res => {
                 if (res.ok) {
                     showToast('Guardado', 'success');

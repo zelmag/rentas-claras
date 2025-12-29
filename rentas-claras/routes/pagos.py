@@ -106,6 +106,8 @@ def index():
         status = monthly_status.get(tenant.id, {})
         tenant.paid = bool(status.get("paid", 0))
         tenant.payment_method = status.get("payment_method")
+        tenant.visits = status.get("visits", 0)
+        tenant.visit_charge = status.get("visit_charge", 0)
 
         msg_info = message_counts.get(tenant.id, {"sent": 0, "failed": 0})
         tenant.msg_count = msg_info["sent"]
@@ -248,15 +250,24 @@ def update_payment():
     tenant_id = data.get("tenant_id")
     paid = data.get("paid", False)
     payment_method = data.get("payment_method")
+    visits = data.get("visits", 0)
+    visit_charge = data.get("visit_charge", 0.0)
 
     today = datetime.now()
+    
+    # BUG FIX: Use year/month from request if provided, otherwise default to current
+    # This ensures payments for historical/future months are saved correctly
+    year = data.get("year", today.year)
+    month = data.get("month", today.month)
 
     update_payment_status(
         tenant_id=tenant_id,
-        year=today.year,
-        month=today.month,
+        year=year,
+        month=month,
         paid=paid,
         payment_method=payment_method,
+        visits=visits,
+        visit_charge=visit_charge,
     )
 
     # Sync to Excel if payment is marked as paid
@@ -281,21 +292,27 @@ def update_payment():
                 ]
                 month_name = spanish_months_cap[today.month - 1]
 
+                # Calculate total amount including visit charges
+                total_amount = tenant.rent + visit_charge
+                concept = f"Renta {month_name} {today.year}"
+                if visits > 0:
+                    concept += f" + {visits} visita{'s' if visits > 1 else ''}"
+
                 payment = PaymentRow(
                     payment_id=generate_payment_id(),
                     tenant_id=tenant_id,
                     payment_date=today.strftime("%Y-%m-%d"),
-                    amount=tenant.rent,
+                    amount=total_amount,
                     method=payment_method or "Web UI",
                     withdrawal_code=None,
                     bank=tenant.bank,
-                    concept=f"Renta {month_name} {today.year}",
+                    concept=concept,
                     folio=f"RC-{today.strftime('%Y%m%d')}-{tenant_id}",
                     confirmed=True,
-                    notes="Marcado pagado desde la vista de tarjetas",
+                    notes=f"Marcado pagado desde la vista de tarjetas{' (incluye ' + str(visits) + ' visitas)' if visits > 0 else ''}",
                 )
                 client.add_payment(payment)
-                print(f"✅ Synced payment for {tenant.name} to Excel")
+                print(f"✅ Synced payment for {tenant.name} to Excel (${total_amount})")
         except ImportError as e:
             print(f"⚠️ Excel sync skipped - missing dependencies: {e}")
         except Exception as e:

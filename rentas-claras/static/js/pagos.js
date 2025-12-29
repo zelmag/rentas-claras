@@ -464,7 +464,7 @@
                 fetch('/api/payment', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ tenant_id: tenantId, paid: newPaidStatus })
+                    body: JSON.stringify({ tenant_id: tenantId, paid: newPaidStatus, year: currentYear, month: currentMonth })
                 }).then(response => {
                     toggleInProgress.delete(tenantId);
                     if (response.ok) {
@@ -489,7 +489,7 @@
             fetch('/api/payment', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ tenant_id: tenantId, paid: isPaid })
+                body: JSON.stringify({ tenant_id: tenantId, paid: isPaid, year: currentYear, month: currentMonth })
             }).then(response => {
                 if (response.ok) {
                     updateCounts();
@@ -1420,7 +1420,9 @@
                 body: JSON.stringify({
                     tenant_id: tenantId,
                     paid: isPaid,
-                    payment_method: paymentSelect?.value || null
+                    payment_method: paymentSelect?.value || null,
+                    year: currentYear,
+                    month: currentMonth
                 }),
                 signal: controller.signal
             }).then(response => {
@@ -1438,7 +1440,7 @@
                 const queue = JSON.parse(localStorage.getItem('pendingPayments') || '[]');
                 // BUGFIX: Deduplicate queue - only keep latest entry per tenant
                 const filteredQueue = queue.filter(item => item.tenantId !== tenantId);
-                filteredQueue.push({ tenantId: tenantId, paid: isPaid, timestamp: Date.now() });
+                filteredQueue.push({ tenantId: tenantId, paid: isPaid, year: currentYear, month: currentMonth, timestamp: Date.now() });
                 localStorage.setItem('pendingPayments', JSON.stringify(filteredQueue));
                 showPersistentConfirmation('Guardado localmente (sin conexión)', 'warning');
             });
@@ -1630,7 +1632,9 @@
                 body: JSON.stringify({
                     tenant_id: tenantId,
                     paid: isPaid,
-                    payment_method: paymentSelect?.value || null
+                    payment_method: paymentSelect?.value || null,
+                    year: currentYear,
+                    month: currentMonth
                 }),
                 signal: controller.signal
             }).then(response => {
@@ -1650,7 +1654,7 @@
                 const queue = JSON.parse(localStorage.getItem('pendingPayments') || '[]');
                 // BUGFIX: Deduplicate queue - only keep latest entry per tenant
                 const filteredQueue = queue.filter(item => item.tenantId !== tenantId);
-                filteredQueue.push({ tenantId: tenantId, paid: isPaid, timestamp: Date.now() });
+                filteredQueue.push({ tenantId: tenantId, paid: isPaid, year: currentYear, month: currentMonth, timestamp: Date.now() });
                 localStorage.setItem('pendingPayments', JSON.stringify(filteredQueue));
                 showPersistentConfirmation('Guardado localmente (sin conexión)', 'warning');
             });
@@ -1751,7 +1755,9 @@
                 body: JSON.stringify({
                     tenant_id: tenantId,
                     paid: isPaid,
-                    payment_method: paymentSelect.value || null
+                    payment_method: paymentSelect.value || null,
+                    year: currentYear,
+                    month: currentMonth
                 }),
                 signal: controller.signal
             }).then(response => {
@@ -1769,7 +1775,7 @@
                 // BUGFIX: Deduplicate queue - only keep latest entry per tenant
                 const queue = JSON.parse(localStorage.getItem('pendingPayments') || '[]');
                 const filteredQueue = queue.filter(item => item.tenantId !== tenantId);
-                filteredQueue.push({ tenantId: tenantId, paid: isPaid, timestamp: Date.now() });
+                filteredQueue.push({ tenantId: tenantId, paid: isPaid, year: currentYear, month: currentMonth, timestamp: Date.now() });
                 localStorage.setItem('pendingPayments', JSON.stringify(filteredQueue));
                 showPersistentConfirmation('Guardado localmente (sin conexión)', 'warning');
             });
@@ -2272,7 +2278,9 @@
                     body: JSON.stringify({
                         tenant_id: tenantId,
                         paid: true,
-                        payment_method: method
+                        payment_method: method,
+                        year: currentYear,
+                        month: currentMonth
                     })
                 }).then(response => {
                     if (response.ok) {
@@ -2310,7 +2318,7 @@
                 fetch('/api/payment', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ tenant_id: tenantId, paid: false })
+                    body: JSON.stringify({ tenant_id: tenantId, paid: false, year: currentYear, month: currentMonth })
                 });
             });
 
@@ -2348,7 +2356,7 @@
                 fetch('/api/payment', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ tenant_id: tenantId, paid: true })
+                    body: JSON.stringify({ tenant_id: tenantId, paid: true, year: currentYear, month: currentMonth })
                 });
             });
 
@@ -2615,7 +2623,9 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         tenant_id: item.tenantId,
-                        paid: item.paid
+                        paid: item.paid,
+                        year: item.year || currentYear,
+                        month: item.month || currentMonth
                     })
                 }).then(response => {
                     if (response.ok) {
