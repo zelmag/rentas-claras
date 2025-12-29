@@ -7794,11 +7794,11 @@ CONTRACTS_TEMPLATE = """
         <div class="summary">
             <div class="summary-card">
                 <div class="summary-value red" id="notRenewingCount">{{ not_renewing_count }}</div>
-                <div class="summary-label">No renovarán</div>
+                <div class="summary-label">No renovarán (próx. 30 días)</div>
             </div>
             <div class="summary-card">
                 <div class="summary-value yellow" id="pendingCount">{{ pending_count }}</div>
-                <div class="summary-label">Pendientes</div>
+                <div class="summary-label">Pendientes (próx. 30 días)</div>
             </div>
         </div>
         
@@ -8596,10 +8596,17 @@ def contracts():
     all_tenants = get_all_tenants()
     tenants_by_property = {}
 
-    # Count by renewal status
+    # Calculate today's date for comparisons
+    today = datetime.now()
+    
+    # Count by renewal status (limited to next month for actionable items)
     renewing_count = 0
-    not_renewing_count = 0
-    pending_count = 0
+    not_renewing_count = 0  # Only contracts expiring within next month
+    pending_count = 0  # Only contracts expiring within next month
+    
+    # Calculate the date range for "next month" (contracts expiring in next 30 days)
+    from datetime import timedelta
+    next_month_cutoff = today + timedelta(days=30)
 
     # Spanish month names
     spanish_months = [
@@ -8643,7 +8650,6 @@ def contracts():
                 return None
 
     # Add days_until_expiry for urgency highlighting
-    today = datetime.now()
     for tenant in all_tenants:
         if tenant.contract_end:
             parsed = parse_date(tenant.contract_end)
@@ -8675,13 +8681,21 @@ def contracts():
             tenants_by_property[tenant.property_name] = []
         tenants_by_property[tenant.property_name].append(tenant)
 
-        # Count statuses
+        # Count statuses only for contracts expiring within next 30 days
+        contract_expires_soon = False
+        if tenant.contract_end:
+            parsed_end = parse_date(tenant.contract_end)
+            if parsed_end and parsed_end <= next_month_cutoff:
+                contract_expires_soon = True
+        
         if tenant.renewal_status == "renovará":
             renewing_count += 1
         elif tenant.renewal_status == "no_renovará":
-            not_renewing_count += 1
-        else:
-            pending_count += 1
+            if contract_expires_soon:
+                not_renewing_count += 1
+        else:  # pendiente
+            if contract_expires_soon:
+                pending_count += 1
 
         # Add to upcoming renewals grouped by month
         if tenant.contract_end:

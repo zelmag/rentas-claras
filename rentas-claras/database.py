@@ -57,9 +57,23 @@ class Tenant:
 
 
 def get_db_connection():
-    """Get a connection to the SQLite database."""
-    conn = sqlite3.connect(DB_PATH)
+    """Get a connection to the SQLite database with ROCK SOLID durability."""
+    conn = sqlite3.connect(DB_PATH, timeout=30)
     conn.row_factory = sqlite3.Row
+    
+    # CRITICAL: These settings ensure data is written to disk
+    cursor = conn.cursor()
+    
+    # Use WAL mode for better concurrency + crash safety
+    cursor.execute("PRAGMA journal_mode=WAL")
+    
+    # FULL sync means every transaction waits for disk write confirmation
+    # This is slower but GUARANTEES data isn't lost
+    cursor.execute("PRAGMA synchronous=FULL")
+    
+    # Checkpoint WAL file after every 1000 pages
+    cursor.execute("PRAGMA wal_autocheckpoint=1000")
+    
     return conn
 
 
