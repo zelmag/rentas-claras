@@ -4,23 +4,11 @@
 
 {% block styles %}
 <style>
-    :root {
-        --green: #0A7A0A;
-        --green-light: #dcfce7;
-        --red: #CC0000;
-        --red-light: #FEE2E2;
-        --yellow: #F59E0B;
-        --yellow-light: #FEF3C7;
-        --blue: #1e3a5f;
-        --gray: #666;
-        --gray-light: #F5F5F5;
-    }
-
     * { box-sizing: border-box; }
 
     body {
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        background: #F0F0F0;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: var(--paper);
         margin: 0;
         padding: 0;
         padding-bottom: 100px;
@@ -96,41 +84,42 @@
     .greeting {
         font-size: 1.6rem;
         font-weight: 800;
-        color: var(--blue);
+        color: var(--green);
         margin: 0 0 4px 0;
     }
 
     .date-display {
-        font-size: 1.1rem;
+        font-size: var(--text-sm);
         color: var(--gray);
-        text-transform: capitalize;
     }
 
     /* Main Stat Card */
     .main-stat-card {
-        background: linear-gradient(135deg, var(--green) 0%, #086608 100%);
-        border-radius: 20px;
+        background: linear-gradient(135deg, var(--green) 0%, var(--green-dark) 100%);
+        border-radius: var(--radius-lg);
         padding: 32px 24px;
         margin-bottom: 20px;
-        box-shadow: 0 8px 24px rgba(10, 122, 10, 0.3);
+        box-shadow:
+            0 4px 6px rgba(45, 106, 79, 0.15),
+            0 10px 20px rgba(45, 106, 79, 0.2);
         text-align: center;
         color: white;
     }
 
     .main-stat-label {
-        font-size: 1.1rem;
+        font-size: var(--text-base);
         opacity: 0.9;
         margin-bottom: 8px;
     }
 
     .main-stat-value {
-        font-size: 3rem;
+        font-size: var(--text-3xl);
         font-weight: 800;
         margin-bottom: 8px;
     }
 
     .main-stat-sublabel {
-        font-size: 1rem;
+        font-size: var(--text-sm);
         opacity: 0.8;
     }
 
@@ -151,16 +140,17 @@
 
     /* Alert Cards */
     .alert-card {
-        background: white;
-        border-radius: 16px;
+        background: var(--white);
+        border-radius: var(--radius-md);
         padding: 20px;
-        margin-bottom: 16px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        margin-bottom: 12px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        border: 1px solid var(--border);
         display: flex;
         align-items: center;
         gap: 16px;
         cursor: pointer;
-        transition: transform 0.2s;
+        transition: transform 0.15s, box-shadow 0.15s;
     }
 
     .alert-card:active {
@@ -168,22 +158,22 @@
     }
 
     .alert-card.urgent {
-        border-left: 5px solid var(--red);
+        border-left: 4px solid var(--red);
         background: var(--red-light);
     }
 
     .alert-card.warning {
-        border-left: 5px solid var(--yellow);
+        border-left: 4px solid var(--yellow);
         background: var(--yellow-light);
     }
 
     .alert-card.success {
-        border-left: 5px solid var(--green);
+        border-left: 4px solid var(--green);
         background: var(--green-light);
     }
 
     .alert-icon {
-        font-size: 2rem;
+        font-size: 1.8rem;
         flex-shrink: 0;
     }
 
@@ -192,48 +182,93 @@
     }
 
     .alert-title {
-        font-size: 1.1rem;
+        font-size: var(--text-base);
         font-weight: 700;
-        color: #333;
-        margin-bottom: 4px;
+        color: #1A202C;
+        margin-bottom: 2px;
     }
 
     .alert-description {
-        font-size: 0.95rem;
+        font-size: var(--text-sm);
         color: var(--gray);
     }
 
     .alert-value {
+        font-size: var(--text-xl);
+        font-weight: 800;
+        color: #1A202C;
+    }
+
+    /* Stats Row - 2+1 layout on small screens */
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+
+    .stat-card {
+        background: var(--white);
+        border-radius: var(--radius-md);
+        padding: 16px 12px;
+        text-align: center;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        border: 1px solid var(--border);
+    }
+
+    /* Third stat takes full width on mobile */
+    .stat-card:last-child {
+        grid-column: span 2;
+    }
+
+    @media (min-width: 480px) {
+        .stats-row {
+            grid-template-columns: repeat(3, 1fr);
+        }
+        .stat-card:last-child {
+            grid-column: span 1;
+        }
+    }
+
+    .stat-value {
+        font-size: var(--text-2xl);
+        font-weight: 800;
+        color: var(--green);
+    }
+
+    .stat-label {
+        font-size: var(--text-xs);
+        color: var(--gray);
+        margin-top: 4px;
+    }
+
+    .stat-icon {
         font-size: 1.5rem;
-        font-weight: 800;
-        color: #333;
+        margin-bottom: 4px;
     }
 
-    /* Quick Actions */
-    .section-title {
-        font-size: 1.2rem;
-        font-weight: 800;
-        color: var(--blue);
-        margin: 24px 0 12px 0;
-    }
+    /* Loading Skeleton */
 
+    /* Quick Actions - no label */
     .quick-actions-grid {
         display: grid;
         grid-template-columns: 1fr;
         gap: 12px;
+        margin-top: 20px;
     }
 
     .quick-action {
-        background: white;
-        border-radius: 16px;
+        background: var(--white);
+        border-radius: var(--radius-md);
         padding: 20px 16px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        border: 1px solid var(--border);
         display: flex;
         align-items: center;
         gap: 16px;
         text-decoration: none;
         color: inherit;
-        transition: transform 0.2s, box-shadow 0.2s;
+        transition: transform 0.15s, box-shadow 0.15s;
     }
 
     .quick-action:active {
@@ -241,13 +276,13 @@
     }
 
     .quick-action-icon {
-        width: 56px;
-        height: 56px;
-        border-radius: 14px;
+        width: 52px;
+        height: 52px;
+        border-radius: var(--radius-md);
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.8rem;
+        font-size: 1.6rem;
         flex-shrink: 0;
     }
 
@@ -268,48 +303,70 @@
     }
 
     .quick-action-title {
-        font-size: 1.15rem;
+        font-size: var(--text-base);
         font-weight: 700;
-        color: #333;
-        margin-bottom: 4px;
+        color: #1A202C;
+        margin-bottom: 2px;
     }
 
     .quick-action-description {
-        font-size: 0.95rem;
+        font-size: var(--text-sm);
         color: var(--gray);
     }
 
+    /* Better chevron SVG */
     .quick-action-arrow {
-        font-size: 1.5rem;
-        color: #ccc;
+        color: #CBD5E0;
+        flex-shrink: 0;
     }
 
-    /* Stats Row */
-    .stats-row {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 12px;
-        margin-bottom: 20px;
+    .quick-action-arrow svg {
+        width: 20px;
+        height: 20px;
     }
 
-    .stat-card {
-        background: white;
-        border-radius: 12px;
-        padding: 16px 12px;
-        text-align: center;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    /* Loading Skeleton */
+    .skeleton {
+        background: linear-gradient(90deg, #E2E8F0 25%, #EDF2F7 50%, #E2E8F0 75%);
+        background-size: 200% 100%;
+        animation: shimmer 1.5s infinite;
+        border-radius: 8px;
     }
 
-    .stat-value {
-        font-size: 1.8rem;
-        font-weight: 800;
-        color: var(--blue);
+    @keyframes shimmer {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
     }
 
-    .stat-label {
-        font-size: 0.85rem;
-        color: var(--gray);
-        margin-top: 4px;
+    .skeleton-text {
+        height: 1em;
+        width: 60%;
+        margin: 4px auto;
+    }
+
+    .skeleton-large {
+        height: 2.5em;
+        width: 50%;
+        margin: 8px auto;
+    }
+
+    /* Count up animation */
+    .count-up {
+        opacity: 0;
+        transform: translateY(10px);
+        animation: countFadeIn 0.5s ease-out forwards;
+    }
+
+    @keyframes countFadeIn {
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Content sections - stacked vertically */
+    .content-section {
+        margin-bottom: 16px;
     }
 
     /* Offline banner */
@@ -318,12 +375,12 @@
         top: 0;
         left: 0;
         right: 0;
-        background: #333;
+        background: #1A202C;
         color: white;
         text-align: center;
         padding: 8px;
         font-weight: 600;
-        font-size: 0.9rem;
+        font-size: var(--text-sm);
         z-index: 1000;
         display: none;
     }
@@ -343,96 +400,117 @@
     <div class="container">
         <!-- Header with Greeting -->
         <div class="header">
-            <h1 class="greeting">{{ greeting }}, papi</h1>
+            <h1 class="greeting">{{ greeting }}, papis</h1>
             <div class="date-display">{{ today_formatted }}</div>
         </div>
 
-        <!-- Main Stat: Money Collected This Month -->
-        <div class="main-stat-card">
-            <div class="main-stat-label">Cobrado en {{ month_name }}</div>
-            <div class="main-stat-value">${{ "{:,.0f}".format(total_collected) }}</div>
-            <div class="main-stat-sublabel">de ${{ "{:,.0f}".format(total_expected) }} esperados</div>
-            <div class="main-stat-progress">
-                <div class="main-stat-progress-fill" style="width: {{ collection_percent }}%;"></div>
+        <!-- Content sections - stacked vertically -->
+        <!-- Section 1: Main Stats -->
+        <div class="content-section" id="section-stats">
+            <!-- Main Stat: Money Collected This Month -->
+            <div class="main-stat-card">
+                <div class="main-stat-label">Cobrado en {{ month_name }}</div>
+                <div class="main-stat-value count-up" data-target="{{ total_collected }}" style="animation-delay: 0.1s;">$<span id="collectedValue">0</span></div>
+                <div class="main-stat-sublabel">de ${{ "{:,.0f}".format(total_expected) }} esperados</div>
+                <div class="main-stat-progress">
+                    <div class="main-stat-progress-fill" id="progressBar" style="width: 0%;"></div>
+                </div>
             </div>
         </div>
 
-        <!-- Alert Cards -->
-        {% if pending_payments > 0 %}
-        <a href="/" class="alert-card {{ 'urgent' if pending_payments > 5 else 'warning' }}" style="text-decoration: none;">
-            <div class="alert-icon">💰</div>
-            <div class="alert-content">
-                <div class="alert-title">Pagos pendientes</div>
-                <div class="alert-description">${{ "{:,.0f}".format(pending_amount) }} por cobrar</div>
+        <!-- Section 2: Alerts & Stats -->
+        <div class="content-section" id="section-alerts">
+            <!-- Alert Cards -->
+            {% if pending_payments > 0 %}
+            <a href="/" class="alert-card {{ 'urgent' if pending_payments > 5 else 'warning' }}" style="text-decoration: none;">
+                <div class="alert-icon">💰</div>
+                <div class="alert-content">
+                    <div class="alert-title">Pagos pendientes</div>
+                    <div class="alert-description">${{ "{:,.0f}".format(pending_amount) }} por cobrar</div>
+                </div>
+                <div class="alert-value">{{ pending_payments }}</div>
+            </a>
+            {% else %}
+            <div class="alert-card success">
+                <div class="alert-icon">🎉</div>
+                <div class="alert-content">
+                    <div class="alert-title">¡Todos pagaron!</div>
+                    <div class="alert-description">Este mes está completo</div>
+                </div>
+                <div class="alert-value">✓</div>
             </div>
-            <div class="alert-value">{{ pending_payments }}</div>
-        </a>
-        {% else %}
-        <div class="alert-card success">
-            <div class="alert-icon">🎉</div>
-            <div class="alert-content">
-                <div class="alert-title">¡Todos pagaron!</div>
-                <div class="alert-description">Este mes está completo</div>
+            {% endif %}
+
+            {% if expiring_contracts > 0 %}
+            <a href="/contratos" class="alert-card warning" style="text-decoration: none;">
+                <div class="alert-icon">📄</div>
+                <div class="alert-content">
+                    <div class="alert-title">Contratos por vencer</div>
+                    <div class="alert-description">En los próximos 30 días</div>
+                </div>
+                <div class="alert-value">{{ expiring_contracts }}</div>
+            </a>
+            {% endif %}
+
+            <!-- Stats Row - 2+1 layout -->
+            <div class="stats-row">
+                <div class="stat-card">
+                    <div class="stat-icon">👥</div>
+                    <div class="stat-value count-up" data-target="{{ total_tenants }}" style="animation-delay: 0.2s;"><span id="tenantsValue">0</span></div>
+                    <div class="stat-label">Inquilinos</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🏠</div>
+                    <div class="stat-value count-up" data-target="{{ total_properties }}" style="animation-delay: 0.3s;"><span id="propertiesValue">0</span></div>
+                    <div class="stat-label">Propiedades</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📊</div>
+                    <div class="stat-value count-up" style="animation-delay: 0.4s;"><span id="percentValue">0</span>%</div>
+                    <div class="stat-label">Cobrado</div>
+                </div>
             </div>
-            <div class="alert-value">✓</div>
         </div>
-        {% endif %}
 
-        {% if expiring_contracts > 0 %}
-        <a href="/contratos" class="alert-card warning" style="text-decoration: none;">
-            <div class="alert-icon">📄</div>
-            <div class="alert-content">
-                <div class="alert-title">Contratos por vencer</div>
-                <div class="alert-description">En los próximos 30 días</div>
-            </div>
-            <div class="alert-value">{{ expiring_contracts }}</div>
-        </a>
-        {% endif %}
-
-        <!-- Stats Row -->
-        <div class="stats-row">
-            <div class="stat-card">
-                <div class="stat-value">{{ total_tenants }}</div>
-                <div class="stat-label">Inquilinos</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value">{{ total_properties }}</div>
-                <div class="stat-label">Propiedades</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value">{{ collection_percent }}%</div>
-                <div class="stat-label">Cobrado</div>
-            </div>
-        </div>
-
-        <!-- Quick Actions -->
-        <div class="section-title">Acciones rápidas</div>
+        <!-- Quick Actions - no section title, more action-oriented -->
         <div class="quick-actions-grid">
             <a href="/" class="quick-action">
                 <div class="quick-action-icon pagos">💵</div>
                 <div class="quick-action-content">
-                    <div class="quick-action-title">Registrar pagos</div>
-                    <div class="quick-action-description">{{ pending_payments }} pendiente{{ 's' if pending_payments != 1 else '' }}</div>
+                    <div class="quick-action-title">Cobrar ahora</div>
+                    <div class="quick-action-description">Registrar un pago</div>
                 </div>
-                <div class="quick-action-arrow">›</div>
+                <div class="quick-action-arrow">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </div>
             </a>
 
             <a href="/contratos" class="quick-action">
                 <div class="quick-action-icon contratos">📋</div>
                 <div class="quick-action-content">
                     <div class="quick-action-title">Ver contratos</div>
-                    <div class="quick-action-description">{{ expiring_contracts }} por vencer</div>
+                    <div class="quick-action-description">Revisar y renovar</div>
                 </div>
-                <div class="quick-action-arrow">›</div>
+                <div class="quick-action-arrow">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </div>
             </a>
 
             <a href="/inquilinos" class="quick-action">
                 <div class="quick-action-icon inquilinos">👥</div>
                 <div class="quick-action-content">
                     <div class="quick-action-title">Inquilinos</div>
-                    <div class="quick-action-description">{{ total_tenants }} activos</div>
+                    <div class="quick-action-description">Contactar o editar</div>
                 </div>
-                <div class="quick-action-arrow">›</div>
+                <div class="quick-action-arrow">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </div>
             </a>
         </div>
     </div>
@@ -460,6 +538,44 @@
                 if (navigator.vibrate) navigator.vibrate(30);
             });
         });
+
+        // Count up animation
+        function animateCount(element, target, suffix = '') {
+            const duration = 1000;
+            const start = 0;
+            const startTime = performance.now();
+
+            function update(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                // Easing function for smooth deceleration
+                const easeOut = 1 - Math.pow(1 - progress, 3);
+                const current = Math.round(start + (target - start) * easeOut);
+                element.textContent = current.toLocaleString() + suffix;
+
+                if (progress < 1) {
+                    requestAnimationFrame(update);
+                }
+            }
+
+            requestAnimationFrame(update);
+        }
+
+        // Start count animations when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                animateCount(document.getElementById('collectedValue'), {{ total_collected }});
+                animateCount(document.getElementById('tenantsValue'), {{ total_tenants }});
+                animateCount(document.getElementById('propertiesValue'), {{ total_properties }});
+                animateCount(document.getElementById('percentValue'), {{ collection_percent }});
+
+                // Animate progress bar
+                const progressBar = document.getElementById('progressBar');
+                progressBar.style.width = '{{ collection_percent }}%';
+            }, 300);
+        });
+
+        // Swipe section handling - REMOVED (no longer using swipe layout)
     </script>
 {% endblock %}
 

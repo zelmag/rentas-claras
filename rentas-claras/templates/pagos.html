@@ -8,20 +8,11 @@
 
 {% block styles %}
 <style>
-    :root {
-        --green: #0A7A0A;
-        --green-light: #dcfce7;
-        --red: #CC0000;
-        --red-light: #FEE2E2;
-        --gray: #666;
-        --gray-light: #F5F5F5;
-    }
-
     * { box-sizing: border-box; }
 
     body {
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        background: #F0F0F0;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: var(--paper);
         margin: 0;
         padding: 0;
         padding-bottom: 80px;
@@ -34,242 +25,242 @@
     }
 
     /* ========== RESPONSIVE DESIGN ========== */
-    
+
     /* Tablet - slightly wider */
     @media (min-width: 768px) {
         .container {
             max-width: 700px;
             padding: 24px;
         }
-        
+
         .app-title {
             font-size: 2rem;
         }
-        
+
         .month-name {
             font-size: 1.8rem;
         }
-        
+
         .month-btn {
             width: 56px;
             height: 56px;
         }
-        
+
         .summary-card {
             padding: 28px;
         }
-        
+
         .progress-percent {
             font-size: 2.2rem;
         }
-        
+
         .summary-value {
             font-size: 1.6rem;
         }
-        
+
         .tenant-item {
             padding: 20px 24px;
             min-height: 80px;
         }
-        
+
         .tenant-name {
             font-size: 1.3rem;
         }
-        
+
         .tenant-amount {
             font-size: 1.5rem;
         }
-        
+
         .toggle-btn {
             width: 80px;
             height: 80px;
             font-size: 2.2rem;
         }
-        
+
         .search-input {
             font-size: 1.2rem;
             padding: 18px 24px 18px 56px;
         }
     }
-    
+
     /* Desktop - much wider with larger elements */
     @media (min-width: 1024px) {
         body {
             padding-bottom: 0;
         }
-        
+
         .container {
             max-width: 900px;
             padding: 32px;
         }
-        
+
         .app-title {
             font-size: 2.5rem;
         }
-        
+
         .month-name {
             font-size: 2rem;
             min-width: 200px;
         }
-        
+
         .month-btn {
             width: 64px;
             height: 64px;
         }
-        
+
         .summary-card {
             padding: 32px;
         }
-        
+
         .progress-percent {
             font-size: 2.5rem;
         }
-        
+
         .progress-bar {
             height: 16px;
         }
-        
+
         .summary-row {
             padding: 16px 0;
         }
-        
+
         .summary-label {
             font-size: 1.2rem;
         }
-        
+
         .summary-value {
             font-size: 1.8rem;
         }
-        
+
         .section-header {
             padding: 20px 28px;
         }
-        
+
         .section-title {
             font-size: 1.3rem;
         }
-        
+
         .section-count {
             font-size: 1.8rem;
         }
-        
+
         .property-section-header {
             padding: 18px 28px;
             font-size: 1.3rem;
         }
-        
+
         .property-section-name {
             font-size: 1.4rem;
         }
-        
+
         .property-section-amount {
             font-size: 1.4rem;
         }
-        
+
         .tenant-item {
             padding: 24px 28px;
             min-height: 90px;
             gap: 20px;
         }
-        
+
         .tenant-name {
             font-size: 1.4rem;
         }
-        
+
         .tenant-property {
             font-size: 1.3rem;
             padding: 8px 16px;
         }
-        
+
         .tenant-amount {
             font-size: 1.7rem;
             min-width: 120px;
         }
-        
+
         .toggle-btn {
             width: 88px;
             height: 88px;
             font-size: 2.5rem;
             border-width: 4px;
         }
-        
+
         .search-box {
             padding: 20px;
         }
-        
+
         .search-label {
             font-size: 1.2rem;
         }
-        
+
         .search-input {
             font-size: 1.3rem;
             padding: 20px 28px 20px 60px;
             border-width: 4px;
         }
-        
+
         .search-icon {
             font-size: 1.6rem;
             left: 20px;
         }
-        
+
         .action-buttons {
             gap: 16px;
         }
-        
+
         .action-btn {
             padding: 18px;
             font-size: 1.2rem;
             min-height: 64px;
         }
-        
-        
+
+
         /* Modal - larger on desktop */
         .modal-content {
             max-width: 480px;
             padding: 32px;
         }
-        
+
         .modal-icon {
             font-size: 4rem;
         }
-        
+
         .modal-title {
             font-size: 1.6rem;
         }
-        
+
         .modal-tenant {
             font-size: 1.3rem;
             padding: 16px;
         }
-        
+
         .modal-amount {
             font-size: 2rem;
         }
-        
+
         .modal-btn {
             padding: 20px;
             font-size: 1.3rem;
             min-height: 64px;
         }
-        
+
         .modal-payment-btn {
             padding: 14px 20px;
             font-size: 1.1rem;
         }
-        
+
         /* Toast - larger on desktop */
         .toast {
             padding: 20px 40px;
             font-size: 1.3rem;
             border-radius: 16px;
         }
-        
+
         .sync-indicator {
             font-size: 1.1rem;
             padding: 8px 16px;
         }
     }
-    
+
     /* Large Desktop - even wider */
     @media (min-width: 1400px) {
         .container {
@@ -310,6 +301,12 @@
         justify-content: center;
         cursor: pointer;
         text-decoration: none;
+        transition: transform 0.15s, background 0.15s;
+    }
+
+    .month-btn:active {
+        transform: scale(0.9);
+        background: #444;
     }
 
     .month-btn.disabled {
@@ -368,7 +365,7 @@
         height: 100%;
         background: var(--green);
         border-radius: 6px;
-        transition: width 0.3s;
+        transition: width 0.5s ease-out;
     }
 
     .summary-row {
@@ -466,7 +463,7 @@
 
     .section-arrow {
         font-size: 1.2rem;
-        transition: transform 0.3s;
+        transition: transform 0.3s ease-out;
     }
 
     .section-arrow.collapsed {
@@ -478,10 +475,66 @@
         background: white;
         border-radius: 0 0 16px 16px;
         overflow: hidden;
+        transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
     }
 
     .tenant-list.collapsed {
         display: none;
+    }
+
+    /* Quick action buttons for contacting tenants */
+    .tenant-quick-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 8px;
+    }
+
+    .quick-action-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 8px 14px;
+        border-radius: 20px;
+        border: 2px solid;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.15s, background 0.15s;
+        text-decoration: none;
+    }
+
+    .quick-action-btn:active {
+        transform: scale(0.95);
+    }
+
+    .quick-action-btn.whatsapp {
+        border-color: #25D366;
+        color: #25D366;
+        background: white;
+    }
+
+    .quick-action-btn.whatsapp:hover {
+        background: #25D366;
+        color: white;
+    }
+
+    .quick-action-btn.call {
+        border-color: #007AFF;
+        color: #007AFF;
+        background: white;
+    }
+
+    .quick-action-btn.call:hover {
+        background: #007AFF;
+        color: white;
+    }
+
+    @media (min-width: 768px) {
+        .quick-action-btn {
+            padding: 10px 18px;
+            font-size: 1rem;
+        }
     }
 
     /* Tenant Item - BIG tap targets */
@@ -614,7 +667,18 @@
     }
 
     .toggle-btn:active {
-        transform: scale(0.95);
+        transform: scale(0.9);
+    }
+
+    /* Toggle button animation when status changes */
+    @keyframes togglePop {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.15); }
+        100% { transform: scale(1); }
+    }
+
+    .toggle-btn.animate {
+        animation: togglePop 0.3s ease-out;
     }
 
     /* Property Section Header - CLEAR for 60yr old */
@@ -769,148 +833,148 @@
             display: none;
         }
     }
-    
+
     /* Small screens (iPhone SE and smaller) */
     @media (max-width: 375px) {
         .modal-overlay {
             padding: 8px;
         }
-        
+
         .modal-content {
             padding: 16px;
             border-radius: 16px;
             max-width: 100%;
             max-height: calc(100vh - 16px);
         }
-        
+
         .modal-icon {
             font-size: 2.5rem;
             margin-bottom: 8px;
         }
-        
+
         .modal-title {
             font-size: 1.15rem;
             margin-bottom: 6px;
         }
-        
+
         .modal-tenant {
             font-size: 1rem;
             padding: 10px;
             margin: 12px 0;
         }
-        
+
         .modal-property {
             font-size: 0.9rem;
             margin-bottom: 8px;
         }
-        
+
         .modal-amount {
             font-size: 1.3rem;
         }
-        
+
         .modal-payment-methods {
             padding: 12px;
             margin: 12px 0;
             gap: 8px;
         }
-        
+
         .modal-payment-methods-label {
             font-size: 0.9rem;
             margin-bottom: 4px;
         }
-        
+
         .modal-payment-btn {
             padding: 12px 16px;
             font-size: 1rem;
             min-height: 48px;
             border-width: 2px;
         }
-        
+
         .optional-extras {
             margin-top: 12px;
             padding-top: 12px;
         }
-        
+
         .optional-extras-toggle {
             padding: 12px;
             font-size: 0.9rem;
         }
-        
+
         #extraChargesSection,
         #advancePaymentSection {
             padding: 12px !important;
         }
-        
+
         #extraChargesSection .visit-btn,
         #advancePaymentSection button[onclick^="changeAdvanceMonths"] {
             width: 48px !important;
             height: 48px !important;
             font-size: 1.5rem !important;
         }
-        
+
         #visitCount,
         #advanceMonths {
             font-size: 2rem !important;
         }
-        
+
         .modal-buttons {
             margin-top: 16px;
             gap: 10px;
         }
-        
+
         .modal-btn {
             padding: 14px;
             font-size: 1rem;
             min-height: 50px;
         }
     }
-    
+
     /* Extra small screens (very old iPhone SE 1st gen - 320px) */
     @media (max-width: 320px) {
         .modal-overlay {
             padding: 4px;
         }
-        
+
         .modal-content {
             padding: 12px;
             border-radius: 12px;
         }
-        
+
         .modal-icon {
             font-size: 2rem;
             margin-bottom: 6px;
         }
-        
+
         .modal-title {
             font-size: 1.1rem;
         }
-        
+
         .modal-tenant {
             font-size: 0.95rem;
             padding: 8px;
             margin: 10px 0;
         }
-        
+
         .modal-amount {
             font-size: 1.2rem;
         }
-        
+
         .modal-payment-methods {
             padding: 10px;
             margin: 10px 0;
             gap: 6px;
         }
-        
+
         .modal-payment-btn {
             padding: 10px 12px;
             font-size: 0.95rem;
             min-height: 44px;
         }
-        
+
         .modal-buttons {
             gap: 8px;
         }
-        
+
         .modal-btn {
             padding: 12px;
             font-size: 0.95rem;
@@ -1323,7 +1387,7 @@
 
 {% block body %}
     <!-- Config for JS -->
-    <div id="config" 
+    <div id="config"
          data-year="{{ year }}"
          data-month="{{ month }}"
          data-month-name="{{ month_name }}"
@@ -1418,17 +1482,33 @@
                     </div>
                 </div>
                 {% for tenant in pending_tenants %}
-                <div class="tenant-item pending" 
+                <div class="tenant-item pending"
                      data-tenant-id="{{ tenant.id }}"
                      data-name="{{ tenant.name }}"
                      data-rent="{{ tenant.rent }}"
                      data-property="{{ property_name }}"
                      data-unit="{{ tenant.unit }}"
+                     data-phone="{{ tenant.phone or '' }}"
                      data-payment-method="{{ tenant.payment_method or '' }}"
                      data-paid="false">
                     <div class="tenant-info" onclick="showConfirmModal('{{ tenant.id }}', '{{ tenant.name }}', {{ tenant.rent }}, false)">
                         <div class="tenant-name">{{ tenant.name }}</div>
                         <div class="tenant-property">{{ tenant.unit }}</div>
+                        {% if tenant.phone %}
+                        <div class="tenant-quick-actions">
+                            <a href="https://wa.me/{{ tenant.phone|replace(' ', '')|replace('-', '') }}?text={{ 'Hola ' ~ tenant.name ~ ', te recuerdo que tu renta de ' ~ month_name ~ ' ($' ~ '{:,.0f}'.format(tenant.rent) ~ ') está pendiente. ¡Gracias!'|urlencode }}" 
+                               target="_blank" 
+                               class="quick-action-btn whatsapp" 
+                               onclick="event.stopPropagation();">
+                                📱 WhatsApp
+                            </a>
+                            <a href="tel:{{ tenant.phone }}" 
+                               class="quick-action-btn call" 
+                               onclick="event.stopPropagation();">
+                                📞 Llamar
+                            </a>
+                        </div>
+                        {% endif %}
                     </div>
                     <div class="tenant-amount pending" onclick="showConfirmModal('{{ tenant.id }}', '{{ tenant.name }}', {{ tenant.rent }}, false)">${{ "{:,.0f}".format(tenant.rent) }}</div>
                     <div class="toggle-btn pending" onclick="showConfirmModal('{{ tenant.id }}', '{{ tenant.name }}', {{ tenant.rent }}, false)">✗</div>
@@ -1436,7 +1516,7 @@
                 {% endfor %}
                 {% endif %}
             {% endfor %}
-            
+
             {% if unpaid_count == 0 %}
             <div style="padding: 32px; text-align: center; color: var(--gray);">
                 <div style="font-size: 1.3rem; font-weight: 700; color: var(--green);">Todos pagaron</div>
@@ -1467,7 +1547,7 @@
                     <div class="property-section-amount" data-property-paid="{{ property_name }}">${{ "{:,.0f}".format(paid_tenants|sum(attribute='rent')) }}</div>
                 </div>
                 {% for tenant in paid_tenants %}
-                <div class="tenant-item paid" 
+                <div class="tenant-item paid"
                      data-tenant-id="{{ tenant.id }}"
                      data-name="{{ tenant.name }}"
                      data-rent="{{ tenant.rent }}"
@@ -1526,7 +1606,7 @@
             <div class="modal-tenant" id="modalTenant">Nombre del inquilino</div>
             <div class="modal-property" id="modalProperty">Propiedad · Unidad</div>
             <div class="modal-amount" id="modalAmount">$0</div>
-            
+
             <!-- Payment Method Selection (only shown when marking as paid) - FIRST, most common action -->
             <div class="modal-payment-methods" id="paymentMethods" style="display: none;">
                 <div class="modal-payment-methods-label">¿Cómo pagó?</div>
@@ -1573,7 +1653,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="modal-buttons">
                 <button class="modal-btn cancel" onclick="closeModal()">Cancelar</button>
                 <button class="modal-btn confirm-paid" id="modalConfirmBtn" onclick="confirmAction()">Si, Ya pago</button>
@@ -1661,33 +1741,33 @@
 
             const tenantCount = propertyTenants.length;
             const confirmMsg = `¿Marcar ${tenantCount} inquilino${tenantCount > 1 ? 's' : ''} de ${propertyName} como pagados?`;
-            
+
             if (!confirm(confirmMsg)) return;
 
             hapticFeedback('success');
-            
+
             // Store for undo
             const tenantIds = [];
-            
+
             propertyTenants.forEach(item => {
                 const tenantId = item.dataset.tenantId;
                 const name = item.dataset.name;
                 const rent = parseInt(item.dataset.rent);
-                
+
                 tenantIds.push({ tenantId, name, rent });
-                
+
                 // Update SOT
                 updateSOT(tenantId, true);
-                
+
                 // Update UI
                 updateTenantUI(tenantId, true, name, rent, 0);
-                
+
                 // Save to server
                 fetch('/api/payment', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        tenant_id: tenantId, 
+                    body: JSON.stringify({
+                        tenant_id: tenantId,
                         paid: true,
                         payment_method: 'Efectivo',
                         visits: 0,
@@ -1697,63 +1777,63 @@
                     })
                 }).catch(err => console.error('Error:', err));
             });
-            
+
             lastAction = {
                 type: 'markAllPaid',
                 propertyName,
                 tenants: tenantIds
             };
-            
+
             showToastWithUndo(`✓ ${tenantCount} pagos en ${propertyName}`, 'success');
             updateSummary();
             updateSyncIndicator();
-            
+
             setTimeout(() => showMotivation(), 500);
         }
 
         // Undo last action
         function undoLastAction() {
             if (!lastAction) return;
-            
+
             hapticFeedback('light');
-            
+
             if (lastAction.type === 'markAllPaid') {
                 lastAction.tenants.forEach(({ tenantId, name, rent }) => {
                     updateSOT(tenantId, false);
                     updateTenantUI(tenantId, false, name, rent, 0);
-                    
+
                     fetch('/api/payment', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ 
-                            tenant_id: tenantId, 
+                        body: JSON.stringify({
+                            tenant_id: tenantId,
                             paid: false,
                             year: currentYear,
                             month: currentMonth
                         })
                     }).catch(err => console.error('Error:', err));
                 });
-                
+
                 showToast('Deshecho', 'pending');
             } else if (lastAction.type === 'singlePayment') {
                 const { tenantId, name, rent, wasPaid } = lastAction;
                 updateSOT(tenantId, wasPaid);
                 updateTenantUI(tenantId, wasPaid, name, rent, 0);
-                
+
                 fetch('/api/payment', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        tenant_id: tenantId, 
+                    body: JSON.stringify({
+                        tenant_id: tenantId,
                         paid: wasPaid,
                         year: currentYear,
                         month: currentMonth
                     })
                 }).catch(err => console.error('Error:', err));
-                
+
                 showToast('Deshecho', 'pending');
             }
-            
+
             lastAction = null;
             updateSummary();
             hideUndoButton();
@@ -1763,14 +1843,14 @@
             const toast = document.getElementById('toast');
             const toastMessage = toast.querySelector('.toast-message');
             const toastUndo = document.getElementById('toastUndo');
-            
+
             toastMessage.textContent = message;
             toast.className = 'toast show ' + type;
             toastUndo.style.display = 'inline-block';
-            
+
             // Clear previous timeout
             if (undoTimeout) clearTimeout(undoTimeout);
-            
+
             // Hide after 5 seconds
             undoTimeout = setTimeout(() => {
                 toast.classList.remove('show');
@@ -1813,12 +1893,12 @@
             const paidTotal = document.getElementById('totalPaid').textContent;
             const pendingTotal = document.getElementById('totalPending').textContent;
             const percent = document.getElementById('progressPercent').textContent;
-            
+
             const shareText = `RentasClaras - ${monthName} ${currentYear}\n\n` +
                 `✓ Cobrado: ${paidTotal} (${percent})\n` +
                 `✗ Pendiente: ${pendingTotal}\n\n` +
                 `Generado: ${new Date().toLocaleDateString('es-MX')}`;
-            
+
             if (navigator.share) {
                 navigator.share({
                     title: `RentasClaras - ${monthName} ${currentYear}`,
@@ -1835,7 +1915,7 @@
         // Pull to refresh
         let touchStartY = 0;
         let isPulling = false;
-        
+
         document.addEventListener('touchstart', (e) => {
             if (window.scrollY === 0) {
                 touchStartY = e.touches[0].clientY;
@@ -1846,7 +1926,7 @@
             if (window.scrollY === 0 && touchStartY > 0) {
                 const touchY = e.touches[0].clientY;
                 const diff = touchY - touchStartY;
-                
+
                 if (diff > 60 && !isPulling) {
                     isPulling = true;
                     document.getElementById('pullToRefresh').classList.add('show');
@@ -1859,9 +1939,9 @@
                 const pullIndicator = document.getElementById('pullToRefresh');
                 pullIndicator.textContent = 'Actualizando...';
                 pullIndicator.classList.add('refreshing');
-                
+
                 hapticFeedback('success');
-                
+
                 setTimeout(() => {
                     window.location.reload();
                 }, 500);
@@ -1873,7 +1953,7 @@
         // Swipe for month navigation
         let swipeStartX = 0;
         const monthSelector = document.querySelector('.month-selector');
-        
+
         if (monthSelector) {
             monthSelector.addEventListener('touchstart', (e) => {
                 swipeStartX = e.touches[0].clientX;
@@ -1882,7 +1962,7 @@
             monthSelector.addEventListener('touchend', (e) => {
                 const swipeEndX = e.changedTouches[0].clientX;
                 const diff = swipeEndX - swipeStartX;
-                
+
                 if (Math.abs(diff) > 50) {
                     hapticFeedback('light');
                     if (diff > 0) {
@@ -1922,7 +2002,7 @@
             document.getElementById('visitCount').textContent = currentVisitCount;
             const extra = currentVisitCount * VISIT_CHARGE;
             document.getElementById('visitCharge').textContent = currentVisitCount > 0 ? `+$${extra.toLocaleString()} extra` : '$0 extra';
-            
+
             updateModalTotal();
         }
 
@@ -1930,7 +2010,7 @@
                     const content = document.getElementById('optionalExtrasContent');
                     const icon = document.getElementById('optionalExtrasIcon');
                     const label = document.getElementById('optionalExtrasLabel');
-            
+
                     if (content.classList.contains('show')) {
                         content.classList.remove('show');
                         icon.textContent = '➕';
@@ -1945,7 +2025,7 @@
                 function changeAdvanceMonths(delta) {
             currentAdvanceMonths = Math.max(1, Math.min(12, currentAdvanceMonths + delta));
             document.getElementById('advanceMonths').textContent = currentAdvanceMonths;
-            
+
             // Calculate months covered
             const monthsList = [];
             let m = currentMonth;
@@ -1958,12 +2038,12 @@
                     y++;
                 }
             }
-            
-            document.getElementById('advanceTotal').textContent = currentAdvanceMonths === 1 
-                ? '1 mes' 
+
+            document.getElementById('advanceTotal').textContent = currentAdvanceMonths === 1
+                ? '1 mes'
                 : `${currentAdvanceMonths} meses`;
             document.getElementById('advanceMonthsList').textContent = monthsList.join(', ');
-            
+
             updateModalTotal();
         }
 
@@ -2068,7 +2148,7 @@
                 let m = currentMonth;
                 let y = currentYear;
                 const paymentsToSave = [];
-                
+
                 for (let i = 0; i < currentAdvanceMonths; i++) {
                     paymentsToSave.push({
                         tenant_id: tenantId,
@@ -2081,14 +2161,14 @@
                         is_advance: true,
                         advance_months: currentAdvanceMonths
                     });
-                    
+
                     m++;
                     if (m > 12) {
                         m = 1;
                         y++;
                     }
                 }
-                
+
                 // Save each month
                 paymentsToSave.forEach(payment => {
                     fetch('/api/payment', {
@@ -2097,7 +2177,7 @@
                         body: JSON.stringify(payment)
                     }).catch(err => console.error('Error saving:', err));
                 });
-                
+
                 showToast(`¡${name} pagó ${currentAdvanceMonths} meses! ($${totalPaid.toLocaleString()})`, 'success');
                 updateSyncIndicator();
             } else {
@@ -2105,8 +2185,8 @@
                 fetch('/api/payment', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        tenant_id: tenantId, 
+                    body: JSON.stringify({
+                        tenant_id: tenantId,
                         paid: newPaidStatus,
                         payment_method: newPaidStatus ? selectedPaymentMethod : '',
                         visits: newPaidStatus ? currentVisitCount : 0,
@@ -2116,7 +2196,7 @@
                     })
                 }).then(res => {
                     if (res.ok) {
-                        const msg = newPaidStatus 
+                        const msg = newPaidStatus
                             ? (visitExtra > 0 ? `¡${name} pagó $${totalPaid.toLocaleString()}!` : `¡${name} pagó!`)
                             : `${name} pendiente`;
                         showToast(msg, newPaidStatus ? 'success' : 'pending');
@@ -2130,7 +2210,7 @@
 
             closeModal();
             updateSummary();
-            
+
             // Show motivation after payment
             if (newPaidStatus) {
                 setTimeout(() => showMotivation(), 500);
@@ -2161,14 +2241,14 @@
             newItem.onclick = function() {
                 showConfirmModal(tenantId, name, rent, isPaid);
             };
-            
+
             // Update payment method and visits display for paid items
             const infoDiv = newItem.querySelector('.tenant-info');
             const existingMethodDiv = infoDiv.querySelector('[style*="color: var(--green)"]');
             if (existingMethodDiv) existingMethodDiv.remove();
             const existingVisitsDiv = infoDiv.querySelector('[style*="color: #92400E"]');
             if (existingVisitsDiv) existingVisitsDiv.remove();
-            
+
             if (isPaid && selectedPaymentMethod) {
                 const methodDiv = document.createElement('div');
                 methodDiv.style.cssText = 'font-size: 0.85rem; color: var(--green); margin-top: 4px;';
@@ -2205,7 +2285,7 @@
                     <span class="property-name">${property}</span>
                     <span class="property-amount" data-property-${isPaid ? 'paid' : 'pending'}="${property}">$${rent.toLocaleString()}</span>
                 `;
-                
+
                 // Find the empty message and remove it if exists
                 const emptyMsg = targetList.querySelector('[style*="text-align: center"]');
                 if (emptyMsg) emptyMsg.remove();
@@ -2273,12 +2353,12 @@
             const pendingItems = document.querySelectorAll('#pendingList .tenant-item').length;
             const paidItems = document.querySelectorAll('#paidList .tenant-item').length;
             const total = pendingItems + paidItems;
-            
+
             if (total === 0) return;
-            
+
             const percent = Math.round((paidItems / total) * 100);
             const motivationToast = document.getElementById('motivationToast');
-            
+
             let message = '';
             if (pendingItems === 0) {
                 return; // Will show celebration instead
@@ -2291,7 +2371,7 @@
             } else {
                 return; // Don't show motivation for early stages
             }
-            
+
             if (message) {
                 motivationToast.textContent = message;
                 motivationToast.classList.add('show');
@@ -2409,7 +2489,7 @@
                 <body>
                     <h1>RentasClaras</h1>
                     <p style="font-size: 1.3rem; font-weight: 700; color: #333;">${monthName} ${currentYear}</p>
-                    
+
                     <div class="summary-box">
                         <div class="summary-item paid">
                             <div class="summary-value" style="color: #0A7A0A;">${paidTotal}</div>
@@ -2430,7 +2510,7 @@
             Object.keys(propertiesData).forEach(property => {
                 const data = propertiesData[property];
                 const propertyTotal = data.paidTotal + data.pendingTotal;
-                
+
                 html += `
                     <div class="property-section">
                         <div class="property-header">${property}</div>

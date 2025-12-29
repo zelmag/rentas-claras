@@ -4,21 +4,11 @@
 
 {% block styles %}
 <style>
-    :root {
-        --green: #0A7A0A;
-        --green-light: #dcfce7;
-        --red: #CC0000;
-        --red-light: #FEE2E2;
-        --blue: #1e3a5f;
-        --gray: #666;
-        --gray-light: #F5F5F5;
-    }
-
     * { box-sizing: border-box; }
 
     body {
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        background: #F0F0F0;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: var(--paper);
         margin: 0;
         padding: 0;
         padding-bottom: 100px;
@@ -120,7 +110,7 @@
     .app-title {
         font-size: 1.5rem;
         font-weight: 800;
-        color: var(--blue);
+        color: var(--green);
         margin: 0 0 8px 0;
     }
 
@@ -312,6 +302,7 @@
         background: white;
         border-radius: 20px;
         padding: 20px;
+        padding-bottom: 0;
         max-width: 480px;
         width: 100%;
         animation: modalPop 0.2s ease-out;
@@ -325,8 +316,16 @@
         -webkit-user-drag: none;
         -moz-user-drag: none;
         user-drag: none;
+        display: flex;
+        flex-direction: column;
     }
     
+    .modal-form-scroll {
+        flex: 1;
+        overflow-y: auto;
+        padding-bottom: 16px;
+    }
+
     /* Allow text selection in form inputs */
     .modal-content input,
     .modal-content select,
@@ -335,114 +334,114 @@
         -webkit-user-select: text;
         touch-action: auto;
     }
-    
+
     /* Small screens (iPhone SE and smaller) */
     @media (max-width: 375px) {
         .modal-overlay {
             padding: 8px;
         }
-        
+
         .modal-content {
             padding: 16px;
             border-radius: 16px;
             max-height: calc(100vh - 16px);
         }
-        
+
         .modal-header {
             font-size: 1.2rem;
             margin-bottom: 16px;
         }
-        
+
         .form-row {
             grid-template-columns: 1fr;
             gap: 10px;
         }
-        
+
         .form-group {
             margin-bottom: 12px;
         }
-        
+
         .form-label {
             font-size: 0.95rem;
             margin-bottom: 4px;
         }
-        
+
         .form-input,
         .form-select {
             padding: 12px;
             font-size: 1rem;
             border-width: 2px;
         }
-        
+
         /* Date inputs need special handling on iOS */
         input[type="date"].form-input {
             min-height: 48px;
         }
-        
+
         .form-buttons {
             margin-top: 16px;
             gap: 10px;
         }
-        
+
         .form-buttons .btn {
             padding: 14px;
             font-size: 1rem;
             min-height: 50px;
         }
-        
+
         /* Aval section compact */
         .aval-section {
             padding: 12px !important;
             margin: 12px 0 !important;
         }
-        
+
         .aval-section .form-row {
             grid-template-columns: 1fr;
         }
-        
+
         /* Prorated section compact */
         .prorated-section {
             padding: 12px !important;
             margin-top: 12px !important;
         }
-        
+
         .prorated-section .form-row {
             grid-template-columns: 1fr;
         }
-        
+
         /* Delete warning compact */
         .delete-warning {
             padding: 12px;
             margin: 12px 0;
         }
-        
+
         .delete-warning-icon {
             font-size: 2rem;
         }
     }
-    
+
     /* Extra small screens (iPhone SE 1st gen - 320px) */
     @media (max-width: 320px) {
         .modal-overlay {
             padding: 4px;
         }
-        
+
         .modal-content {
             padding: 12px;
             border-radius: 12px;
         }
-        
+
         .modal-header {
             font-size: 1.1rem;
             gap: 6px;
         }
-        
+
         .form-input,
         .form-select {
             padding: 10px;
             font-size: 0.95rem;
         }
-        
+
         .form-buttons .btn {
             padding: 12px;
             font-size: 0.95rem;
@@ -497,6 +496,7 @@
     .form-input:focus {
         outline: none;
         border-color: var(--green);
+        box-shadow: var(--focus-ring);
     }
 
     .form-select {
@@ -512,6 +512,7 @@
     .form-select:focus {
         outline: none;
         border-color: var(--green);
+        box-shadow: var(--focus-ring);
     }
 
     .form-row {
@@ -519,7 +520,7 @@
         grid-template-columns: 1fr 1fr;
         gap: 16px;
     }
-    
+
     /* Stack form rows on small screens */
     @media (max-width: 480px) {
         .form-row {
@@ -531,11 +532,55 @@
     .form-buttons {
         display: flex;
         gap: 12px;
-        margin-top: 24px;
+        padding: 16px 0;
+        margin-top: 0;
+        background: white;
+        position: sticky;
+        bottom: 0;
+        border-top: 1px solid #eee;
     }
 
     .form-buttons .btn {
         flex: 1;
+    }
+    
+    /* Collapsible sections */
+    .collapsible-section {
+        margin: 16px 0;
+    }
+    
+    .collapsible-toggle {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        width: 100%;
+        padding: 12px 16px;
+        background: #f5f5f5;
+        border: 2px solid #ddd;
+        border-radius: 10px;
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--gray);
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .collapsible-toggle:hover {
+        background: #eee;
+    }
+    
+    .collapsible-toggle.active {
+        background: var(--green-light);
+        border-color: var(--green);
+        color: var(--green);
+    }
+    
+    .collapsible-icon {
+        font-size: 1.2rem;
+    }
+    
+    .collapsible-content {
+        margin-top: 12px;
     }
 
     /* Search */
@@ -599,6 +644,78 @@
         font-size: 1rem;
         color: var(--red);
         font-weight: 600;
+    }
+
+    /* Collapsible sections */
+    .collapsible-section {
+        margin: 16px 0;
+    }
+
+    .collapsible-toggle {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 14px 16px;
+        background: var(--gray-light);
+        border: 2px dashed var(--border);
+        border-radius: 10px;
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--gray);
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .collapsible-toggle:hover {
+        border-color: var(--green);
+        background: var(--green-light);
+    }
+
+    .collapsible-toggle:active {
+        transform: scale(0.99);
+    }
+
+    .collapsible-icon {
+        font-size: 1rem;
+        transition: transform 0.2s;
+    }
+
+    .collapsible-content {
+        margin-top: 12px;
+        animation: slideDown 0.2s ease-out;
+    }
+
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Loading button states */
+    .btn-loading {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-loading::before {
+        content: '';
+        width: 16px;
+        height: 16px;
+        border: 2px solid rgba(255,255,255,0.3);
+        border-top-color: white;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
     }
 </style>
 {% endblock %}
@@ -732,17 +849,25 @@
                     <input type="tel" class="form-input" id="tenantPhone" placeholder="+52 123 456 7890">
                 </div>
 
-                <!-- Aval (Guarantor) Section -->
-                <div class="aval-section" style="background: #E0F2FE; padding: 16px; border-radius: 12px; border: 2px solid #0EA5E9; margin: 16px 0;">
-                    <div style="font-size: 1.1rem; font-weight: 700; color: #0369A1; margin-bottom: 12px;">Aval (Fiador)</div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">Nombre del Aval</label>
-                            <input type="text" class="form-input" id="avalName" placeholder="Nombre completo">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Teléfono del Aval</label>
-                            <input type="tel" class="form-input" id="avalPhone" placeholder="+52 123 456 7890">
+                <!-- Aval (Guarantor) Section - Collapsible -->
+                <div class="collapsible-section" id="avalSection">
+                    <button type="button" class="collapsible-toggle" onclick="toggleCollapsible('avalSection')">
+                        <span class="collapsible-icon">➕</span>
+                        <span>Agregar Aval (Fiador) - Opcional</span>
+                    </button>
+                    <div class="collapsible-content" style="display: none;">
+                        <div class="aval-section" style="background: #E0F2FE; padding: 16px; border-radius: 12px; border: 2px solid #0EA5E9;">
+                            <div style="font-size: 1.1rem; font-weight: 700; color: #0369A1; margin-bottom: 12px;">Aval (Fiador)</div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Nombre del Aval</label>
+                                    <input type="text" class="form-input" id="avalName" placeholder="Nombre completo">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Teléfono del Aval</label>
+                                    <input type="tel" class="form-input" id="avalPhone" placeholder="+52 123 456 7890">
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -758,40 +883,48 @@
                     </div>
                 </div>
 
-                <!-- Prorated Rent Section -->
-                <div class="form-group" style="background: #FEF3C7; padding: 16px; border-radius: 10px; border: 2px solid #F59E0B; margin-top: 16px;">
-                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                        <input type="checkbox" id="proratedCheckbox" style="width: 24px; height: 24px; accent-color: #F59E0B;" onchange="toggleProrated()">
-                        <span style="font-size: 1rem; font-weight: 700; color: #92400E;">Renta prorrateada el primer mes?</span>
-                    </label>
-                    <div id="proratedDetails" style="display: none; margin-top: 12px;">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label class="form-label">Mes prorrateado</label>
-                                <select class="form-select" id="proratedMonth">
-                                    <option value="1">Enero</option>
-                                    <option value="2">Febrero</option>
-                                    <option value="3">Marzo</option>
-                                    <option value="4">Abril</option>
-                                    <option value="5">Mayo</option>
-                                    <option value="6">Junio</option>
-                                    <option value="7">Julio</option>
-                                    <option value="8">Agosto</option>
-                                    <option value="9">Septiembre</option>
-                                    <option value="10">Octubre</option>
-                                    <option value="11">Noviembre</option>
-                                    <option value="12">Diciembre</option>
-                                </select>
+                <!-- Prorated Rent Section - Collapsible -->
+                <div class="collapsible-section" id="proratedSection">
+                    <button type="button" class="collapsible-toggle" onclick="toggleCollapsible('proratedSection')">
+                        <span class="collapsible-icon">➕</span>
+                        <span>Renta prorrateada - Opcional</span>
+                    </button>
+                    <div class="collapsible-content" style="display: none;">
+                        <div class="prorated-section" style="background: #FEF3C7; padding: 16px; border-radius: 10px; border: 2px solid #F59E0B;">
+                            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                                <input type="checkbox" id="proratedCheckbox" style="width: 24px; height: 24px; accent-color: #F59E0B;" onchange="toggleProrated()">
+                                <span style="font-size: 1rem; font-weight: 700; color: #92400E;">Aplicar renta prorrateada</span>
+                            </label>
+                            <div id="proratedDetails" style="display: none; margin-top: 12px;">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label">Mes prorrateado</label>
+                                        <select class="form-select" id="proratedMonth">
+                                            <option value="1">Enero</option>
+                                            <option value="2">Febrero</option>
+                                            <option value="3">Marzo</option>
+                                            <option value="4">Abril</option>
+                                            <option value="5">Mayo</option>
+                                            <option value="6">Junio</option>
+                                            <option value="7">Julio</option>
+                                            <option value="8">Agosto</option>
+                                            <option value="9">Septiembre</option>
+                                            <option value="10">Octubre</option>
+                                            <option value="11">Noviembre</option>
+                                            <option value="12">Diciembre</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Año</label>
+                                        <input type="number" class="form-input" id="proratedYear" placeholder="2025" value="">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Monto prorrateado ($)</label>
+                                    <input type="number" class="form-input" id="proratedAmount" placeholder="Ej: 4500">
+                                    <div style="font-size: 0.85rem; color: #92400E; margin-top: 4px;">Si entro el dia 15, serian ~50% de la renta normal</div>
+                                </div>
                             </div>
-                            <div class="form-group">
-                                <label class="form-label">Año</label>
-                                <input type="number" class="form-input" id="proratedYear" placeholder="2025" value="">
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Monto prorrateado ($)</label>
-                            <input type="number" class="form-input" id="proratedAmount" placeholder="Ej: 4500">
-                            <div style="font-size: 0.85rem; color: #92400E; margin-top: 4px;">Si entro el dia 15, serian ~50% de la renta normal</div>
                         </div>
                     </div>
                 </div>
@@ -807,7 +940,10 @@
 
                 <div class="form-buttons">
                     <button type="button" class="btn secondary" onclick="closeModal()">Cancelar</button>
-                    <button type="submit" class="btn primary">Guardar</button>
+                    <button type="submit" class="btn primary" id="saveBtn">
+                        <span class="btn-text">Guardar</span>
+                        <span class="btn-loading" style="display: none;">Guardando...</span>
+                    </button>
                 </div>
             </form>
         </div>
@@ -990,6 +1126,20 @@ function showEditModal(tenantId) {
                 document.getElementById('proratedMonth').value = now.getMonth() + 1;
             } else {
                 details.style.display = 'none';
+            }
+        }
+
+        function toggleCollapsible(sectionId) {
+            const section = document.getElementById(sectionId);
+            const content = section.querySelector('.collapsible-content');
+            const icon = section.querySelector('.collapsible-icon');
+            
+            if (content.style.display === 'none') {
+                content.style.display = 'block';
+                icon.textContent = '➖';
+            } else {
+                content.style.display = 'none';
+                icon.textContent = '➕';
             }
         }
     </script>

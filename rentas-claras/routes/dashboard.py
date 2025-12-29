@@ -36,16 +36,15 @@ def index():
     else:
         greeting = "Buenas noches"
     
-    # Format today's date in Spanish
-    DIAS_SEMANA = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo']
-    MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 
-             'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
+    # Format today's date in Spanish (shorter format)
+    DIAS_SEMANA_CORTO = ['lun', 'mar', 'mié', 'jue', 'vie', 'sáb', 'dom']
+    MESES_CORTO = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 
+                   'jul', 'ago', 'sep', 'oct', 'nov', 'dic']
     
-    dia_semana = DIAS_SEMANA[today.weekday()]
+    dia_semana = DIAS_SEMANA_CORTO[today.weekday()]
     dia = today.day
-    mes = MESES[today.month - 1]
-    año = today.year
-    today_formatted = f"{dia_semana.capitalize()}, {dia} de {mes} de {año}"
+    mes = MESES_CORTO[today.month - 1]
+    today_formatted = f"{dia_semana.capitalize()} {dia} {mes}"
     
     # Current month
     year = today.year
@@ -84,6 +83,21 @@ def index():
     expiring = get_expiring_contracts(days_ahead=30)
     expiring_contracts = len(expiring)
     
+    # Property pending breakdown with colors
+    PROPERTY_COLORS = ['#2D6A4F', '#9B2C2C', '#B7791F', '#5B21B6', '#0891B2', '#DB2777']
+    property_pending = []
+    property_names = sorted(list(properties))
+    for i, prop_name in enumerate(property_names):
+        pending_for_prop = sum(1 for t in all_tenants 
+                               if t.property_name == prop_name 
+                               and not monthly_status.get(t.id, {}).get("paid", 0))
+        if pending_for_prop > 0:
+            property_pending.append({
+                'name': prop_name[:10],  # Truncate long names
+                'pending': pending_for_prop,
+                'color': PROPERTY_COLORS[i % len(PROPERTY_COLORS)]
+            })
+    
     return render_template(
         "dashboard.html",
         greeting=greeting,
@@ -97,5 +111,6 @@ def index():
         expiring_contracts=expiring_contracts,
         total_tenants=total_tenants,
         total_properties=total_properties,
+        property_pending=property_pending,
         active_tab="resumen",
     )

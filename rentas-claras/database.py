@@ -358,8 +358,10 @@ def init_database():
 
 def seed_tenants():
     """
-    Seed the database with tenant data from Excel screenshots.
+    Seed the database with tenant data from JSON file.
 
+    Data source: data/seed_tenants.json
+    
     Properties:
     - Matehuala: 7 tenants (units A-G)
     - Múzquiz: 7 tenants (units A-G)
@@ -372,6 +374,8 @@ def seed_tenants():
     NOTE: Phone numbers are missing from Excel - placeholders used.
     User needs to provide real phone numbers.
     """
+    import json
+    
     conn = get_db_connection()
     cursor = conn.cursor()
 
@@ -382,434 +386,39 @@ def seed_tenants():
         conn.close()
         return
 
-    tenants = [
-        # MATEHUALA - 7 tenants (from Excel screenshot)
-        # Units: A, B, C, D, E, F, G
-        (
-            "MAT-A",
-            "Fatima",
-            "",
-            "Matehuala",
-            "A",
-            9600,
-            None,
-            None,
-            "2024-07-01",
-            "2025-12-31",
-            "BT",
-        ),
-        (
-            "MAT-B",
-            "J Carlos y Raul",
-            "",
-            "Matehuala",
-            "B",
-            8400,
-            None,
-            None,
-            "2024-04-06",
-            "2026-04-30",
-            "HSBC",
-        ),
-        (
-            "MAT-C",
-            "Enrique -Hector",
-            "",
-            "Matehuala",
-            "C",
-            7200,
-            None,
-            None,
-            "2024-06-14",
-            "2025-12-31",
-            None,
-        ),
-        (
-            "MAT-D",
-            "Alejandro",
-            "",
-            "Matehuala",
-            "D",
-            7200,
-            None,
-            None,
-            "2025-06-03",
-            "2026-05-31",
-            None,
-        ),
-        (
-            "MAT-E",
-            "José Pablo",
-            "",
-            "Matehuala",
-            "E",
-            7800,
-            None,
-            None,
-            "2024-07-01",
-            "2025-12-31",
-            "Stdr",
-        ),
-        (
-            "MAT-F",
-            "Ali",
-            "",
-            "Matehuala",
-            "F",
-            6700,
-            None,
-            None,
-            "2024-11-01",
-            "2026-04-30",
-            None,
-        ),
-        (
-            "MAT-G",
-            "Andrea",
-            "",
-            "Matehuala",
-            "G",
-            7300,
-            None,
-            None,
-            "2025-04-01",
-            "2026-03-31",
-            None,
-        ),
-        # MÚZQUIZ 287 - 7 tenants (from Excel screenshot)
-        # Units: A, B, C, D, E, F, G
-        (
-            "MUZ-A",
-            "Antonio",
-            "",
-            "Múzquiz",
-            "A",
-            8400,
-            None,
-            None,
-            "2025-07-01",
-            "2025-12-31",
-            "Bmx",
-        ),
-        (
-            "MUZ-B",
-            "Karen y Yolitzin",
-            "",
-            "Múzquiz",
-            "B",
-            9600,
-            None,
-            None,
-            "2025-12-01",
-            "2026-05-31",
-            None,
-        ),
-        (
-            "MUZ-C",
-            "Alfredo",
-            "",
-            "Múzquiz",
-            "C",
-            7500,
-            None,
-            None,
-            "2024-06-01",
-            "2026-04-30",
-            "ST",
-        ),
-        (
-            "MUZ-D",
-            "Gpe Vanessa",
-            "",
-            "Múzquiz",
-            "D",
-            7900,
-            None,
-            None,
-            "2025-07-06",
-            "2026-01-31",
-            None,
-        ),
-        (
-            "MUZ-E",
-            "Isaac",
-            "",
-            "Múzquiz",
-            "E",
-            8100,
-            None,
-            None,
-            "2023-08-01",
-            "2026-01-31",
-            None,
-        ),
-        (
-            "MUZ-F",
-            "Jorge de Jesús",
-            "",
-            "Múzquiz",
-            "F",
-            8100,
-            None,
-            None,
-            "2025-03-15",
-            "2026-03-31",
-            None,
-        ),
-        (
-            "MUZ-G",
-            "Fernanda",
-            "",
-            "Múzquiz",
-            "G",
-            8100,
-            None,
-            None,
-            "2024-12-26",
-            "2025-12-31",
-            None,
-        ),
-        # ENSENADA 114 - 9 tenants (from Excel screenshot)
-        # Units: 1-9
-        (
-            "ENS-1",
-            "Claudia",
-            "",
-            "Ensenada",
-            "1",
-            7500,
-            None,
-            None,
-            "2025-11-16",
-            "2026-05-31",
-            None,
-        ),
-        (
-            "ENS-2",
-            "Samantha Y Cecilia",
-            "",
-            "Ensenada",
-            "2",
-            9500,
-            None,
-            None,
-            "2024-12-15",
-            "2025-12-31",
-            None,
-        ),
-        (
-            "ENS-3",
-            "Regina",
-            "",
-            "Ensenada",
-            "3",
-            7800,
-            None,
-            None,
-            "2025-01-07",
-            "2025-12-31",
-            None,
-        ),
-        (
-            "ENS-4",
-            "David Alonso",
-            "",
-            "Ensenada",
-            "4",
-            7800,
-            None,
-            None,
-            "2024-05-31",
-            "2026-05-31",
-            None,
-        ),
-        (
-            "ENS-5",
-            "Aranza",
-            "",
-            "Ensenada",
-            "5",
-            8300,
-            None,
-            None,
-            "2025-04-14",
-            "2026-04-30",
-            None,
-        ),
-        (
-            "ENS-6",
-            "Ericka",
-            "",
-            "Ensenada",
-            "6",
-            8300,
-            None,
-            None,
-            "2025-02-01",
-            "2026-01-31",
-            None,
-        ),
-        (
-            "ENS-7",
-            "Fatima",
-            "",
-            "Ensenada",
-            "7",
-            7800,
-            None,
-            None,
-            "2025-02-01",
-            "2026-01-31",
-            None,
-        ),
-        (
-            "ENS-8",
-            "Jhosvan",
-            "",
-            "Ensenada",
-            "8",
-            8100,
-            None,
-            None,
-            "2024-03-25",
-            "2026-03-31",
-            None,
-        ),
-        (
-            "ENS-9",
-            "Cruz",
-            "",
-            "Ensenada",
-            "9",
-            7600,
-            None,
-            None,
-            "2024-12-20",
-            "2025-12-31",
-            None,
-        ),
-        # HUICHAPAN - 8 tenants (from Excel screenshot)
-        # Units: A, B, C, D, E, F, G, H
-        (
-            "HUI-A",
-            "Hanna",
-            "",
-            "Huichapan",
-            "A",
-            7500,
-            None,
-            None,
-            "2024-09-25",
-            "2026-03-31",
-            "BBVA",
-        ),
-        (
-            "HUI-B",
-            "Irene",
-            "",
-            "Huichapan",
-            "B",
-            6900,
-            None,
-            None,
-            "2025-10-15",
-            "2026-03-31",
-            None,
-        ),
-        (
-            "HUI-C",
-            "Adrian",
-            "",
-            "Huichapan",
-            "C",
-            7200,
-            None,
-            None,
-            "2025-03-22",
-            "2026-03-31",
-            None,
-        ),
-        (
-            "HUI-D",
-            "Raul",
-            "",
-            "Huichapan",
-            "D",
-            7200,
-            None,
-            None,
-            "2025-02-03",
-            "2026-02-28",
-            None,
-        ),
-        (
-            "HUI-E",
-            "Jocelyn",
-            "",
-            "Huichapan",
-            "E",
-            6400,
-            None,
-            None,
-            "2025-04-30",
-            "2026-04-30",
-            None,
-        ),
-        (
-            "HUI-F",
-            "Juan de Dios",
-            "",
-            "Huichapan",
-            "F",
-            7900,
-            None,
-            None,
-            "2025-11-05",
-            "2026-04-30",
-            None,
-        ),
-        (
-            "HUI-G",
-            "Kevin",
-            "",
-            "Huichapan",
-            "G",
-            7300,
-            None,
-            None,
-            "2025-04-05",
-            "2026-03-31",
-            None,
-        ),
-        (
-            "HUI-H",
-            "Daniela",
-            "",
-            "Huichapan",
-            "H",
-            6400,
-            None,
-            None,
-            "2024-09-16",
-            "2026-03-31",
-            "BBVA",
-        ),
-        # PUERTA DEL SOL - 1 tenant
-        # Units: 1
-        (
-            "PDS-1",
-            "Inguva",
-            "",
-            "Puerta Del Sol",
-            "1",
-            15900,
-            None,
-            None,
-            "2025-03-01",
-            "2026-02-28",
-            None,
-        ),
-    ]
+    # Load seed data from JSON file
+    seed_file = Path(__file__).parent / "data" / "seed_tenants.json"
+    
+    if not seed_file.exists():
+        print(f"⚠️  Seed file not found: {seed_file}")
+        print("   Database will start empty. Add tenants via the UI.")
+        conn.close()
+        return
+    
+    with open(seed_file, "r", encoding="utf-8") as f:
+        seed_data = json.load(f)
+    
+    # Convert JSON records to tuples for INSERT
+    tenants = []
+    for t in seed_data.get("tenants", []):
+        tenants.append((
+            t["id"],
+            t["name"],
+            t.get("phone", ""),
+            t["property_name"],
+            t["unit"],
+            t["rent"],
+            t.get("emergency_contact"),
+            t.get("emergency_phone"),
+            t.get("contract_start"),
+            t.get("contract_end"),
+            t.get("bank"),
+        ))
+
+    if not tenants:
+        print("⚠️  No tenants found in seed file.")
+        conn.close()
+        return
 
     cursor.executemany(
         """
@@ -822,7 +431,7 @@ def seed_tenants():
 
     conn.commit()
     conn.close()
-    print(f"✅ Seeded {len(tenants)} tenants into database")
+    print(f"✅ Seeded {len(tenants)} tenants from {seed_file.name}")
 
 
 def get_all_tenants() -> List[Tenant]:

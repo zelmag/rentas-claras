@@ -2,62 +2,73 @@
 Late Fee Calculation Services
 ==============================
 
-Business logic for calculating late fees on rent payments.
-Based on the contract terms for RentasClaras properties.
+This module re-exports from src/late_fees.py (the comprehensive version)
+and provides backward-compatible wrapper functions.
 
-Fee Structure:
-- Day 1: No fee (rent is due)
-- Day 2: $500 MXN initial penalty
-- Days 3-7: +$100 MXN per day (up to $500 max daily fees)
-- Day 8+: Capped at $500 + $500 = $1,000 MXN maximum
-
-Formula: late_fee = 500 + min(days_late - 1, 5) * 100
+Source of truth: src/late_fees.py
 """
 
-import calendar
-from dataclasses import dataclass
 from datetime import datetime
+from decimal import Decimal
 from typing import Optional
 
-
 # =============================================================================
-# CONSTANTS
-# =============================================================================
-
-# Late fee configuration
-INITIAL_PENALTY = 500  # $500 MXN on day 2
-DAILY_PENALTY = 100  # $100 MXN per day after day 2
-MAX_DAILY_PENALTY_DAYS = 5  # Cap daily penalty at 5 days ($500 max)
-
-# Derived: Maximum late fee = 500 + (5 * 100) = $1,000 MXN
-
-
-# =============================================================================
-# DATA CLASSES
+# RE-EXPORTS FROM src/late_fees.py (comprehensive version)
 # =============================================================================
 
-@dataclass
-class LateFeeResult:
-    """Result of late fee calculation."""
-    days_late: int
-    late_fee: float
-    total_owed: float
-    breakdown: Optional[str] = None
+from src.late_fees import (
+    # Constants
+    INITIAL_PENALTY_MXN,
+    DAILY_PENALTY_MXN,
+    MAX_DAILY_PENALTY_DAYS,
+    TERMINATION_WARNING_DAY,
+    # Enums
+    PaymentStatus,
+    PropertyType,
+    # Dataclasses
+    LateFeeResult,
+    PropertyConfig,
+    PropertySubtotal,
+    GrandTotal,
+    # Property configurations
+    PROPERTIES,
+    # Core functions
+    calculate_rentas_claras_balance,
+    calculate_tenant_utilities,
+    calculate_property_subtotal,
+    calculate_grand_total,
+    # Formatting functions
+    format_property_subtotal,
+    format_grand_total,
+    # Message generation
+    generate_payment_request_message,
+    generate_reminder_message,
+)
+
+# =============================================================================
+# BACKWARD-COMPATIBLE CONSTANTS (for any code using the old names)
+# =============================================================================
+
+INITIAL_PENALTY = int(INITIAL_PENALTY_MXN)  # 500
+DAILY_PENALTY = int(DAILY_PENALTY_MXN)      # 100
 
 
 # =============================================================================
-# FUNCTIONS
+# BACKWARD-COMPATIBLE WRAPPER FUNCTIONS
 # =============================================================================
 
 def calculate_late_fee(days_late: int) -> float:
     """
     Calculate the late fee based on days late.
+    
+    BACKWARD COMPATIBILITY WRAPPER.
+    Prefer using calculate_rentas_claras_balance() for new code.
 
     Args:
         days_late: Number of days past the due date (day 1)
 
     Returns:
-        Late fee amount in MXN
+        Late fee amount in MXN (float)
 
     Examples:
         days_late=0: $0 (on time)
@@ -88,6 +99,9 @@ def calculate_days_late(
 ) -> int:
     """
     Calculate the number of days late for a given month.
+    
+    BACKWARD COMPATIBILITY WRAPPER.
+    Prefer using calculate_rentas_claras_balance() for new code.
 
     Args:
         year: The year of the payment
@@ -99,6 +113,8 @@ def calculate_days_late(
     Returns:
         Number of days late (0 if not late)
     """
+    import calendar
+    
     if is_future_month:
         return 0
 
@@ -122,6 +138,10 @@ def calculate_tenant_late_fee(
 ) -> LateFeeResult:
     """
     Calculate late fee for a specific tenant.
+    
+    BACKWARD COMPATIBILITY WRAPPER.
+    This function wraps calculate_rentas_claras_balance() to maintain
+    the original interface used by routes/pagos.py.
 
     Args:
         rent: Monthly rent amount in MXN
@@ -133,38 +153,81 @@ def calculate_tenant_late_fee(
         current_day: Override for current day (for testing)
 
     Returns:
-        LateFeeResult with days_late, late_fee, and total_owed
+        LateFeeResult with full details
     """
+    # Determine the effective day for calculation
+    if is_future_month:
+        effective_day = 1  # No late fees for future months
+    elif is_current_month:
+        effective_day = current_day or datetime.now().day
+    else:
+        # Past month - use a high day to get full late fees
+        import calendar
+        effective_day = calendar.monthrange(year, month)[1]
+
+    # If paid, return early with zero fees
     if is_paid:
         return LateFeeResult(
+            base_rent=Decimal(str(rent)),
+            utilities=Decimal("0"),
             days_late=0,
-            late_fee=0.0,
-            total_owed=float(rent),
+            initial_penalty=Decimal("0"),
+            daily_penalties=Decimal("0"),
+            total_penalties=Decimal("0"),
+            total_due=Decimal(str(rent)),
+            status=PaymentStatus.PAID,
+            warning_message=None,
+            breakdown="",
         )
 
-    days_late = calculate_days_late(
-        year=year,
-        month=month,
-        is_current_month=is_current_month,
-        is_future_month=is_future_month,
-        current_day=current_day,
+    # Use the comprehensive calculator
+    result = calculate_rentas_claras_balance(
+        base_rent=rent,
+        utilities=0,  # Routes/pagos.py doesn't track utilities separately
+        current_day=effective_day,
+        already_paid=rent if is_paid else 0,
     )
 
-    late_fee = calculate_late_fee(days_late)
-    total_owed = float(rent) + late_fee
+    return result
 
-    # Generate breakdown for display
-    breakdown = None
-    if late_fee > 0:
-        daily_portion = late_fee - INITIAL_PENALTY
-        if daily_portion > 0:
-            breakdown = f"${INITIAL_PENALTY:,.0f} + ${daily_portion:,.0f}"
-        else:
-            breakdown = f"${INITIAL_PENALTY:,.0f}"
 
-    return LateFeeResult(
-        days_late=days_late,
-        late_fee=late_fee,
-        total_owed=total_owed,
-        breakdown=breakdown,
-    )
+# =============================================================================
+# CONVENIENCE PROPERTIES FOR BACKWARD COMPATIBILITY
+# =============================================================================
+
+# Expose commonly needed attributes at module level
+__all__ = [
+    # Constants (old names)
+    "INITIAL_PENALTY",
+    "DAILY_PENALTY",
+    # Constants (new names)
+    "INITIAL_PENALTY_MXN",
+    "DAILY_PENALTY_MXN",
+    "MAX_DAILY_PENALTY_DAYS",
+    "TERMINATION_WARNING_DAY",
+    # Enums
+    "PaymentStatus",
+    "PropertyType",
+    # Dataclasses
+    "LateFeeResult",
+    "PropertyConfig",
+    "PropertySubtotal",
+    "GrandTotal",
+    # Property configurations
+    "PROPERTIES",
+    # Backward-compatible functions
+    "calculate_late_fee",
+    "calculate_days_late",
+    "calculate_tenant_late_fee",
+    # Core functions from src/late_fees.py
+    "calculate_rentas_claras_balance",
+    "calculate_tenant_utilities",
+    "calculate_property_subtotal",
+    "calculate_grand_total",
+    # Formatting
+    "format_property_subtotal",
+    "format_grand_total",
+    # Message generation
+    "generate_payment_request_message",
+    "generate_reminder_message",
+]

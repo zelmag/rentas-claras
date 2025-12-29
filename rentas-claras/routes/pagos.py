@@ -134,7 +134,7 @@ def index():
 
         # Calculate late fees using the service
         fee_result = calculate_tenant_late_fee(
-            rent=tenant.rent,
+            rent=float(tenant.rent),
             year=year,
             month=month,
             is_paid=tenant.paid,
@@ -142,8 +142,8 @@ def index():
             is_future_month=is_future_month,
         )
         tenant.days_late = fee_result.days_late
-        tenant.late_fee = fee_result.late_fee
-        tenant.total_owed = fee_result.total_owed
+        tenant.late_fee = float(fee_result.total_penalties)  # Renamed in new version
+        tenant.total_owed = float(fee_result.total_due)      # Renamed in new version
 
     # Get expiring contracts
     expiring_contracts = get_expiring_contracts(days_ahead=60)

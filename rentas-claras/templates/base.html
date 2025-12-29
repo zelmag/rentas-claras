@@ -9,7 +9,12 @@
     <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
     <link rel="apple-touch-icon" href="/static/icon-192.png">
     <link rel="manifest" href="/static/manifest.json">
-    <meta name="theme-color" content="#0A7A0A">
+    <meta name="theme-color" content="#2D6A4F">
+    
+    {# Google Fonts - Inter for modern, legible typography #}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     {# Shared CSS Variables and Bottom Nav Styles #}
     <style>
@@ -18,14 +23,48 @@
         :root {
             --safe-area-top: env(safe-area-inset-top, 0px);
             --safe-area-bottom: env(safe-area-inset-bottom, 0px);
-            --color-primary: #0A7A0A;
-            --color-primary-light: #dcfce7;
-            --color-primary-dark: #085A08;
-            --color-danger: #CC0000;
+            
+            /* Modern Muted Color Palette */
+            --green: #2D6A4F;
+            --green-light: #D8F3DC;
+            --green-dark: #1B4332;
+            --red: #9B2C2C;
+            --red-light: #FED7D7;
+            --yellow: #92400E;  /* Darkened for better contrast */
+            --yellow-light: #FEFCBF;
+            --blue: #1A365D;
+            --gray: #4A5568;
+            --gray-light: #F7FAFC;
+            --paper: #FAFAFA;
+            --border: #E2E8F0;
+            --white: #FFFFFF;
+            
+            /* Focus ring */
+            --focus-ring: 0 0 0 3px rgba(45, 106, 79, 0.25);
+            
+            /* Legacy aliases for compatibility */
+            --color-primary: var(--green);
+            --color-primary-light: var(--green-light);
+            --color-primary-dark: var(--green-dark);
+            --color-danger: var(--red);
             --color-neutral: #333333;
-            --color-gray: #888;
-            --color-white: #FFFFFF;
-            --color-border: #e0e0e0;
+            --color-gray: var(--gray);
+            --color-white: var(--white);
+            --color-border: var(--border);
+            
+            /* Typography Scale */
+            --text-xs: 0.8125rem;   /* 13px */
+            --text-sm: 0.9375rem;   /* 15px */
+            --text-base: 1.0625rem; /* 17px */
+            --text-lg: 1.25rem;     /* 20px */
+            --text-xl: 1.5rem;      /* 24px */
+            --text-2xl: 2rem;       /* 32px */
+            --text-3xl: 2.5rem;     /* 40px */
+            
+            /* Spacing */
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
         }
         
         html {
@@ -33,12 +72,14 @@
         }
         
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--color-white);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--paper);
             min-height: 100%;
             min-height: 100dvh;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
+            font-size: var(--text-base);
+            color: #1A202C;
         }
 
         /* ========== SHARED BOTTOM NAV STYLES ========== */
@@ -47,66 +88,68 @@
             bottom: 0;
             left: 0;
             right: 0;
-            background: white;
+            background: var(--white);
             display: flex;
-            box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
+            box-shadow: 0 -2px 12px rgba(0,0,0,0.08);
             z-index: 100;
-            border-top: 3px solid var(--color-border);
+            border-top: 1px solid var(--border);
             padding-bottom: env(safe-area-inset-bottom, 0px);
             padding-bottom: constant(safe-area-inset-bottom, 0px);
         }
 
         .nav-item {
             flex: 1;
-            padding: 16px 12px;
+            padding: 10px 4px;
             text-align: center;
             text-decoration: none;
-            color: #666;
-            font-weight: 700;
-            font-size: 1.1rem;
+            color: var(--gray);
+            font-weight: 600;
+            font-size: 0.7rem;
             transition: all 0.2s;
-            border-top: 5px solid transparent;
-            margin-top: -3px;
+            border-top: 3px solid transparent;
+            margin-top: -1px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            min-width: 0;
         }
 
         .nav-item.active {
-            color: var(--color-primary);
-            background: var(--color-primary-light);
-            border-top: 5px solid var(--color-primary);
-            font-weight: 800;
+            color: var(--green);
+            background: var(--green-light);
+            border-top-color: var(--green);
+            font-weight: 700;
         }
 
         .nav-icon {
-            font-size: 1.8rem;
-            font-weight: 800;
-            margin-bottom: 6px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            font-size: 1.4rem;
+            line-height: 1;
             transition: transform 0.2s;
         }
         
         .nav-icon svg {
-            width: 28px;
-            height: 28px;
+            width: 24px;
+            height: 24px;
         }
 
         .nav-item.active .nav-icon {
-            transform: scale(1.15);
+            transform: scale(1.1);
         }
 
         /* Tablet responsive */
         @media (min-width: 768px) {
             .nav-item {
-                padding: 18px;
-                font-size: 1.2rem;
+                padding: 14px 8px;
+                font-size: 0.85rem;
+                gap: 4px;
             }
             .nav-icon {
-                font-size: 2rem;
+                font-size: 1.6rem;
             }
             .nav-icon svg {
-                width: 32px;
-                height: 32px;
+                width: 28px;
+                height: 28px;
             }
         }
 
@@ -115,26 +158,27 @@
             .bottom-nav {
                 position: relative;
                 margin-top: 32px;
-                border-radius: 16px;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-                border-top: none;
+                border-radius: var(--radius-md);
+                box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+                border: 1px solid var(--border);
             }
             .nav-item {
-                padding: 20px;
-                font-size: 1.3rem;
+                padding: 16px 12px;
+                font-size: 1rem;
                 border-top: none;
                 margin-top: 0;
+                gap: 6px;
             }
             .nav-item.active {
-                border-radius: 16px;
+                border-radius: var(--radius-md);
                 border-top: none;
             }
             .nav-icon {
-                font-size: 2.2rem;
+                font-size: 1.8rem;
             }
             .nav-icon svg {
-                width: 36px;
-                height: 36px;
+                width: 32px;
+                height: 32px;
             }
         }
     </style>
