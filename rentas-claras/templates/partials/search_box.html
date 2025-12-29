@@ -207,11 +207,11 @@
             clearBtn.classList.remove('visible');
         }
         
-        // Call page-specific filter function
+        // Call page-specific filter function (always call, even with empty string to reset)
         if (typeof filterTenants === 'function') {
-            filterTenants(term);
+            filterTenants(term || '');
         } else if (typeof filterContracts === 'function') {
-            filterContracts(term);
+            filterContracts(term || '');
         }
     }
 
@@ -221,9 +221,14 @@
         
         input.value = '';
         clearBtn.classList.remove('visible');
-        input.focus();
         
-        // Reset the filter - show all items
-        handleSearch('');
+        // Explicitly reset all filters by calling with empty string
+        if (typeof filterTenants === 'function') {
+            filterTenants('');
+        } else if (typeof filterContracts === 'function') {
+            filterContracts('');
+        }
+        
+        input.focus();
     }
 </script>

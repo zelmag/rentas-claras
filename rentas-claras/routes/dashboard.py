@@ -36,15 +36,15 @@ def index():
     else:
         greeting = "Buenas noches"
     
-    # Format today's date in Spanish (shorter format)
-    DIAS_SEMANA_CORTO = ['lun', 'mar', 'mié', 'jue', 'vie', 'sáb', 'dom']
-    MESES_CORTO = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 
-                   'jul', 'ago', 'sep', 'oct', 'nov', 'dic']
+    # Format today's date in Spanish (full format for clarity)
+    DIAS_SEMANA = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo']
+    MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 
+             'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
     
-    dia_semana = DIAS_SEMANA_CORTO[today.weekday()]
+    dia_semana = DIAS_SEMANA[today.weekday()]
     dia = today.day
-    mes = MESES_CORTO[today.month - 1]
-    today_formatted = f"{dia_semana.capitalize()} {dia} {mes}"
+    mes = MESES[today.month - 1]
+    today_formatted = f"{dia_semana.capitalize()} {dia} de {mes}"
     
     # Current month
     year = today.year

@@ -354,13 +354,26 @@
     .count-up {
         opacity: 0;
         transform: translateY(10px);
-        animation: countFadeIn 0.5s ease-out forwards;
+        animation: countFadeIn 0.3s ease-out forwards;
     }
 
     @keyframes countFadeIn {
         to {
             opacity: 1;
             transform: translateY(0);
+        }
+    }
+    
+    /* Respect reduced motion preference */
+    @media (prefers-reduced-motion: reduce) {
+        .count-up {
+            animation: none;
+            opacity: 1;
+            transform: none;
+        }
+        
+        .main-stat-progress-fill {
+            transition: none;
         }
     }
 
@@ -541,7 +554,13 @@
 
         // Count up animation
         function animateCount(element, target, suffix = '') {
-            const duration = 1000;
+            // Respect reduced motion preference
+            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                element.textContent = target.toLocaleString() + suffix;
+                return;
+            }
+            
+            const duration = 400;  // Fast 400ms instead of 1000ms
             const start = 0;
             const startTime = performance.now();
 
@@ -563,6 +582,7 @@
 
         // Start count animations when page loads
         document.addEventListener('DOMContentLoaded', () => {
+            // Reduced delay for snappier feel
             setTimeout(() => {
                 animateCount(document.getElementById('collectedValue'), {{ total_collected }});
                 animateCount(document.getElementById('tenantsValue'), {{ total_tenants }});
@@ -572,7 +592,7 @@
                 // Animate progress bar
                 const progressBar = document.getElementById('progressBar');
                 progressBar.style.width = '{{ collection_percent }}%';
-            }, 300);
+            }, 100);
         });
 
         // Swipe section handling - REMOVED (no longer using swipe layout)
