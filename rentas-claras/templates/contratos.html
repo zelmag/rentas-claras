@@ -862,7 +862,7 @@
 
                         <!-- Replacement Form (shown when No Renovará) -->
                         <div class="replacement-form {{ 'show' if tenant.renewal_status == 'no_renovará' else '' }}" id="replacement-{{ tenant.id }}">
-                            <div class="replacement-title">🔄 Nuevo Inquilino</div>
+                            <div class="replacement-title">Nuevo Inquilino</div>
                             <div class="form-grid">
                                 <div class="form-group">
                                     <label class="form-label">Nombre</label>
@@ -886,12 +886,12 @@
                             <label class="tracking-checkbox">
                                 <input type="checkbox" {{ 'checked' if tenant.contract_delivered else '' }}
                                        onchange="updateTracking('{{ tenant.id }}', 'delivered', this.checked)">
-                                <span>📨 Contrato entregado</span>
+                                <span>Contrato entregado</span>
                             </label>
                             <label class="tracking-checkbox">
                                 <input type="checkbox" {{ 'checked' if tenant.contract_picked_up else '' }}
                                        onchange="updateTracking('{{ tenant.id }}', 'picked_up', this.checked)">
-                                <span>✍️ Contrato firmado</span>
+                                <span>Contrato firmado</span>
                             </label>
                         </div>
                     </div>
@@ -937,7 +937,7 @@
                             <div class="contract-name">{{ tenant.name }}</div>
                             <div class="contract-unit">{{ tenant.unit }}</div>
                             <div class="contract-dates">
-                                📄 {{ tenant.contract_end_formatted }}
+                                {{ tenant.contract_end_formatted }}
                             </div>
                         </div>
                     </div>
@@ -961,12 +961,12 @@
                         <label class="tracking-checkbox">
                             <input type="checkbox" {{ 'checked' if tenant.contract_delivered else '' }}
                                    onchange="updateTracking('{{ tenant.id }}', 'delivered', this.checked)">
-                            <span>📨 Contrato entregado</span>
+                            <span>Contrato entregado</span>
                         </label>
                         <label class="tracking-checkbox">
                             <input type="checkbox" {{ 'checked' if tenant.contract_picked_up else '' }}
                                    onchange="updateTracking('{{ tenant.id }}', 'picked_up', this.checked)">
-                            <span>✍️ Contrato firmado</span>
+                            <span>Contrato firmado</span>
                         </label>
                     </div>
                 </div>
@@ -984,11 +984,9 @@
         <!-- Action Buttons - AT BOTTOM -->
         <div class="action-buttons" style="margin-bottom: 100px;">
             <button class="action-btn print" onclick="printSummary()">
-                <span>🖨️</span>
                 <span>Imprimir</span>
             </button>
             <button class="action-btn excel" onclick="downloadExcel()">
-                <span>📥</span>
                 <span>Excel</span>
             </button>
         </div>
@@ -1259,8 +1257,8 @@
                                 <th>Días</th>
                                 <th>Estado</th>
                                 <th>Reemplazo</th>
-                                <th>📨</th>
-                                <th>✍️</th>
+                                <th>Ent.</th>
+                                <th>Firm.</th>
                             </tr>
                 `;
 
@@ -1289,7 +1287,7 @@
 
             html += `
                     <div class="footer">
-                        <strong>Leyenda:</strong> 📨 = Contrato entregado | ✍️ = Contrato firmado
+                        <strong>Leyenda:</strong> Entregado = Contrato entregado | Firmado = Contrato firmado
                     </div>
                 </body>
                 </html>
