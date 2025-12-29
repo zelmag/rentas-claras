@@ -2975,10 +2975,21 @@ HTML_TEMPLATE = """
                     </div>
                 </div>
                 {% endfor %}
-                {% if expiring_contracts|length > 3 %}
+                {% set displayed_count = [expiring_contracts[:3]|length, 3]|min %}
+                {% if expiring_expired|length > 0 %}
+                    {% set banner_total = expiring_expired|length %}
+                {% elif expiring_critical|length > 0 %}
+                    {% set banner_total = expiring_critical|length %}
+                {% elif expiring_warning|length > 0 %}
+                    {% set banner_total = expiring_warning|length %}
+                {% else %}
+                    {% set banner_total = expiring_contracts|length %}
+                {% endif %}
+                {% set remaining = banner_total - displayed_count %}
+                {% if remaining > 0 %}
                 <div style="text-align: center; padding: 12px; margin-top: 8px;">
                     <a href="/contratos" style="color: #0A7A0A; font-weight: 700; text-decoration: none;">
-                        Ver {{ expiring_contracts|length - 3 }} más →
+                        Ver {{ remaining }} más →
                     </a>
                 </div>
                 {% endif %}
@@ -3010,7 +3021,7 @@ HTML_TEMPLATE = """
         
         {% if test_mode %}
         <div class="test-mode-banner">
-            MODO PRUEBA — Los mensajes irán a tu número ({{ test_phone }}), no a los inquilinos.
+            MODO PRUEBA — Los mensajes irán a tu número {{ test_phone }}, no a los inquilinos.
         </div>
         {% endif %}
         
@@ -3239,8 +3250,36 @@ HTML_TEMPLATE = """
         
         <!-- Last Saved Indicator - Text-first design for small screens like iPhone Mini -->
         <div id="lastSaved" style="text-align: center; background: #dcfce7; border: 2px solid #0A7A0A; color: #0A7A0A; font-weight: 700; padding: 12px 16px; border-radius: 12px; margin-bottom: 16px; font-size: 1rem;">
-            <span id="lastSavedText">Guardado ✓</span>
+            <span id="lastSavedText">✓ Listo</span>
         </div>
+        <script>
+            // Load and display last saved timestamp on page load
+            (function() {
+                const savedTime = localStorage.getItem('lastSavedTime');
+                if (savedTime) {
+                    const date = new Date(parseInt(savedTime));
+                    const now = new Date();
+                    const isToday = date.toDateString() === now.toDateString();
+                    const yesterday = new Date(now);
+                    yesterday.setDate(yesterday.getDate() - 1);
+                    const isYesterday = date.toDateString() === yesterday.toDateString();
+                    
+                    let dayStr;
+                    if (isToday) {
+                        dayStr = 'Hoy';
+                    } else if (isYesterday) {
+                        dayStr = 'Ayer';
+                    } else {
+                        dayStr = date.toLocaleDateString('es-MX', { weekday: 'short', day: 'numeric', month: 'short' });
+                    }
+                    const timeStr = date.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+                    const textEl = document.getElementById('lastSavedText');
+                    if (textEl) {
+                        textEl.textContent = '✓ Guardado: ' + dayStr + ' ' + timeStr;
+                    }
+                }
+            })();
+        </script>
           
         <!-- Offline Banner -->
         <div class="offline-banner" id="offlineBanner" style="display:none;">
@@ -5408,16 +5447,20 @@ HTML_TEMPLATE = """
         function updateLastSaved() {
             const el = document.getElementById('lastSaved');
             const textEl = document.getElementById('lastSavedText');
+            const now = new Date();
+            
+            // Save timestamp to localStorage for persistence across page reloads
+            localStorage.setItem('lastSavedTime', now.getTime().toString());
+            
+            // Format the time display
+            const timeStr = now.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+            const displayText = '✓ Guardado: Hoy ' + timeStr;
+            
             if (el && textEl) {
-                const now = new Date();
-                const timeStr = now.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
-                textEl.textContent = `Guardado a las ${timeStr}`;
+                textEl.textContent = displayText;
                 el.style.display = 'flex';
             } else if (el) {
-                // Fallback for old structure
-                const now = new Date();
-                const timeStr = now.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
-                el.textContent = `Guardado a las ${timeStr}`;
+                el.textContent = displayText;
                 el.style.color = '#0A7A0A';
             }
         }
@@ -7753,7 +7796,7 @@ CONTRACTS_TEMPLATE = """
         {% if upcoming_renewals_by_month %}
         <div class="upcoming-section" style="background: white; border-radius: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 24px; overflow: hidden;">
             <div class="upcoming-header" style="background: #CC0000; color: white; padding: 16px; font-weight: 700; font-size: 1rem;">
-                📋 Próximos Vencimientos <span style="font-weight: 400; opacity: 0.9; font-size: 0.9rem;">(toca para editar)</span>
+                ⚠️ {{ action_needed_count }} contrato{{ 's' if action_needed_count != 1 else '' }} necesita{{ 'n' if action_needed_count != 1 else '' }} atención <span style="font-weight: 400; opacity: 0.9; font-size: 0.85rem;">(pendientes o sin candidato)</span>
             </div>
             <div class="upcoming-list">
                 {% for month_group in upcoming_renewals_by_month %}
@@ -8639,6 +8682,31 @@ def contracts():
         )
     )
 
+    # Filter upcoming renewals to only show "action needed" items:
+    # - no_renovará WITHOUT a candidate (needs attention)
+    # - pendiente (needs decision)
+    # Exclude renovará (already handled, no action needed)
+    action_needed_renewals_by_month = []
+    action_needed_count = 0
+    for month_group in upcoming_renewals_by_month:
+        filtered_tenants = []
+        for tenant in month_group["tenants"]:
+            needs_action = False
+            if tenant.renewal_status == "pendiente":
+                needs_action = True
+            elif tenant.renewal_status == "no_renovará" and not tenant.replacement_name:
+                needs_action = True
+            
+            if needs_action:
+                filtered_tenants.append(tenant)
+                action_needed_count += 1
+        
+        if filtered_tenants:
+            action_needed_renewals_by_month.append({
+                "month": month_group["month"],
+                "tenants": filtered_tenants
+            })
+
     return render_template_string(
         CONTRACTS_TEMPLATE,
         tenants_by_property=tenants_by_property,
@@ -8646,7 +8714,8 @@ def contracts():
         renewing_count=renewing_count,
         not_renewing_count=not_renewing_count,
         pending_count=pending_count,
-        upcoming_renewals_by_month=upcoming_renewals_by_month,
+        upcoming_renewals_by_month=action_needed_renewals_by_month,
+        action_needed_count=action_needed_count,
         available_apartments=available_apartments,
     )
 
