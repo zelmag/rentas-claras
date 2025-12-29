@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <title>{% block title %}RentasClaras{% endblock %}</title>
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <link rel="apple-touch-icon" href="/static/icon-192.png">
+    <link rel="manifest" href="/static/manifest.json">
+    <meta name="theme-color" content="#0A7A0A">
+    
+    {# Shared CSS Variables #}
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        :root {
+            --safe-area-top: env(safe-area-inset-top, 0px);
+            --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+            --color-primary: #0A7A0A;
+            --color-primary-dark: #085A08;
+            --color-danger: #CC0000;
+            --color-neutral: #333333;
+            --color-white: #FFFFFF;
+            --color-border: #CCCCCC;
+        }
+        
+        html {
+            height: 100%;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--color-white);
+            min-height: 100%;
+            min-height: 100dvh;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+    </style>
+    
+    {# Page-specific styles #}
+    {% block styles %}{% endblock %}
+    
+    {# Extra head content (scripts, meta tags, etc.) #}
+    {% block head_extra %}{% endblock %}
+</head>
+<body>
+    {% block body %}{% endblock %}
+    
+    {# Bottom Navigation - Shared across main pages #}
+    {% block bottom_nav %}
+    <nav class="bottom-nav" style="
+        display: flex;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: var(--color-white);
+        border-top: 2px solid var(--color-border);
+        padding: 8px;
+        padding-bottom: calc(8px + var(--safe-area-bottom));
+        z-index: 1000;
+        justify-content: space-around;
+        gap: 8px;
+        box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
+    ">
+        <a href="/" class="bottom-nav-item {% if active_tab == 'pagos' %}active{% endif %}" style="
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            color: {% if active_tab == 'pagos' %}var(--color-primary){% else %}var(--color-neutral){% endif %};
+            font-size: 0.875rem;
+            font-weight: 700;
+            padding: 8px;
+            border-radius: 8px;
+            min-width: 64px;
+            min-height: 48px;
+            {% if active_tab == 'pagos' %}background: rgba(10, 122, 10, 0.1);{% endif %}
+        ">
+            <span style="font-size: 1.5rem; margin-bottom: 2px;">💰</span>
+            <span>Cobrar</span>
+        </a>
+        <a href="/contratos" class="bottom-nav-item {% if active_tab == 'contratos' %}active{% endif %}" style="
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            color: {% if active_tab == 'contratos' %}var(--color-primary){% else %}var(--color-neutral){% endif %};
+            font-size: 0.875rem;
+            font-weight: 700;
+            padding: 8px;
+            border-radius: 8px;
+            min-width: 64px;
+            min-height: 48px;
+            {% if active_tab == 'contratos' %}background: rgba(10, 122, 10, 0.1);{% endif %}
+        ">
+            <span style="font-size: 1.5rem; margin-bottom: 2px;">📋</span>
+            <span>Contratos</span>
+        </a>
+    </nav>
+    {% endblock %}
+    
+    {# Page-specific scripts #}
+    {% block scripts %}{% endblock %}
+</body>
+</html>
