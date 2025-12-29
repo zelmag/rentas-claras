@@ -3537,8 +3537,8 @@ HTML_TEMPLATE = """
                             <th style="text-align: right; min-width: 70px; background: #FFF3CD; color: #856404;">MULTA</th>
                             <th style="text-align: right; min-width: 80px; font-weight: 800;">TOTAL</th>
                             <th style="text-align: right; min-width: 70px;">Pagado</th>
-                            <th style="text-align: center; width: 40px;" title="Mensajes enviados este mes">📨</th>
                             <th style="text-align: center; width: 70px;">Estado</th>
+                            <th style="text-align: center; width: 40px;" title="Mensajes enviados este mes">📨</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -3561,6 +3561,12 @@ HTML_TEMPLATE = """
                             <td class="pagado-cell" data-tenant-id="{{ tenant.id }}" style="text-align: right; font-weight: 700; color: #0A7A0A;">
                                 {% if tenant.paid %}${{ "{:,.0f}".format(tenant.rent) }}{% endif %}
                             </td>
+                            <td style="text-align: center;">
+                                <button type="button" class="status-pill status-pill--small tenant-status-btn-table {% if tenant.paid %}paid{% else %}unpaid{% endif %}"
+                                        onclick="togglePaidTable(this, '{{ tenant.id }}')">
+                                    {% if tenant.paid %}✓{% else %}{% endif %}
+                                </button>
+                            </td>
                             <!-- MESSAGE INDICATOR COLUMN -->
                             <td style="text-align: center; font-size: 0.85rem;">
                                 {% if tenant.paid %}
@@ -3573,12 +3579,6 @@ HTML_TEMPLATE = """
                                     <span style="color: #9CA3AF;">—</span>
                                 {% endif %}
                             </td>
-                            <td style="text-align: center;">
-                                <button type="button" class="status-pill status-pill--small tenant-status-btn-table {% if tenant.paid %}paid{% else %}unpaid{% endif %}"
-                                        onclick="togglePaidTable(this, '{{ tenant.id }}')">
-                                    {% if tenant.paid %}✓{% else %}{% endif %}
-                                </button>
-                            </td>
                         </tr>
                         {% endfor %}
                         <!-- Property Total Row -->
@@ -3589,8 +3589,8 @@ HTML_TEMPLATE = """
                             <td style="border-top: 2px solid #333; text-align: right; color: #CC0000;">+${{ "{:,.0f}".format(tenants|rejectattr('paid')|sum(attribute='late_fee')) }}</td>
                             <td style="border-top: 2px solid #333; text-align: right; font-weight: 800; color: #CC0000;">${{ "{:,.0f}".format(tenants|rejectattr('paid')|sum(attribute='total_owed')) }}</td>
                             <td class="property-total-paid" data-property="{{ property_name }}" style="text-align: right; color: #0A7A0A; border-top: 2px solid #333;">${{ "{:,.0f}".format(tenants|selectattr('paid')|sum(attribute='rent')) }}</td>
-                            <td style="border-top: 2px solid #333;"></td>
                             <td></td>
+                            <td style="border-top: 2px solid #333;"></td>
                         </tr>
                     </tbody>
                 </table>
