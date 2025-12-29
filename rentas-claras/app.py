@@ -37,6 +37,7 @@ from database import (
     get_all_tenants,
     get_available_months,
     get_expiring_contracts,
+    get_last_sync_time,
     get_message_counts_for_month,
     get_monthly_status,
     get_tenant_by_id,
@@ -9252,7 +9253,7 @@ if __name__ == "__main__":
 ║                Simple Bulk WhatsApp Sender                        ║
 ╠══════════════════════════════════════════════════════════════════╣
 ║                                                                   ║
-║  Abre tu navegador en: http://localhost:5000                     ║
+║  Abre tu navegador en: http://localhost:5001                     ║
 ║                                                                   ║
 ║  Instrucciones:                                                   ║
 ║  1. Desmarca los inquilinos que YA PAGARON                       ║
@@ -9266,4 +9267,4 @@ if __name__ == "__main__":
 ╚══════════════════════════════════════════════════════════════════╝
 """
     )
-    app.run(debug=False, port=5000)
+    app.run(debug=False, port=5001)
