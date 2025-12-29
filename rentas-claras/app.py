@@ -3415,47 +3415,6 @@ HTML_TEMPLATE = """
             </div>
         </div>
         
-        <!-- Last Saved Indicator - Text-first design for small screens like iPhone Mini -->
-        <div id="lastSaved" style="text-align: center; background: #dcfce7; border: 2px solid #0A7A0A; color: #0A7A0A; font-weight: 700; padding: 12px 16px; border-radius: 12px; margin-bottom: 16px; font-size: 1rem;">
-            <span id="lastSavedText">✓ Listo</span>
-        </div>
-        <script>
-            // Load and display last saved timestamp on page load
-            (function() {
-                console.log('Page load: Loading last saved timestamp from localStorage...');
-                const savedTime = localStorage.getItem('lastSavedTime');
-                console.log('Page load: savedTime from localStorage =', savedTime);
-                if (savedTime) {
-                    const date = new Date(parseInt(savedTime));
-                    console.log('Page load: Parsed date =', date);
-                    const now = new Date();
-                    const isToday = date.toDateString() === now.toDateString();
-                    const yesterday = new Date(now);
-                    yesterday.setDate(yesterday.getDate() - 1);
-                    const isYesterday = date.toDateString() === yesterday.toDateString();
-                    
-                    let dayStr;
-                    if (isToday) {
-                        dayStr = 'Hoy';
-                    } else if (isYesterday) {
-                        dayStr = 'Ayer';
-                    } else {
-                        dayStr = date.toLocaleDateString('es-MX', { weekday: 'short', day: 'numeric', month: 'short' });
-                    }
-                    const timeStr = date.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
-                    const displayText = '✓ Guardado: ' + dayStr + ' ' + timeStr;
-                    console.log('Page load: displayText =', displayText);
-                    const textEl = document.getElementById('lastSavedText');
-                    console.log('Page load: textEl found =', !!textEl);
-                    if (textEl) {
-                        textEl.textContent = displayText;
-                        console.log('Page load: Updated lastSavedText to:', textEl.textContent);
-                    }
-                } else {
-                    console.log('Page load: No savedTime found in localStorage, showing default "Listo"');
-                }
-            })();
-        </script>
           
         <!-- Offline Banner -->
         <div class="offline-banner" id="offlineBanner" style="display:none;">
@@ -5617,35 +5576,16 @@ HTML_TEMPLATE = """
         }
         
 // =============================================
-        // Last Saved Timestamp - More visible for Excel users
+        // Last Saved Timestamp - Updates sync indicator
         // =============================================
         
         function updateLastSaved() {
-            console.log('updateLastSaved() called');
-            const el = document.getElementById('lastSaved');
-            const textEl = document.getElementById('lastSavedText');
             const syncIndicator = document.getElementById('sync-indicator');
             const syncText = document.getElementById('sync-text');
-            console.log('Elements found:', { el: !!el, textEl: !!textEl, syncIndicator: !!syncIndicator });
             const now = new Date();
             
             // Save timestamp to localStorage for persistence across page reloads
             localStorage.setItem('lastSavedTime', now.getTime().toString());
-            console.log('Saved to localStorage:', now.getTime().toString());
-            
-            // Format the time display
-            const timeStr = now.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
-            const displayText = '✓ Guardado: Hoy ' + timeStr;
-            console.log('Display text:', displayText);
-            
-            if (el && textEl) {
-                textEl.textContent = displayText;
-                console.log('Updated textEl.textContent to:', textEl.textContent);
-            } else if (el) {
-                el.textContent = displayText;
-                el.style.color = '#0A7A0A';
-                console.log('Updated el.textContent to:', el.textContent);
-            }
             
             // Update the sync indicator
             if (syncIndicator && syncText) {
