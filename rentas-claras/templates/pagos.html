@@ -28,9 +28,269 @@
     }
 
     .container {
-        max-width: 500px;
+        max-width: 600px;
         margin: 0 auto;
         padding: 16px;
+    }
+
+    /* ========== RESPONSIVE DESIGN ========== */
+    
+    /* Tablet - slightly wider */
+    @media (min-width: 768px) {
+        .container {
+            max-width: 700px;
+            padding: 24px;
+        }
+        
+        .app-title {
+            font-size: 2rem;
+        }
+        
+        .month-name {
+            font-size: 1.8rem;
+        }
+        
+        .month-btn {
+            width: 56px;
+            height: 56px;
+        }
+        
+        .summary-card {
+            padding: 28px;
+        }
+        
+        .progress-percent {
+            font-size: 2.2rem;
+        }
+        
+        .summary-value {
+            font-size: 1.6rem;
+        }
+        
+        .tenant-item {
+            padding: 20px 24px;
+            min-height: 80px;
+        }
+        
+        .tenant-name {
+            font-size: 1.3rem;
+        }
+        
+        .tenant-amount {
+            font-size: 1.5rem;
+        }
+        
+        .toggle-btn {
+            width: 80px;
+            height: 80px;
+            font-size: 2.2rem;
+        }
+        
+        .search-input {
+            font-size: 1.2rem;
+            padding: 18px 24px 18px 56px;
+        }
+    }
+    
+    /* Desktop - much wider with larger elements */
+    @media (min-width: 1024px) {
+        body {
+            padding-bottom: 0;
+        }
+        
+        .container {
+            max-width: 900px;
+            padding: 32px;
+        }
+        
+        .app-title {
+            font-size: 2.5rem;
+        }
+        
+        .month-name {
+            font-size: 2rem;
+            min-width: 200px;
+        }
+        
+        .month-btn {
+            width: 64px;
+            height: 64px;
+        }
+        
+        .summary-card {
+            padding: 32px;
+        }
+        
+        .progress-percent {
+            font-size: 2.5rem;
+        }
+        
+        .progress-bar {
+            height: 16px;
+        }
+        
+        .summary-row {
+            padding: 16px 0;
+        }
+        
+        .summary-label {
+            font-size: 1.2rem;
+        }
+        
+        .summary-value {
+            font-size: 1.8rem;
+        }
+        
+        .section-header {
+            padding: 20px 28px;
+        }
+        
+        .section-title {
+            font-size: 1.3rem;
+        }
+        
+        .section-count {
+            font-size: 1.8rem;
+        }
+        
+        .property-section-header {
+            padding: 18px 28px;
+            font-size: 1.3rem;
+        }
+        
+        .property-section-name {
+            font-size: 1.4rem;
+        }
+        
+        .property-section-amount {
+            font-size: 1.4rem;
+        }
+        
+        .tenant-item {
+            padding: 24px 28px;
+            min-height: 90px;
+            gap: 20px;
+        }
+        
+        .tenant-name {
+            font-size: 1.4rem;
+        }
+        
+        .tenant-property {
+            font-size: 1.3rem;
+            padding: 8px 16px;
+        }
+        
+        .tenant-amount {
+            font-size: 1.7rem;
+            min-width: 120px;
+        }
+        
+        .toggle-btn {
+            width: 88px;
+            height: 88px;
+            font-size: 2.5rem;
+            border-width: 4px;
+        }
+        
+        .search-box {
+            padding: 20px;
+        }
+        
+        .search-label {
+            font-size: 1.2rem;
+        }
+        
+        .search-input {
+            font-size: 1.3rem;
+            padding: 20px 28px 20px 60px;
+            border-width: 4px;
+        }
+        
+        .search-icon {
+            font-size: 1.6rem;
+            left: 20px;
+        }
+        
+        .action-buttons {
+            gap: 16px;
+        }
+        
+        .action-btn {
+            padding: 18px;
+            font-size: 1.2rem;
+            min-height: 64px;
+        }
+        
+        /* Desktop navigation - inline instead of fixed bottom */
+        .bottom-nav {
+            position: relative;
+            margin-top: 32px;
+            border-radius: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        
+        .nav-item {
+            padding: 16px;
+            font-size: 1.1rem;
+        }
+        
+        .nav-icon {
+            font-size: 1.8rem;
+        }
+        
+        /* Modal - larger on desktop */
+        .modal-content {
+            max-width: 480px;
+            padding: 32px;
+        }
+        
+        .modal-icon {
+            font-size: 4rem;
+        }
+        
+        .modal-title {
+            font-size: 1.6rem;
+        }
+        
+        .modal-tenant {
+            font-size: 1.3rem;
+            padding: 16px;
+        }
+        
+        .modal-amount {
+            font-size: 2rem;
+        }
+        
+        .modal-btn {
+            padding: 20px;
+            font-size: 1.3rem;
+            min-height: 64px;
+        }
+        
+        .modal-payment-btn {
+            padding: 14px 20px;
+            font-size: 1.1rem;
+        }
+        
+        /* Toast - larger on desktop */
+        .toast {
+            padding: 20px 40px;
+            font-size: 1.3rem;
+            border-radius: 16px;
+        }
+        
+        .sync-indicator {
+            font-size: 1.1rem;
+            padding: 8px 16px;
+        }
+    }
+    
+    /* Large Desktop - even wider */
+    @media (min-width: 1400px) {
+        .container {
+            max-width: 1100px;
+        }
     }
 
     /* Header */
@@ -765,14 +1025,7 @@
             </div>
         </div>
 
-        <!-- Search - PROMINENT -->
-        <div class="search-box">
-            <label class="search-label">🔍 ¿Quién buscas?</label>
-            <div class="search-input-wrapper">
-                <span class="search-icon">🔍</span>
-                <input type="text" class="search-input" id="searchInput" placeholder="Escribe el nombre..." oninput="filterTenants(this.value)">
-            </div>
-        </div>
+        {% include 'partials/search_box.html' %}
 
         <!-- PENDING Section -->
         <div class="section-header pending" onclick="toggleSection('pending')">
@@ -885,7 +1138,7 @@
         </div>
 
         <!-- Action Buttons - AT BOTTOM -->
-        <div class="action-buttons" style="margin-top: 24px; margin-bottom: 16px;">
+        <div class="action-buttons" style="margin-top: 24px; margin-bottom: 100px;">
             <button class="action-btn print" onclick="printSummary()">
                 <span>🖨️</span>
                 <span>Imprimir</span>
@@ -897,17 +1150,7 @@
         </div>
     </div>
 
-    <!-- Bottom Navigation -->
-    <nav class="bottom-nav">
-        <a href="/" class="nav-item active">
-            <div class="nav-icon">💰</div>
-            <div>Pagos</div>
-        </a>
-        <a href="/contratos" class="nav-item">
-            <div class="nav-icon">📄</div>
-            <div>Contratos</div>
-        </a>
-    </nav>
+    {% include 'partials/bottom_nav.html' %}
 
     <!-- Confirmation Modal -->
     <div class="modal-overlay" id="confirmModal">
@@ -930,6 +1173,21 @@
                     <button type="button" class="visit-btn" onclick="changeVisits(1)" style="width: 48px; height: 48px; border-radius: 50%; border: 2px solid #D97706; background: white; font-size: 1.5rem; cursor: pointer;">+</button>
                 </div>
                 <div id="visitCharge" style="font-size: 1rem; font-weight: 700; color: #92400E; text-align: center; margin-top: 8px;">$0 extra</div>
+            </div>
+
+            <!-- Advance Payment Section -->
+            <div id="advancePaymentSection" style="display: none; margin: 16px 0; padding: 12px; background: #E0E7FF; border-radius: 10px; border: 2px solid #6366F1;">
+                <div style="font-size: 1rem; font-weight: 600; color: #4338CA; margin-bottom: 10px;">📅 ¿Pago adelantado?</div>
+                <div style="display: flex; align-items: center; gap: 12px; justify-content: center;">
+                    <button type="button" onclick="changeAdvanceMonths(-1)" style="width: 48px; height: 48px; border-radius: 50%; border: 2px solid #6366F1; background: white; font-size: 1.5rem; cursor: pointer;">−</button>
+                    <div style="text-align: center;">
+                        <div id="advanceMonths" style="font-size: 2rem; font-weight: 800; color: #4338CA;">1</div>
+                        <div style="font-size: 0.85rem; color: #4338CA;">mes(es)</div>
+                    </div>
+                    <button type="button" onclick="changeAdvanceMonths(1)" style="width: 48px; height: 48px; border-radius: 50%; border: 2px solid #6366F1; background: white; font-size: 1.5rem; cursor: pointer;">+</button>
+                </div>
+                <div id="advanceTotal" style="font-size: 1rem; font-weight: 700; color: #4338CA; text-align: center; margin-top: 8px;">1 mes</div>
+                <div id="advanceMonthsList" style="font-size: 0.9rem; color: #4338CA; text-align: center; margin-top: 4px;"></div>
             </div>
 
             <!-- Payment Method Selection (only shown when marking as paid) -->
@@ -995,7 +1253,9 @@
         // Selected payment method
         let selectedPaymentMethod = '';
         let currentVisitCount = 0;
+        let currentAdvanceMonths = 1;
         const VISIT_CHARGE = 1500; // $1,500 per visit
+        const SPANISH_MONTHS = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 
         function selectPaymentMethod(method) {
             selectedPaymentMethod = method;
@@ -1010,11 +1270,41 @@
             const extra = currentVisitCount * VISIT_CHARGE;
             document.getElementById('visitCharge').textContent = currentVisitCount > 0 ? `+$${extra.toLocaleString()} extra` : '$0 extra';
             
-            // Update modal amount to show total
-            if (pendingAction) {
-                const total = pendingAction.rent + extra;
-                document.getElementById('modalAmount').textContent = '$' + total.toLocaleString();
+            updateModalTotal();
+        }
+
+        function changeAdvanceMonths(delta) {
+            currentAdvanceMonths = Math.max(1, Math.min(12, currentAdvanceMonths + delta));
+            document.getElementById('advanceMonths').textContent = currentAdvanceMonths;
+            
+            // Calculate months covered
+            const monthsList = [];
+            let m = currentMonth;
+            let y = currentYear;
+            for (let i = 0; i < currentAdvanceMonths; i++) {
+                monthsList.push(`${SPANISH_MONTHS[m - 1]} ${y}`);
+                m++;
+                if (m > 12) {
+                    m = 1;
+                    y++;
+                }
             }
+            
+            document.getElementById('advanceTotal').textContent = currentAdvanceMonths === 1 
+                ? '1 mes' 
+                : `${currentAdvanceMonths} meses`;
+            document.getElementById('advanceMonthsList').textContent = monthsList.join(', ');
+            
+            updateModalTotal();
+        }
+
+        function updateModalTotal() {
+            if (!pendingAction) return;
+            const visitExtra = currentVisitCount * VISIT_CHARGE;
+            const baseRent = pendingAction.rent;
+            const totalMonths = currentAdvanceMonths;
+            const total = (baseRent * totalMonths) + visitExtra;
+            document.getElementById('modalAmount').textContent = '$' + total.toLocaleString();
         }
 
         // Show confirmation modal
@@ -1028,6 +1318,7 @@
             const btn = document.getElementById('modalConfirmBtn');
             const paymentMethods = document.getElementById('paymentMethods');
             const extraChargesSection = document.getElementById('extraChargesSection');
+            const advancePaymentSection = document.getElementById('advancePaymentSection');
 
             // Get tenant item for property/unit info
             const tenantItem = document.querySelector(`[data-tenant-id="${tenantId}"]`);
@@ -1048,6 +1339,12 @@
             const extra = currentVisitCount * VISIT_CHARGE;
             document.getElementById('visitCharge').textContent = currentVisitCount > 0 ? `+$${extra.toLocaleString()} extra` : '$0 extra';
 
+            // Reset advance months
+            currentAdvanceMonths = 1;
+            document.getElementById('advanceMonths').textContent = '1';
+            document.getElementById('advanceTotal').textContent = '1 mes';
+            document.getElementById('advanceMonthsList').textContent = `${SPANISH_MONTHS[currentMonth - 1]} ${currentYear}`;
+
             if (currentlyPaid) {
                 // Currently paid, asking to mark as unpaid
                 icon.textContent = '⚠️';
@@ -1057,6 +1354,7 @@
                 btn.className = 'modal-btn confirm-unpaid';
                 paymentMethods.style.display = 'none';
                 extraChargesSection.style.display = 'none';
+                advancePaymentSection.style.display = 'none';
             } else {
                 // Currently unpaid, asking to mark as paid
                 icon.textContent = '💰';
@@ -1066,6 +1364,7 @@
                 btn.className = 'modal-btn confirm-paid';
                 paymentMethods.style.display = 'block';
                 extraChargesSection.style.display = 'block';
+                advancePaymentSection.style.display = 'block';
             }
 
             tenant.textContent = name;
@@ -1087,7 +1386,7 @@
 
             const { tenantId, name, rent, newPaidStatus } = pendingAction;
             const visitExtra = currentVisitCount * VISIT_CHARGE;
-            const totalPaid = rent + visitExtra;
+            const totalPaid = (rent * currentAdvanceMonths) + visitExtra;
 
             // Update SOT
             updateSOT(tenantId, newPaidStatus);
@@ -1095,31 +1394,71 @@
             // Update UI with visit info
             updateTenantUI(tenantId, newPaidStatus, name, rent, currentVisitCount);
 
-            // Save to server (include payment method and visits)
-            fetch('/api/payment', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    tenant_id: tenantId, 
-                    paid: newPaidStatus,
-                    payment_method: newPaidStatus ? selectedPaymentMethod : '',
-                    visits: newPaidStatus ? currentVisitCount : 0,
-                    visit_charge: visitExtra,
-                    year: currentYear,
-                    month: currentMonth
-                })
-            }).then(res => {
-                if (res.ok) {
-                    const msg = newPaidStatus 
-                        ? (visitExtra > 0 ? `¡${name} pagó $${totalPaid.toLocaleString()}!` : `¡${name} pagó!`)
-                        : `${name} pendiente`;
-                    showToast(msg, newPaidStatus ? 'success' : 'pending');
-                    updateSyncIndicator();
+            // If advance payment, we need to mark multiple months as paid
+            if (newPaidStatus && currentAdvanceMonths > 1) {
+                // Mark multiple months - send array of months
+                let m = currentMonth;
+                let y = currentYear;
+                const paymentsToSave = [];
+                
+                for (let i = 0; i < currentAdvanceMonths; i++) {
+                    paymentsToSave.push({
+                        tenant_id: tenantId,
+                        paid: true,
+                        payment_method: selectedPaymentMethod,
+                        visits: i === 0 ? currentVisitCount : 0, // Only first month gets visits
+                        visit_charge: i === 0 ? visitExtra : 0,
+                        year: y,
+                        month: m,
+                        is_advance: true,
+                        advance_months: currentAdvanceMonths
+                    });
+                    
+                    m++;
+                    if (m > 12) {
+                        m = 1;
+                        y++;
+                    }
                 }
-            }).catch(err => {
-                console.error('Error saving:', err);
-                showToast('Guardado localmente', 'pending');
-            });
+                
+                // Save each month
+                paymentsToSave.forEach(payment => {
+                    fetch('/api/payment', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payment)
+                    }).catch(err => console.error('Error saving:', err));
+                });
+                
+                showToast(`¡${name} pagó ${currentAdvanceMonths} meses! ($${totalPaid.toLocaleString()})`, 'success');
+                updateSyncIndicator();
+            } else {
+                // Single month payment (original logic)
+                fetch('/api/payment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        tenant_id: tenantId, 
+                        paid: newPaidStatus,
+                        payment_method: newPaidStatus ? selectedPaymentMethod : '',
+                        visits: newPaidStatus ? currentVisitCount : 0,
+                        visit_charge: visitExtra,
+                        year: currentYear,
+                        month: currentMonth
+                    })
+                }).then(res => {
+                    if (res.ok) {
+                        const msg = newPaidStatus 
+                            ? (visitExtra > 0 ? `¡${name} pagó $${totalPaid.toLocaleString()}!` : `¡${name} pagó!`)
+                            : `${name} pendiente`;
+                        showToast(msg, newPaidStatus ? 'success' : 'pending');
+                        updateSyncIndicator();
+                    }
+                }).catch(err => {
+                    console.error('Error saving:', err);
+                    showToast('Guardado localmente', 'pending');
+                });
+            }
 
             closeModal();
             updateSummary();

@@ -1,0 +1,150 @@
+<!-- Search Box - Shared across all pages -->
+<div class="search-box">
+    <label class="search-label">🔍 ¿Quién buscas?</label>
+    <div class="search-input-wrapper">
+        <span class="search-icon">🔍</span>
+        <input type="text" class="search-input" id="searchInput" placeholder="Escribe el nombre..." oninput="handleSearch(this.value)">
+        <button type="button" class="search-clear" id="searchClear" onclick="clearSearch()" style="display: none;">✕</button>
+    </div>
+</div>
+
+<style>
+    .search-box {
+        position: relative;
+        margin-bottom: 20px;
+        background: white;
+        border-radius: 16px;
+        padding: 16px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .search-label {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #333;
+        margin-bottom: 10px;
+        display: block;
+    }
+
+    .search-input-wrapper {
+        position: relative;
+    }
+
+    .search-input {
+        width: 100%;
+        padding: 16px 52px 16px 52px;
+        border: 3px solid #0A7A0A;
+        border-radius: 12px;
+        font-size: 1.1rem;
+        background: white;
+    }
+
+    .search-input:focus {
+        outline: none;
+        border-color: #086608;
+        box-shadow: 0 0 0 3px rgba(10, 122, 10, 0.2);
+    }
+
+    .search-icon {
+        position: absolute;
+        left: 18px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 1.4rem;
+        pointer-events: none;
+    }
+
+    .search-clear {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        border: none;
+        background: #e0e0e0;
+        color: #666;
+        font-size: 1.2rem;
+        font-weight: 700;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+    }
+
+    .search-clear:hover {
+        background: #ccc;
+    }
+
+    .search-clear:active {
+        transform: translateY(-50%) scale(0.95);
+        background: #bbb;
+    }
+
+    /* Responsive */
+    @media (min-width: 768px) {
+        .search-input {
+            font-size: 1.2rem;
+            padding: 18px 56px 18px 56px;
+        }
+        
+        .search-clear {
+            width: 40px;
+            height: 40px;
+            font-size: 1.3rem;
+            right: 14px;
+        }
+    }
+
+    @media (min-width: 1024px) {
+        .search-box {
+            padding: 20px;
+        }
+        
+        .search-label {
+            font-size: 1.2rem;
+        }
+        
+        .search-input {
+            font-size: 1.3rem;
+            padding: 20px 64px 20px 60px;
+            border-width: 4px;
+        }
+        
+        .search-icon {
+            font-size: 1.6rem;
+            left: 20px;
+        }
+        
+        .search-clear {
+            width: 44px;
+            height: 44px;
+            font-size: 1.4rem;
+            right: 16px;
+        }
+    }
+</style>
+
+<script>
+    function handleSearch(term) {
+        // Show/hide clear button
+        const clearBtn = document.getElementById('searchClear');
+        clearBtn.style.display = term.length > 0 ? 'flex' : 'none';
+        
+        // Call page-specific filter function
+        if (typeof filterTenants === 'function') {
+            filterTenants(term);
+        } else if (typeof filterContracts === 'function') {
+            filterContracts(term);
+        }
+    }
+
+    function clearSearch() {
+        const input = document.getElementById('searchInput');
+        input.value = '';
+        input.focus();
+        handleSearch('');
+    }
+</script>

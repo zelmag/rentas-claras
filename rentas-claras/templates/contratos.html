@@ -26,9 +26,227 @@
     }
 
     .container {
-        max-width: 500px;
+        max-width: 600px;
         margin: 0 auto;
         padding: 16px;
+    }
+
+    /* ========== RESPONSIVE DESIGN ========== */
+    
+    /* Tablet - slightly wider */
+    @media (min-width: 768px) {
+        .container {
+            max-width: 700px;
+            padding: 24px;
+        }
+        
+        .app-title {
+            font-size: 2rem;
+        }
+        
+        .summary-card {
+            padding: 28px;
+        }
+        
+        .summary-value {
+            font-size: 1.8rem;
+        }
+        
+        .tenant-item {
+            padding: 20px 24px;
+        }
+        
+        .tenant-name {
+            font-size: 1.3rem;
+        }
+        
+        .tenant-property {
+            font-size: 1.2rem;
+        }
+        
+        .renewal-btn {
+            width: 64px;
+            height: 64px;
+            font-size: 1.5rem;
+        }
+        
+        .search-input {
+            font-size: 1.2rem;
+            padding: 18px 24px 18px 56px;
+        }
+    }
+    
+    /* Desktop - much wider with larger elements */
+    @media (min-width: 1024px) {
+        body {
+            padding-bottom: 0;
+        }
+        
+        .container {
+            max-width: 900px;
+            padding: 32px;
+        }
+        
+        .app-title {
+            font-size: 2.5rem;
+        }
+        
+        .summary-card {
+            padding: 32px;
+        }
+        
+        .summary-row {
+            padding: 16px 0;
+        }
+        
+        .summary-label {
+            font-size: 1.2rem;
+        }
+        
+        .summary-value {
+            font-size: 2rem;
+        }
+        
+        .section-header {
+            padding: 20px 28px;
+        }
+        
+        .section-title {
+            font-size: 1.3rem;
+        }
+        
+        .section-count {
+            font-size: 1.8rem;
+        }
+        
+        .property-section-header {
+            padding: 18px 28px;
+            font-size: 1.3rem;
+        }
+        
+        .property-section-name {
+            font-size: 1.4rem;
+        }
+        
+        .tenant-item {
+            padding: 24px 28px;
+            min-height: 90px;
+            gap: 20px;
+        }
+        
+        .tenant-name {
+            font-size: 1.4rem;
+        }
+        
+        .tenant-property {
+            font-size: 1.3rem;
+            padding: 8px 16px;
+        }
+        
+        .contract-dates {
+            font-size: 1.1rem;
+        }
+        
+        .days-badge {
+            font-size: 1.1rem;
+            padding: 10px 16px;
+        }
+        
+        .renewal-btn {
+            width: 72px;
+            height: 72px;
+            font-size: 1.6rem;
+            border-width: 4px;
+        }
+        
+        .search-box {
+            padding: 20px;
+        }
+        
+        .search-label {
+            font-size: 1.2rem;
+        }
+        
+        .search-input {
+            font-size: 1.3rem;
+            padding: 20px 28px 20px 60px;
+            border-width: 4px;
+        }
+        
+        .search-icon {
+            font-size: 1.6rem;
+            left: 20px;
+        }
+        
+        .action-buttons {
+            gap: 16px;
+        }
+        
+        .action-btn {
+            padding: 18px;
+            font-size: 1.2rem;
+            min-height: 64px;
+        }
+        
+        /* Desktop navigation - inline instead of fixed bottom */
+        .bottom-nav {
+            position: relative;
+            margin-top: 32px;
+            border-radius: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        
+        .nav-item {
+            padding: 16px;
+            font-size: 1.1rem;
+        }
+        
+        .nav-icon {
+            font-size: 1.8rem;
+        }
+        
+        /* Modal - larger on desktop */
+        .modal-content {
+            max-width: 520px;
+            padding: 32px;
+        }
+        
+        .modal-icon {
+            font-size: 4rem;
+        }
+        
+        .modal-title {
+            font-size: 1.6rem;
+        }
+        
+        .modal-tenant {
+            font-size: 1.3rem;
+            padding: 16px;
+        }
+        
+        .modal-btn {
+            padding: 20px;
+            font-size: 1.3rem;
+            min-height: 64px;
+        }
+        
+        .toast {
+            padding: 20px 40px;
+            font-size: 1.3rem;
+            border-radius: 16px;
+        }
+        
+        .sync-indicator {
+            font-size: 1.1rem;
+            padding: 8px 16px;
+        }
+    }
+    
+    /* Large Desktop - even wider */
+    @media (min-width: 1400px) {
+        .container {
+            max-width: 1100px;
+        }
     }
 
     /* Header */
@@ -607,14 +825,7 @@
             </div>
         </div>
 
-        <!-- Search - PROMINENT -->
-        <div class="search-box">
-            <label class="search-label">🔍 ¿Quién buscas?</label>
-            <div class="search-input-wrapper">
-                <span class="search-icon">🔍</span>
-                <input type="text" class="search-input" id="searchInput" placeholder="Escribe el nombre..." oninput="filterContracts(this.value)">
-            </div>
-        </div>
+        {% include 'partials/search_box.html' %}
 
         <!-- NEEDS ATTENTION Section (Pending + Not Renewing without replacement) -->
         <div class="section-header needs-attention" onclick="toggleSection('attention')">
@@ -814,7 +1025,7 @@
         </div>
 
         <!-- Action Buttons - AT BOTTOM -->
-        <div class="action-buttons">
+        <div class="action-buttons" style="margin-bottom: 100px;">
             <button class="action-btn print" onclick="printSummary()">
                 <span>🖨️</span>
                 <span>Imprimir</span>
@@ -826,17 +1037,7 @@
         </div>
     </div>
 
-    <!-- Bottom Navigation -->
-    <nav class="bottom-nav">
-        <a href="/" class="nav-item">
-            <div class="nav-icon">💰</div>
-            <div>Pagos</div>
-        </a>
-        <a href="/contratos" class="nav-item active">
-            <div class="nav-icon">📄</div>
-            <div>Contratos</div>
-        </a>
-    </nav>
+    {% include 'partials/bottom_nav.html' %}
 
     <!-- Toast -->
     <div class="toast" id="toast">Guardado</div>

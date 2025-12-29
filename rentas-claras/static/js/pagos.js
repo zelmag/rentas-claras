@@ -1,5 +1,5 @@
         console.log('🚀 Main script starting...');
-        
+
         // =============================================
         // 🔍 DEBUG: Global Error Handler & Tracing
         // =============================================
@@ -13,24 +13,24 @@
             });
             return false;
         };
-        
+
         window.addEventListener('unhandledrejection', function(event) {
             console.error('🚨 UNHANDLED PROMISE REJECTION:', event.reason);
         });
-        
+
         // Debug utility to check button clickability
         function debugButtonClickability() {
             console.log('🔍 === BUTTON CLICKABILITY DEBUG ===');
-            
+
             // Check all status pills
             const statusPills = document.querySelectorAll('.status-pill');
             console.log(`Found ${statusPills.length} status pills`);
-            
+
             statusPills.forEach((btn, i) => {
                 const rect = btn.getBoundingClientRect();
                 const styles = window.getComputedStyle(btn);
                 const tenantId = btn.closest('[data-tenant-id]')?.dataset?.tenantId || 'unknown';
-                
+
                 console.log(`Button ${i} (tenant: ${tenantId}):`, {
                     visible: rect.width > 0 && rect.height > 0,
                     position: { top: rect.top, left: rect.left, width: rect.width, height: rect.height },
@@ -42,7 +42,7 @@
                     disabled: btn.disabled,
                     hasOnclick: !!btn.onclick || btn.hasAttribute('onclick')
                 });
-                
+
                 // Check for overlapping elements
                 const centerX = rect.left + rect.width / 2;
                 const centerY = rect.top + rect.height / 2;
@@ -51,7 +51,7 @@
                     console.warn(`⚠️ Button ${i} is covered by:`, elementAtPoint, elementAtPoint?.className);
                 }
             });
-            
+
             // Check payment toggles
             const toggles = document.querySelectorAll('.payment-toggle input[type="checkbox"]');
             console.log(`Found ${toggles.length} payment toggles`);
@@ -63,7 +63,7 @@
                     hasOnchange: !!toggle.onchange || toggle.hasAttribute('onchange')
                 });
             });
-            
+
             // Check for modals blocking clicks
             const modals = document.querySelectorAll('.phone-modal, .confirm-modal');
             modals.forEach((modal, i) => {
@@ -77,19 +77,19 @@
                     });
                 }
             });
-            
+
             console.log('🔍 === END DEBUG ===');
         }
-        
+
         // Make debug function available globally
         window.debugButtonClickability = debugButtonClickability;
-        
+
         // Add click event listener to document to trace all clicks
         document.addEventListener('click', function(e) {
             const target = e.target;
-            const isButton = target.matches('button, .status-pill, .payment-toggle, [onclick]') || 
+            const isButton = target.matches('button, .status-pill, .payment-toggle, [onclick]') ||
                             target.closest('button, .status-pill, .payment-toggle, [onclick]');
-            
+
             if (isButton) {
                 console.log('🖱️ Click detected:', {
                     element: target.tagName,
@@ -102,7 +102,7 @@
                 });
             }
         }, true); // Use capture phase to see clicks before they're handled
-        
+
         // Read config from data attributes (no more Jinja in JS!)
         const configEl = document.getElementById('pagos-config');
         const dayOfMonth = parseInt(configEl?.dataset.dayOfMonth || '1');
@@ -160,7 +160,7 @@
             const now = Date.now();
             const maxAge = 90 * 24 * 60 * 60 * 1000; // 90 days in ms
             const keysToRemove = [];
-            
+
             for (let i = 0; i < localStorage.length; i++) {
                 const key = localStorage.key(i);
                 if (key && key.startsWith('paymentStateSOT_')) {
@@ -175,12 +175,12 @@
                     }
                 }
             }
-            
+
             keysToRemove.forEach(key => {
                 localStorage.removeItem(key);
                 console.log('Cleaned up stale SOT:', key);
             });
-            
+
             // Also clean up the old non-scoped key if it exists
             if (localStorage.getItem('paymentStateSOT')) {
                 localStorage.removeItem('paymentStateSOT');
@@ -193,18 +193,18 @@
         function reconcileSOTWithServer() {
             const sot = getPaymentSOT();
             const serverStateMap = new Map();
-            
+
             // Build map of server state from DOM (rendered by Jinja)
             document.querySelectorAll('.tenant-item').forEach(item => {
                 const tenantId = item.dataset.tenantId;
                 const isPaidServer = item.classList.contains('paid');
                 serverStateMap.set(tenantId, isPaidServer);
             });
-            
+
             // Check each SOT entry - if server disagrees and SOT is old (>5 min), trust server
             const fiveMinutesAgo = Date.now() - (5 * 60 * 1000);
             let needsUpdate = false;
-            
+
             Object.entries(sot.tenants).forEach(([tenantId, state]) => {
                 const serverState = serverStateMap.get(tenantId);
                 if (serverState !== undefined && serverState !== state.isPaid) {
@@ -218,7 +218,7 @@
                     }
                 }
             });
-            
+
             if (needsUpdate) {
                 const key = getSOTKey();
                 localStorage.setItem(key, JSON.stringify(sot));
@@ -227,10 +227,10 @@
 
         function applyPaymentSOT() {
             console.log('Applying SOT to DOM...');
-            
+
             // First reconcile with server to remove stale entries
             reconcileSOTWithServer();
-            
+
             const sot = getPaymentSOT();
             let appliedCount = 0;
 
@@ -296,7 +296,7 @@
                 tableBtn.style.boxShadow = 'none';
                 tableBtn.style.border = '3px solid transparent';
             }
-            
+
             // Update hint text for Don Raúl
             const viewHint = document.getElementById('viewHint');
             if (viewHint) {
@@ -308,10 +308,10 @@
             if (toggle) toggle.checked = false;
 
             localStorage.setItem('preferredView', 'card');
-            
+
             // BUGFIX #6: Apply SOT to ensure card view has correct state after switch
             applyPaymentSOT();
-            
+
             console.log('Switched to card view');
         }
 
@@ -345,7 +345,7 @@
                 cardBtn.style.boxShadow = 'none';
                 cardBtn.style.border = '3px solid transparent';
             }
-            
+
             // Update hint text for Don Raúl
             const viewHint = document.getElementById('viewHint');
             if (viewHint) {
@@ -357,10 +357,10 @@
             if (toggle) toggle.checked = true;
 
             localStorage.setItem('preferredView', 'table');
-            
+
             // BUGFIX #6: Apply SOT to ensure table view has correct state after switch
             applyPaymentSOT();
-            
+
             console.log('Switched to table view');
         }
 
@@ -389,7 +389,7 @@
                     filterTenants(e.target.value);
                 });
             }
-            
+
             // 🔍 DEBUG: Run button clickability check after page loads
             setTimeout(() => {
                 console.log('🔍 Running automatic button clickability debug...');
@@ -400,7 +400,7 @@
         // Toggle paid status from Excel table view
         function togglePaidTable(btn, tenantId) {
             console.log('🔘 togglePaidTable called:', { btn, tenantId, btnClass: btn?.className });
-            
+
             try {
                 // BUGFIX #9: Prevent double-clicks with toggleInProgress
                 if (toggleInProgress.has(tenantId)) {
@@ -408,7 +408,7 @@
                     return;
                 }
                 toggleInProgress.add(tenantId);
-                
+
                 // Determine current state and toggle it
                 const row = btn.closest('tr');
                 if (!row) {
@@ -416,7 +416,7 @@
                     toggleInProgress.delete(tenantId);
                     return;
                 }
-                
+
                 const currentlyPaid = btn.classList.contains('paid');
                 const newPaidStatus = !currentlyPaid;
                 console.log('📊 Status change:', { tenantId, currentlyPaid, newPaidStatus });
@@ -816,7 +816,7 @@
             const now = new Date();
             const dateStr = now.toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' });
             const timeStr = now.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
-            
+
             // Collect tenant data from the page
             let tenantsHTML = '';
             let totalExpected = 0;
@@ -824,36 +824,36 @@
             let totalPending = 0;
             let paidCount = 0;
             let pendingCount = 0;
-            
+
             // Group by property
             const propertySections = document.querySelectorAll('.excel-property-section');
-            
+
             propertySections.forEach(section => {
                 const header = section.querySelector('.excel-table thead th');
                 if (!header) return;
                 const propertyName = header.textContent.trim();
                 if (!propertyName) return;
-                
+
                 let propertyTotal = 0;
                 let propertyPaid = 0;
                 let propertyHTML = '';
-                
+
                 const rows = section.querySelectorAll('.excel-table tbody tr[data-tenant-id]');
                 const sot = getPaymentSOT();
-                
+
                 rows.forEach(row => {
                     const cells = row.querySelectorAll('td');
                     if (cells.length < 6) return;
-                    
+
                     const tenantId = row.dataset.tenantId;
                     const unit = cells[0].textContent.trim();
                     const name = cells[1].textContent.trim().replace('⚠️', '').trim();
-                    
+
                     // Column 2 is the rent-cell, not column 4
                     const rentCell = row.querySelector('.rent-cell');
                     const rentText = rentCell ? rentCell.textContent.replace(/[$,]/g, '').trim() : cells[2].textContent.replace(/[$,]/g, '').trim();
                     const rent = parseFloat(rentText) || 0;
-                    
+
                     // Use SOT as source of truth for paid status, fallback to DOM class
                     let isPaid = false;
                     if (sot.tenants[tenantId]) {
@@ -861,7 +861,7 @@
                     } else {
                         isPaid = row.classList.contains('paid-row');
                     }
-                    
+
                     propertyTotal += rent;
                     if (isPaid) {
                         propertyPaid += rent;
@@ -869,7 +869,7 @@
                     } else {
                         pendingCount++;
                     }
-                    
+
                     propertyHTML += `
                         <tr style="${isPaid ? 'background: #f0fff4;' : 'background: #fff5f5;'}">
                             <td style="padding: 8px; border: 1px solid #ddd;">${unit}</td>
@@ -879,11 +879,11 @@
                         </tr>
                     `;
                 });
-                
+
                 totalExpected += propertyTotal;
                 totalPaid += propertyPaid;
                 totalPending += (propertyTotal - propertyPaid);
-                
+
                 tenantsHTML += `
                     <div style="margin-bottom: 24px; page-break-inside: avoid;">
                         <h3 style="background: #0A7A0A; color: white; padding: 10px 16px; margin: 0; border-radius: 8px 8px 0 0;">${propertyName}</h3>
@@ -910,10 +910,10 @@
                     </div>
                 `;
             });
-            
+
             // Calculate collection percentage
             const collectionPercent = totalExpected > 0 ? Math.round((totalPaid / totalExpected) * 100) : 0;
-            
+
             // Generate the printable HTML
             const printContent = `
             <!DOCTYPE html>
@@ -923,8 +923,8 @@
                 <title>Resumen de Rentas - ${monthName} ${currentYear}</title>
                 <style>
                     * { box-sizing: border-box; margin: 0; padding: 0; }
-                    body { 
-                        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; 
+                    body {
+                        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
                         padding: 24px;
                         color: #333;
                         line-height: 1.4;
@@ -989,7 +989,7 @@
                     <div class="logo">🏠 RentasClaras</div>
                     <div class="month-title">Resumen de Rentas — ${monthName} ${currentYear}</div>
                 </div>
-                
+
                 <div class="summary-box">
                     <div class="summary-item">
                         <div class="summary-value gray">${paidCount + pendingCount}</div>
@@ -1016,13 +1016,13 @@
                         <div class="summary-label">Falta Cobrar</div>
                     </div>
                 </div>
-                
+
                 <div class="progress-bar">
                     <div class="progress-fill" style="width: ${collectionPercent}%;">${collectionPercent}% cobrado</div>
                 </div>
-                
+
                 ${tenantsHTML}
-                
+
                 <!-- GRAND TOTAL Section -->
                 <div style="margin-top: 32px; page-break-inside: avoid;">
                     <table style="width: 100%; border-collapse: collapse; border: 3px solid #0A7A0A; background: linear-gradient(135deg, #f0fff4 0%, #e8f5e8 100%);">
@@ -1055,14 +1055,14 @@
                         </tbody>
                     </table>
                 </div>
-                
+
                 <div class="footer">
                     <div>Generado por RentasClaras el ${dateStr} a las ${timeStr}</div>
                     <div style="margin-top: 8px; color: #0A7A0A; font-weight: 600;">
                         Conserve este documento para su registro
                     </div>
                 </div>
-                
+
                 <div class="no-print" style="text-align: center; margin-top: 32px;">
                     <button onclick="window.print()" style="background: #0A7A0A; color: white; border: none; padding: 16px 32px; border-radius: 8px; font-size: 16px; font-weight: 700; cursor: pointer;">
                         🖨️ Imprimir / Guardar PDF
@@ -1071,7 +1071,7 @@
             </body>
             </html>
             `;
-            
+
             // Open in new window for printing
             const printWindow = window.open('', '_blank');
             printWindow.document.write(printContent);
@@ -1112,12 +1112,12 @@
 
                     const tenantId = row.dataset.tenantId;
                     const name = cells[1].textContent.trim().replace('⚠️', '').trim();
-                    
+
                     // Column 2 is Renta (rent), not "inicia"
                     const rentCell = row.querySelector('.rent-cell');
                     const rentText = rentCell ? rentCell.textContent.replace(/[$,]/g, '').trim() : cells[2].textContent.replace(/[$,]/g, '').trim();
                     const rent = parseFloat(rentText) || 0;
-                    
+
                     // Determine paid status from SOT first, then fall back to DOM state
                     let isPaid = false;
                     if (sot.tenants[tenantId]) {
@@ -1125,7 +1125,7 @@
                     } else {
                         isPaid = row.classList.contains('paid-row');
                     }
-                    
+
                     // Pagado amount is rent if paid, 0 if unpaid
                     const pagado = isPaid ? rent : 0;
 
@@ -1227,7 +1227,7 @@
             const grandPagado = grandTotals.reduce((sum, item) => sum + item.pagado, 0);
             summaryData.push([]);
             summaryData.push(['', 'GRAN TOTAL', '', grandTotal, grandPagado]);
-            
+
             // Add percentage collected
             const percentCollected = grandTotal > 0 ? Math.round((grandPagado / grandTotal) * 100) : 0;
             summaryData.push(['', 'Porcentaje cobrado', '', '', percentCollected + '%']);
@@ -1247,7 +1247,7 @@
 
             // Download the file
             XLSX.writeFile(wb, filename);
-            
+
             console.log('✅ Excel downloaded:', filename, 'Totals:', grandTotals);
         }
 
@@ -1455,7 +1455,7 @@
         // Don Raúl requested: "¿Estás seguro?" before changing status
         function togglePaymentStatus(toggle, tenantId) {
             console.log('🔘 togglePaymentStatus called:', { toggle, tenantId, checked: toggle?.checked });
-            
+
             try {
                 const isPaid = toggle.checked;
                 const item = toggle.closest('.tenant-item');
@@ -1467,21 +1467,21 @@
                 const tenantName = item.querySelector('.tenant-name')?.textContent?.trim() || 'Inquilino';
                 const rentText = item.querySelector('.tenant-rent')?.textContent || '$0';
                 console.log('📊 Toggle details:', { tenantId, tenantName, rentText, isPaid });
-                
+
                 // REVERT the toggle immediately - wait for confirmation
                 toggle.checked = !isPaid;
-                
+
                 // Show confirmation modal
                 showPaymentConfirmModal(tenantId, tenantName, rentText, isPaid, toggle, item);
             } catch (error) {
                 console.error('🚨 Error in togglePaymentStatus:', error);
             }
         }
-        
+
         // Show confirmation modal for payment status change
         function showPaymentConfirmModal(tenantId, tenantName, rentText, markAsPaid, toggle, item) {
             console.log('📋 showPaymentConfirmModal called:', { tenantId, tenantName, markAsPaid });
-            
+
             try {
                 const modal = document.getElementById('confirmModal');
                 const icon = document.getElementById('confirmIcon');
@@ -1491,12 +1491,12 @@
                 const amountEl = document.getElementById('confirmAmount');
                 const message = document.getElementById('confirmMessage');
                 const confirmBtn = document.getElementById('confirmBtn');
-                
+
                 if (!modal) {
                     console.error('❌ Confirmation modal not found!');
                     return;
                 }
-                
+
                 // Set content based on action
                 if (markAsPaid) {
                     icon.textContent = '💰';
@@ -1511,12 +1511,12 @@
                     confirmBtn.textContent = '✗ Marcar Pendiente';
                     confirmBtn.className = 'btn-confirm-unpaid';
                 }
-                
+
                 // Set context
                 tenantNameEl.textContent = tenantName;
                 monthYearEl.textContent = `${monthName} ${currentYear}`;
                 amountEl.textContent = rentText;
-                
+
                 // Store pending action for execution
                 pendingConfirmAction = {
                     type: 'payment',
@@ -1525,7 +1525,7 @@
                     toggle: toggle,
                     item: item
                 };
-                
+
                 // Show modal
                 modal.classList.add('show');
                 console.log('✅ Confirmation modal shown');
@@ -1533,29 +1533,29 @@
                 console.error('🚨 Error in showPaymentConfirmModal:', error);
             }
         }
-        
+
         // Close confirmation modal
         function closeConfirmModal() {
             const modal = document.getElementById('confirmModal');
             modal.classList.remove('show');
             pendingConfirmAction = null;
         }
-        
+
         // Execute the confirmed action
         function executeConfirmedAction() {
             if (!pendingConfirmAction) return;
-            
+
             const { type, tenantId, markAsPaid, toggle, item } = pendingConfirmAction;
-            
+
             if (type === 'payment') {
                 // Close modal first
                 closeConfirmModal();
-                
+
                 // Now execute the actual payment status change
                 executePaymentStatusChange(tenantId, markAsPaid, toggle, item);
             }
         }
-        
+
         // Execute the actual payment status change (after confirmation)
         function executePaymentStatusChange(tenantId, isPaid, toggle, item) {
             // BUGFIX #9: Prevent double-clicks with toggleInProgress
@@ -1564,7 +1564,7 @@
                 return;
             }
             toggleInProgress.add(tenantId);
-            
+
             // Now actually update the toggle
             toggle.checked = isPaid;
 
@@ -2596,13 +2596,13 @@
                 syncPendingPayments();  // Sync when back online
             });
             window.addEventListener('offline', updateOnlineStatus);
-            
+
             // BUGFIX #5: Sync pending payments on page load if online
             // This ensures any payments saved during offline are synced when page reloads
             if (navigator.onLine) {
                 syncPendingPayments();
             }
-            
+
             // BUGFIX #6: Cleanup stale SOT entries older than 90 days
             cleanupStaleSOT();
         });
@@ -2690,14 +2690,14 @@
 
         function editPhone(tenantId, currentPhone) {
             console.log('📞 editPhone called:', { tenantId, currentPhone });
-            
+
             try {
                 currentEditingTenantId = tenantId;
                 const modal = document.getElementById('phoneModal');
                 const input = document.getElementById('phoneInput');
                 const preview = document.getElementById('phonePreview');
                 const saveBtn = document.getElementById('savePhoneBtn');
-                
+
                 if (!modal) {
                     console.error('❌ Phone modal not found!');
                     return;
@@ -2835,17 +2835,17 @@
         // =============================================
         // Inline WhatsApp Function - NOW WITH PREVIEW
         // =============================================
-        
+
         // Store pending WhatsApp data for preview
         let pendingWhatsAppData = null;
 
         function sendWhatsApp(event, btn) {
             console.log('📱 sendWhatsApp called:', { btn, tenantId: btn?.dataset?.tenantId });
-            
+
             try {
                 event.preventDefault();
                 const tenantId = btn.dataset.tenantId;
-                
+
                 if (!tenantId) {
                     console.error('❌ No tenant ID found on button');
                     return;
@@ -2862,19 +2862,19 @@
                     .then(data => {
                         btn.innerHTML = originalText;
                         console.log('✅ WhatsApp data received:', data);
-                        
+
                         // Store the data for when user confirms
                         pendingWhatsAppData = {
                             url: data.whatsapp_url,
                             tenantName: data.tenant_name,
                             message: data.message
                         };
-                        
+
                         // Get phone from the tenant item
                         const item = btn.closest('.tenant-item');
                         const phoneEl = item?.querySelector('.tenant-phone-inline a');
                         const phone = phoneEl ? phoneEl.textContent.trim() : 'Teléfono no disponible';
-                        
+
                         // Show preview modal
                         showWhatsAppPreview(data.tenant_name, phone, data.message);
                     })
@@ -2887,24 +2887,24 @@
                 console.error('🚨 Error in sendWhatsApp:', error);
             }
         }
-        
+
         // Show the WhatsApp preview modal
         function showWhatsAppPreview(tenantName, phone, message) {
             const modal = document.getElementById('whatsappPreviewModal');
             const recipientEl = document.getElementById('waPreviewRecipient');
             const phoneEl = document.getElementById('waPreviewPhone');
             const messageEl = document.getElementById('waPreviewMessage');
-            
+
             if (recipientEl) recipientEl.textContent = tenantName;
             if (phoneEl) phoneEl.textContent = phone;
             if (messageEl) messageEl.textContent = message;
-            
+
             if (modal) {
                 modal.style.display = 'flex';
                 modal.classList.add('show');
             }
         }
-        
+
         // Close the WhatsApp preview modal
         function closeWhatsAppPreview() {
             const modal = document.getElementById('whatsappPreviewModal');
@@ -2914,7 +2914,7 @@
             }
             pendingWhatsAppData = null;
         }
-        
+
         // Confirm and send WhatsApp message
         function confirmSendWhatsApp() {
             if (pendingWhatsAppData && pendingWhatsAppData.url) {

@@ -1,7 +1,7 @@
 /**
  * Login Page Scripts
  * ==================
- * 
+ *
  * PIN-based authentication with visual feedback.
  * Features:
  * - Visual digit masking (● characters)

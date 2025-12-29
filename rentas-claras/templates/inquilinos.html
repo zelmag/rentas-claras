@@ -1,0 +1,871 @@
+{% extends "base.html" %}
+
+{% block title %}RentasClaras - Inquilinos{% endblock %}
+
+{% block styles %}
+<style>
+    :root {
+        --green: #0A7A0A;
+        --green-light: #dcfce7;
+        --red: #CC0000;
+        --red-light: #FEE2E2;
+        --blue: #1e3a5f;
+        --gray: #666;
+        --gray-light: #F5F5F5;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: #F0F0F0;
+        margin: 0;
+        padding: 0;
+        padding-bottom: 80px;
+    }
+
+    .container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 16px;
+    }
+
+    /* ========== RESPONSIVE DESIGN ========== */
+    @media (min-width: 768px) {
+        .container {
+            max-width: 700px;
+            padding: 24px;
+        }
+        
+        .app-title {
+            font-size: 2rem;
+        }
+        
+        .tenant-card {
+            padding: 20px 24px;
+        }
+        
+        .tenant-name {
+            font-size: 1.3rem;
+        }
+        
+        .btn {
+            padding: 16px 24px;
+            font-size: 1.1rem;
+        }
+    }
+    
+    @media (min-width: 1024px) {
+        body {
+            padding-bottom: 0;
+        }
+        
+        .container {
+            max-width: 900px;
+            padding: 32px;
+        }
+        
+        .app-title {
+            font-size: 2.5rem;
+        }
+        
+        .summary-card {
+            padding: 32px;
+        }
+        
+        .tenant-card {
+            padding: 24px 28px;
+        }
+        
+        .tenant-name {
+            font-size: 1.4rem;
+        }
+        
+        .tenant-property {
+            font-size: 1.3rem;
+        }
+        
+        .tenant-rent {
+            font-size: 1.5rem;
+        }
+        
+        .btn {
+            padding: 18px 28px;
+            font-size: 1.2rem;
+            min-height: 64px;
+        }
+        
+        .form-input {
+            font-size: 1.2rem;
+            padding: 16px;
+        }
+        
+        .form-label {
+            font-size: 1.1rem;
+        }
+        
+        .bottom-nav {
+            position: relative;
+            margin-top: 32px;
+            border-radius: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        
+        .nav-item {
+            padding: 16px;
+            font-size: 1.1rem;
+        }
+        
+        .nav-icon {
+            font-size: 1.8rem;
+        }
+    }
+    
+    @media (min-width: 1400px) {
+        .container {
+            max-width: 1100px;
+        }
+    }
+
+    /* Header */
+    .header {
+        text-align: center;
+        margin-bottom: 16px;
+    }
+
+    .app-title {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: var(--blue);
+        margin: 0 0 8px 0;
+    }
+
+    /* Summary Card */
+    .summary-card {
+        background: white;
+        border-radius: 16px;
+        padding: 20px;
+        margin-bottom: 16px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        text-align: center;
+    }
+
+    .summary-value {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: var(--blue);
+    }
+
+    .summary-label {
+        font-size: 1rem;
+        color: var(--gray);
+    }
+
+    /* Big Add Button */
+    .add-btn-container {
+        margin-bottom: 20px;
+    }
+
+    .btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        width: 100%;
+        padding: 16px 20px;
+        border-radius: 12px;
+        border: 3px solid;
+        font-size: 1.1rem;
+        font-weight: 700;
+        cursor: pointer;
+        min-height: 56px;
+        transition: all 0.2s;
+    }
+
+    .btn:active {
+        transform: scale(0.98);
+    }
+
+    .btn.primary {
+        background: var(--green);
+        border-color: var(--green);
+        color: white;
+    }
+
+    .btn.secondary {
+        background: white;
+        border-color: var(--gray);
+        color: #333;
+    }
+
+    .btn.danger {
+        background: var(--red);
+        border-color: var(--red);
+        color: white;
+    }
+
+    /* Property Section */
+    .property-section {
+        margin-bottom: 20px;
+    }
+
+    .property-header {
+        color: white;
+        padding: 16px 20px;
+        font-size: 1.2rem;
+        font-weight: 800;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-radius: 12px 12px 0 0;
+    }
+
+    .property-header[data-color="blue"] { background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%); }
+    .property-header[data-color="brown"] { background: linear-gradient(135deg, #5c3d2e 0%, #7d5a4a 100%); }
+    .property-header[data-color="green"] { background: linear-gradient(135deg, #2e5c4a 0%, #4a7d6a 100%); }
+    .property-header[data-color="purple"] { background: linear-gradient(135deg, #5c2e5c 0%, #7d4a7d 100%); }
+    .property-header[data-color="gold"] { background: linear-gradient(135deg, #5c5c2e 0%, #7d7d4a 100%); }
+
+    .property-header-name {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .property-count {
+        font-size: 1.5rem;
+        background: rgba(255,255,255,0.2);
+        padding: 4px 14px;
+        border-radius: 20px;
+    }
+
+    /* Tenant Card */
+    .tenant-card {
+        background: white;
+        padding: 16px 20px;
+        border-bottom: 1px solid #eee;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+
+    .tenant-card:last-child {
+        border-bottom: none;
+        border-radius: 0 0 12px 12px;
+    }
+
+    .tenant-card:active {
+        background: #f5f5f5;
+    }
+
+    .tenant-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 8px;
+    }
+
+    .tenant-name {
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: #333;
+    }
+
+    .tenant-rent {
+        font-size: 1.25rem;
+        font-weight: 800;
+        color: var(--green);
+    }
+
+    .tenant-property {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: white;
+        background: #555;
+        padding: 6px 14px;
+        border-radius: 8px;
+        display: inline-block;
+        margin-bottom: 6px;
+    }
+
+    .tenant-details {
+        font-size: 0.95rem;
+        color: var(--gray);
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .tenant-detail {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    /* Modal */
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        overflow-y: auto;
+    }
+
+    .modal-overlay.show {
+        display: flex;
+    }
+
+    .modal-content {
+        background: white;
+        border-radius: 20px;
+        padding: 24px;
+        max-width: 480px;
+        width: 100%;
+        animation: modalPop 0.2s ease-out;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+
+    @keyframes modalPop {
+        from { transform: scale(0.9); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
+    }
+
+    .modal-header {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: var(--blue);
+        margin-bottom: 20px;
+        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+    }
+
+    /* Form */
+    .form-group {
+        margin-bottom: 16px;
+    }
+
+    .form-label {
+        display: block;
+        font-size: 1rem;
+        font-weight: 700;
+        color: #333;
+        margin-bottom: 6px;
+    }
+
+    .form-label.required::after {
+        content: " *";
+        color: var(--red);
+    }
+
+    .form-input {
+        width: 100%;
+        padding: 14px 16px;
+        border: 3px solid #ddd;
+        border-radius: 10px;
+        font-size: 1.1rem;
+        transition: border-color 0.2s;
+    }
+
+    .form-input:focus {
+        outline: none;
+        border-color: var(--green);
+    }
+
+    .form-select {
+        width: 100%;
+        padding: 14px 16px;
+        border: 3px solid #ddd;
+        border-radius: 10px;
+        font-size: 1.1rem;
+        background: white;
+        cursor: pointer;
+    }
+
+    .form-select:focus {
+        outline: none;
+        border-color: var(--green);
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+
+    .form-buttons {
+        display: flex;
+        gap: 12px;
+        margin-top: 24px;
+    }
+
+    .form-buttons .btn {
+        flex: 1;
+    }
+
+    /* Search */
+    .search-box {
+        margin-bottom: 16px;
+    }
+
+    .search-input {
+        width: 100%;
+        padding: 14px 20px 14px 52px;
+        border: 3px solid var(--green);
+        border-radius: 12px;
+        font-size: 1.1rem;
+        background: white url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='%23666'%3E%3Cpath d='M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z'/%3E%3C/svg%3E") no-repeat 16px center;
+    }
+
+    .search-input:focus {
+        outline: none;
+        border-color: #086608;
+    }
+
+    /* Toast */
+    .toast {
+        position: fixed;
+        bottom: 100px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--green);
+        color: white;
+        padding: 16px 32px;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 1.1rem;
+        z-index: 1001;
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+
+    .toast.show {
+        opacity: 1;
+    }
+
+    /* Bottom Nav */
+    .bottom-nav {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: white;
+        display: flex;
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+        z-index: 100;
+    }
+
+    .nav-item {
+        flex: 1;
+        padding: 12px;
+        text-align: center;
+        text-decoration: none;
+        color: var(--gray);
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+    .nav-item.active {
+        color: var(--green);
+    }
+
+    .nav-icon {
+        font-size: 1.4rem;
+        margin-bottom: 4px;
+    }
+
+    /* Delete confirmation */
+    .delete-warning {
+        background: var(--red-light);
+        border: 2px solid var(--red);
+        border-radius: 10px;
+        padding: 16px;
+        margin: 16px 0;
+        text-align: center;
+    }
+
+    .delete-warning-icon {
+        font-size: 2.5rem;
+        margin-bottom: 8px;
+    }
+
+    .delete-warning-text {
+        font-size: 1rem;
+        color: var(--red);
+        font-weight: 600;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1 class="app-title">👥 Inquilinos</h1>
+        </div>
+
+        <!-- Summary -->
+        <div class="summary-card">
+            <div class="summary-value">{{ total_tenants }}</div>
+            <div class="summary-label">inquilinos activos</div>
+        </div>
+
+        <!-- Big Add Button -->
+        <div class="add-btn-container">
+            <button class="btn primary" onclick="showAddModal()">
+                <span style="font-size: 1.5rem;">➕</span>
+                <span>Agregar Inquilino</span>
+            </button>
+        </div>
+
+        {% include 'partials/search_box.html' %}
+
+        <!-- Tenants by Property -->
+        {% set colors = ['blue', 'brown', 'green', 'purple', 'gold'] %}
+        {% for property_name, tenants in tenants_by_property.items() %}
+        <div class="property-section" data-property="{{ property_name }}">
+            <div class="property-header" data-color="{{ colors[loop.index0 % 5] }}">
+                <div class="property-header-name">
+                    <span>🏢</span>
+                    <span>{{ property_name }}</span>
+                </div>
+                <div class="property-count">{{ tenants|length }}</div>
+            </div>
+            
+            {% for tenant in tenants %}
+            <div class="tenant-card" 
+                 data-tenant-id="{{ tenant.id }}"
+                 data-name="{{ tenant.name }}"
+                 data-property="{{ tenant.property_name }}"
+                 data-unit="{{ tenant.unit }}"
+                 data-rent="{{ tenant.rent }}"
+                 data-phone="{{ tenant.phone or '' }}"
+                 data-contract-start="{{ tenant.contract_start or '' }}"
+                 data-contract-end="{{ tenant.contract_end or '' }}"
+                 onclick="showEditModal('{{ tenant.id }}')">
+                <div class="tenant-card-header">
+                    <div>
+                        <div class="tenant-name">{{ tenant.name }}</div>
+                        <div class="tenant-property">{{ tenant.unit }}</div>
+                    </div>
+                    <div class="tenant-rent">${{ "{:,.0f}".format(tenant.rent) }}</div>
+                </div>
+                <div class="tenant-details">
+                    {% if tenant.phone %}
+                    <div class="tenant-detail">📱 {{ tenant.phone }}</div>
+                    {% endif %}
+                    {% if tenant.contract_end %}
+                    <div class="tenant-detail">📄 Vence: {{ tenant.contract_end }}</div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endfor %}
+
+        <!-- Add New Property Section -->
+        <div class="add-btn-container" style="margin-top: 24px; margin-bottom: 100px;">
+            <button class="btn secondary" onclick="showAddPropertyModal()">
+                <span style="font-size: 1.5rem;">🏢</span>
+                <span>Agregar a Nueva Propiedad</span>
+            </button>
+        </div>
+    </div>
+
+    {% include 'partials/bottom_nav.html' %}
+
+    <!-- Add/Edit Modal -->
+    <div class="modal-overlay" id="tenantModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span id="modalIcon">➕</span>
+                <span id="modalTitle">Agregar Inquilino</span>
+            </div>
+            
+            <form id="tenantForm" onsubmit="saveTenant(event)">
+                <input type="hidden" id="tenantId" value="">
+                
+                <div class="form-group">
+                    <label class="form-label required">Nombre</label>
+                    <input type="text" class="form-input" id="tenantName" placeholder="Nombre del inquilino" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label required">Propiedad</label>
+                        <select class="form-select" id="tenantProperty" required>
+                            <option value="">Seleccionar...</option>
+                            {% for prop in properties %}
+                            <option value="{{ prop }}">{{ prop }}</option>
+                            {% endfor %}
+                            <option value="__new__">+ Nueva propiedad</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label required">Unidad</label>
+                        <input type="text" class="form-input" id="tenantUnit" placeholder="A, B, 1..." required>
+                    </div>
+                </div>
+
+                <div class="form-group" id="newPropertyGroup" style="display: none;">
+                    <label class="form-label required">Nueva Propiedad</label>
+                    <input type="text" class="form-input" id="newPropertyName" placeholder="Nombre de la propiedad">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label required">Renta Mensual ($)</label>
+                    <input type="number" class="form-input" id="tenantRent" placeholder="8000" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Teléfono (WhatsApp)</label>
+                    <input type="tel" class="form-input" id="tenantPhone" placeholder="+52 123 456 7890">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Inicio Contrato</label>
+                        <input type="date" class="form-input" id="contractStart">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Fin Contrato</label>
+                        <input type="date" class="form-input" id="contractEnd">
+                    </div>
+                </div>
+
+                <!-- Prorated Rent Section -->
+                <div class="form-group" style="background: #FEF3C7; padding: 16px; border-radius: 10px; border: 2px solid #F59E0B; margin-top: 16px;">
+                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                        <input type="checkbox" id="proratedCheckbox" style="width: 24px; height: 24px; accent-color: #F59E0B;" onchange="toggleProrated()">
+                        <span style="font-size: 1rem; font-weight: 700; color: #92400E;">📅 ¿Renta prorrateada el primer mes?</span>
+                    </label>
+                    <div id="proratedDetails" style="display: none; margin-top: 12px;">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Mes prorrateado</label>
+                                <select class="form-select" id="proratedMonth">
+                                    <option value="1">Enero</option>
+                                    <option value="2">Febrero</option>
+                                    <option value="3">Marzo</option>
+                                    <option value="4">Abril</option>
+                                    <option value="5">Mayo</option>
+                                    <option value="6">Junio</option>
+                                    <option value="7">Julio</option>
+                                    <option value="8">Agosto</option>
+                                    <option value="9">Septiembre</option>
+                                    <option value="10">Octubre</option>
+                                    <option value="11">Noviembre</option>
+                                    <option value="12">Diciembre</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Año</label>
+                                <input type="number" class="form-input" id="proratedYear" placeholder="2025" value="">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Monto prorrateado ($)</label>
+                            <input type="number" class="form-input" id="proratedAmount" placeholder="Ej: 4500">
+                            <div style="font-size: 0.85rem; color: #92400E; margin-top: 4px;">💡 Si entró el día 15, serían ~50% de la renta normal</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Delete Warning (only shown when editing) -->
+                <div class="delete-warning" id="deleteWarning" style="display: none;">
+                    <div class="delete-warning-icon">⚠️</div>
+                    <div class="delete-warning-text">¿Eliminar este inquilino?</div>
+                    <button type="button" class="btn danger" onclick="deleteTenant()" style="margin-top: 12px;">
+                        🗑️ Sí, Eliminar
+                    </button>
+                </div>
+
+                <div class="form-buttons">
+                    <button type="button" class="btn secondary" onclick="closeModal()">Cancelar</button>
+                    <button type="submit" class="btn primary">💾 Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast">Guardado ✓</div>
+
+    <script>
+        let isEditMode = false;
+
+        function showAddModal() {
+            isEditMode = false;
+            document.getElementById('modalIcon').textContent = '➕';
+            document.getElementById('modalTitle').textContent = 'Agregar Inquilino';
+            document.getElementById('tenantId').value = '';
+            document.getElementById('tenantForm').reset();
+            document.getElementById('deleteWarning').style.display = 'none';
+            document.getElementById('newPropertyGroup').style.display = 'none';
+            document.getElementById('tenantModal').classList.add('show');
+        }
+
+        function showAddPropertyModal() {
+            showAddModal();
+            document.getElementById('tenantProperty').value = '__new__';
+            document.getElementById('newPropertyGroup').style.display = 'block';
+        }
+
+        function showEditModal(tenantId) {
+            isEditMode = true;
+            const card = document.querySelector(`[data-tenant-id="${tenantId}"]`);
+            
+            document.getElementById('modalIcon').textContent = '✏️';
+            document.getElementById('modalTitle').textContent = 'Editar Inquilino';
+            document.getElementById('tenantId').value = tenantId;
+            document.getElementById('tenantName').value = card.dataset.name;
+            document.getElementById('tenantProperty').value = card.dataset.property;
+            document.getElementById('tenantUnit').value = card.dataset.unit;
+            document.getElementById('tenantRent').value = card.dataset.rent;
+            document.getElementById('tenantPhone').value = card.dataset.phone;
+            document.getElementById('contractStart').value = card.dataset.contractStart;
+            document.getElementById('contractEnd').value = card.dataset.contractEnd;
+            document.getElementById('deleteWarning').style.display = 'block';
+            document.getElementById('newPropertyGroup').style.display = 'none';
+            document.getElementById('tenantModal').classList.add('show');
+        }
+
+        function closeModal() {
+            document.getElementById('tenantModal').classList.remove('show');
+        }
+
+        // Handle property dropdown change
+        document.getElementById('tenantProperty').addEventListener('change', function() {
+            const newPropertyGroup = document.getElementById('newPropertyGroup');
+            if (this.value === '__new__') {
+                newPropertyGroup.style.display = 'block';
+            } else {
+                newPropertyGroup.style.display = 'none';
+            }
+        });
+
+        function saveTenant(event) {
+            event.preventDefault();
+
+            const tenantId = document.getElementById('tenantId').value;
+            let propertyName = document.getElementById('tenantProperty').value;
+            
+            // If adding new property
+            if (propertyName === '__new__') {
+                propertyName = document.getElementById('newPropertyName').value.trim();
+                if (!propertyName) {
+                    alert('Por favor ingrese el nombre de la propiedad');
+                    return;
+                }
+            }
+
+            const data = {
+                name: document.getElementById('tenantName').value.trim(),
+                property_name: propertyName,
+                unit: document.getElementById('tenantUnit').value.trim(),
+                rent: parseFloat(document.getElementById('tenantRent').value),
+                phone: document.getElementById('tenantPhone').value.trim(),
+                contract_start: document.getElementById('contractStart').value || null,
+                contract_end: document.getElementById('contractEnd').value || null,
+            };
+
+            const url = isEditMode ? `/api/tenant/${tenantId}` : '/api/tenant';
+            const method = isEditMode ? 'PUT' : 'POST';
+
+            fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            })
+            .then(res => res.json())
+            .then(result => {
+                if (result.success) {
+                    showToast(isEditMode ? 'Inquilino actualizado ✓' : 'Inquilino agregado ✓');
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            })
+            .catch(err => {
+                console.error('Error:', err);
+                alert('Error al guardar');
+            });
+        }
+
+        function deleteTenant() {
+            const tenantId = document.getElementById('tenantId').value;
+            const tenantName = document.getElementById('tenantName').value;
+            
+            if (!confirm(`¿Está seguro que desea eliminar a ${tenantName}?`)) {
+                return;
+            }
+
+            fetch(`/api/tenant/${tenantId}`, {
+                method: 'DELETE'
+            })
+            .then(res => res.json())
+            .then(result => {
+                if (result.success) {
+                    showToast('Inquilino eliminado');
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            })
+            .catch(err => {
+                console.error('Error:', err);
+                alert('Error al eliminar');
+            });
+        }
+
+        function filterTenants(term) {
+            term = term.toLowerCase().trim();
+            
+            document.querySelectorAll('.tenant-card').forEach(card => {
+                const name = card.dataset.name.toLowerCase();
+                const property = card.dataset.property.toLowerCase();
+                const unit = card.dataset.unit.toLowerCase();
+                const matches = name.includes(term) || property.includes(term) || unit.includes(term);
+                card.style.display = matches ? 'block' : 'none';
+            });
+
+            // Show/hide property sections
+            document.querySelectorAll('.property-section').forEach(section => {
+                const visibleCards = section.querySelectorAll('.tenant-card:not([style*="display: none"])');
+                section.style.display = visibleCards.length > 0 ? 'block' : 'none';
+            });
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2500);
+        }
+
+        function toggleProrated() {
+            const checkbox = document.getElementById('proratedCheckbox');
+            const details = document.getElementById('proratedDetails');
+            if (checkbox.checked) {
+                details.style.display = 'block';
+                // Set default year to current year
+                const now = new Date();
+                document.getElementById('proratedYear').value = now.getFullYear();
+                document.getElementById('proratedMonth').value = now.getMonth() + 1;
+            } else {
+                details.style.display = 'none';
+            }
+        }
+    </script>
+{% endblock %}
+
+{% block bottom_nav %}{% endblock %}

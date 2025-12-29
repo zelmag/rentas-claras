@@ -269,6 +269,23 @@ def init_database():
         cursor.execute("ALTER TABLE tenants ADD COLUMN replacement_aval_phone TEXT")
     except:
         pass
+    # Prorated rent fields
+    try:
+        cursor.execute("ALTER TABLE tenants ADD COLUMN prorated_first_month INTEGER DEFAULT 0")
+    except:
+        pass
+    try:
+        cursor.execute("ALTER TABLE tenants ADD COLUMN prorated_amount REAL")
+    except:
+        pass
+    try:
+        cursor.execute("ALTER TABLE tenants ADD COLUMN prorated_month INTEGER")
+    except:
+        pass
+    try:
+        cursor.execute("ALTER TABLE tenants ADD COLUMN prorated_year INTEGER")
+    except:
+        pass
 
     # Message logs table - prevents double-sending (idempotency)
     cursor.execute(
@@ -1390,6 +1407,185 @@ def get_message_counts_for_month(year: int, month: int) -> dict:
     
     conn.close()
     return result
+
+
+def get_all_properties() -> List[str]:
+    """Get list of all unique property names."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    cursor.execute(
+        """
+        SELECT DISTINCT property_name FROM tenants
+        WHERE active = 1
+        ORDER BY property_name
+        """
+    )
+    
+    properties = [row["property_name"] for row in cursor.fetchall()]
+    conn.close()
+    return properties
+
+
+def add_tenant(
+    name: str,
+    property_name: str,
+    unit: str,
+    rent: float,
+    phone: str = "",
+    contract_start: Optional[str] = None,
+    contract_end: Optional[str] = None,
+    emergency_contact: Optional[str] = None,
+    emergency_phone: Optional[str] = None,
+    bank: Optional[str] = None,
+) -> str:
+    """Add a new tenant. Returns the new tenant ID."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    # Generate ID from property name prefix and unit
+    # E.g., "Matehuala" + "H" = "MAT-H"
+    prefix = property_name[:3].upper()
+    tenant_id = f"{prefix}-{unit}"
+    
+    # Check if ID already exists, add number if needed
+    cursor.execute("SELECT id FROM tenants WHERE id = ?", (tenant_id,))
+    if cursor.fetchone():
+        # Find next available number
+        cursor.execute("SELECT id FROM tenants WHERE id LIKE ? ORDER BY id", (f"{prefix}-%",))
+        existing = [row["id"] for row in cursor.fetchall()]
+        counter = 2
+        while f"{prefix}-{unit}{counter}" in existing:
+            counter += 1
+        tenant_id = f"{prefix}-{unit}{counter}"
+    
+    cursor.execute(
+        """
+        INSERT INTO tenants (id, name, phone, property_name, unit, rent,
+                            emergency_contact, emergency_phone, contract_start, contract_end, bank)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            tenant_id,
+            name,
+            phone,
+            property_name,
+            unit,
+            rent,
+            emergency_contact,
+            emergency_phone,
+            contract_start,
+            contract_end,
+            bank,
+        ),
+    )
+    
+    conn.commit()
+    conn.close()
+    
+    return tenant_id
+
+
+def update_tenant(
+    tenant_id: str,
+    name: Optional[str] = None,
+    phone: Optional[str] = None,
+    property_name: Optional[str] = None,
+    unit: Optional[str] = None,
+    rent: Optional[float] = None,
+    contract_start: Optional[str] = None,
+    contract_end: Optional[str] = None,
+    emergency_contact: Optional[str] = None,
+    emergency_phone: Optional[str] = None,
+    bank: Optional[str] = None,
+):
+    """Update an existing tenant's information."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    updates = []
+    params = []
+    
+    if name is not None:
+        updates.append("name = ?")
+        params.append(name)
+    if phone is not None:
+        updates.append("phone = ?")
+        params.append(phone)
+    if property_name is not None:
+        updates.append("property_name = ?")
+        params.append(property_name)
+    if unit is not None:
+        updates.append("unit = ?")
+        params.append(unit)
+    if rent is not None:
+        updates.append("rent = ?")
+        params.append(rent)
+    if contract_start is not None:
+        updates.append("contract_start = ?")
+        params.append(contract_start)
+    if contract_end is not None:
+        updates.append("contract_end = ?")
+        params.append(contract_end)
+    if emergency_contact is not None:
+        updates.append("emergency_contact = ?")
+        params.append(emergency_contact)
+    if emergency_phone is not None:
+        updates.append("emergency_phone = ?")
+        params.append(emergency_phone)
+    if bank is not None:
+        updates.append("bank = ?")
+        params.append(bank)
+    
+    if updates:
+        updates.append("updated_at = datetime('now')")
+        params.append(tenant_id)
+        
+        cursor.execute(
+            f"""
+            UPDATE tenants SET {', '.join(updates)}
+            WHERE id = ?
+            """,
+            params,
+        )
+        
+        conn.commit()
+    
+    conn.close()
+
+
+def deactivate_tenant(tenant_id: str):
+    """Soft-delete a tenant by marking as inactive."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    cursor.execute(
+        """
+        UPDATE tenants SET active = 0, updated_at = datetime('now')
+        WHERE id = ?
+        """,
+        (tenant_id,),
+    )
+    
+    conn.commit()
+    conn.close()
+
+
+def reactivate_tenant(tenant_id: str):
+    """Reactivate a previously deactivated tenant."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    cursor.execute(
+        """
+        UPDATE tenants SET active = 1, updated_at = datetime('now')
+        WHERE id = ?
+        """,
+        (tenant_id,),
+    )
+    
+    conn.commit()
+    conn.close()
 
 
 def get_last_sync_time() -> Optional[str]:

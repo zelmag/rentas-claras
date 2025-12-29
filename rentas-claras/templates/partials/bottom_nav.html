@@ -1,0 +1,15 @@
+<!-- Bottom Navigation - Shared across all pages -->
+<nav class="bottom-nav">
+    <a href="/" class="nav-item {{ 'active' if active_tab == 'pagos' else '' }}">
+        <div class="nav-icon">💰</div>
+        <div>Pagos</div>
+    </a>
+    <a href="/contratos" class="nav-item {{ 'active' if active_tab == 'contratos' else '' }}">
+        <div class="nav-icon">📄</div>
+        <div>Contratos</div>
+    </a>
+    <a href="/inquilinos" class="nav-item {{ 'active' if active_tab == 'inquilinos' else '' }}">
+        <div class="nav-icon">👥</div>
+        <div>Inquilinos</div>
+    </a>
+</nav>
