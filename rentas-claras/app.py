@@ -2280,6 +2280,7 @@ HTML_TEMPLATE = """
         .tenant-amount {
             text-align: center;
             order: 3;
+            padding-right: 12px;
         }
         
         @media (min-width: 768px) {
@@ -3902,32 +3903,10 @@ HTML_TEMPLATE = """
 
         // Toggle paid status from Excel table view
         function togglePaidTable(btn, tenantId) {
-            // Find the corresponding tenant in card view
-            const cardViewItem = document.querySelector(`.tenant-item[data-tenant-id="${tenantId}"]`);
-            if (!cardViewItem) {
-                console.error('Could not find card view item for tenant:', tenantId);
-                return;
-            }
-            
             // Determine current state and toggle it
             const row = btn.closest('tr');
             const currentlyPaid = btn.classList.contains('paid');
             const newPaidStatus = !currentlyPaid;
-            
-            // Find the payment buttons in card view and trigger the appropriate one
-            const paymentBtnPaid = cardViewItem.querySelector('.payment-btn[onclick*="true"]');
-            const paymentBtnUnpaid = cardViewItem.querySelector('.payment-btn[onclick*="false"]');
-            
-            if (newPaidStatus && paymentBtnPaid) {
-                // Trigger the "Ya pagó" button
-                setPaymentStatus(paymentBtnPaid, tenantId, true);
-            } else if (!newPaidStatus && paymentBtnUnpaid) {
-                // Trigger the "No ha pagado" button
-                setPaymentStatus(paymentBtnUnpaid, tenantId, false);
-            } else {
-                // Fallback: directly update via API
-                updatePaymentDirectly(tenantId, newPaidStatus);
-            }
 
             // Update table row appearance
             const pagadoCell = row.querySelector('.pagado-cell');
@@ -3958,8 +3937,23 @@ HTML_TEMPLATE = """
                 }
             }
             
+            // Sync card view with table view state
+            syncCardView(tenantId, newPaidStatus);
+            
             // Update property totals
             updatePropertyTotals();
+            
+            // Save to database
+            fetch('/api/payment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tenant_id: tenantId, paid: newPaidStatus })
+            }).then(response => {
+                if (response.ok) {
+                    console.log(`Guardado: ${tenantId} = ${newPaidStatus ? 'pagado' : 'pendiente'}`);
+                    updateCounts();
+                }
+            }).catch(err => console.error('Payment update failed:', err));
         }
         
         // Fallback function for direct API update when card view buttons not found
@@ -3973,6 +3967,99 @@ HTML_TEMPLATE = """
                     updateCounts();
                 }
             }).catch(err => console.error('Payment update failed:', err));
+        }
+        
+        // Helper function to sync table view when card view changes
+        function syncTableView(tenantId, isPaid) {
+            const tableRow = document.querySelector(`tr[data-tenant-id="${tenantId}"]`);
+            if (!tableRow) return; // Table view might not exist
+            
+            const btn = tableRow.querySelector('.tenant-status-btn-table');
+            const pagadoCell = tableRow.querySelector('.pagado-cell');
+            const rentCell = tableRow.querySelector('.rent-cell');
+            const rentAmount = rentCell ? rentCell.textContent.trim() : '$0';
+            
+            if (isPaid) {
+                tableRow.classList.add('paid-row');
+                tableRow.classList.remove('unpaid-row');
+                if (btn) {
+                    btn.className = 'status-pill status-pill--small tenant-status-btn-table paid';
+                    btn.textContent = '✓';
+                }
+                if (pagadoCell) {
+                    pagadoCell.textContent = rentAmount;
+                }
+                if (rentCell) {
+                    rentCell.style.color = '';
+                }
+            } else {
+                tableRow.classList.add('unpaid-row');
+                tableRow.classList.remove('paid-row');
+                if (btn) {
+                    btn.className = 'status-pill status-pill--small tenant-status-btn-table unpaid';
+                    btn.textContent = '';
+                }
+                if (pagadoCell) {
+                    pagadoCell.textContent = '';
+                }
+                if (rentCell) {
+                    rentCell.style.color = '#CC0000';
+                }
+            }
+            
+            // Update property totals
+            updatePropertyTotals();
+        }
+        
+        // Helper function to sync card view when table view changes
+        function syncCardView(tenantId, isPaid) {
+            const cardItem = document.querySelector(`.tenant-item[data-tenant-id="${tenantId}"]`);
+            if (!cardItem) return; // Card view might not exist
+            
+            const toggle = cardItem.querySelector('.payment-toggle');
+            const toggleLabel = cardItem.querySelector('.payment-toggle-label');
+            const checkbox = cardItem.querySelector('.tenant-checkbox');
+            const paymentSelect = cardItem.querySelector('.payment-method');
+            const container = cardItem.querySelector('.payment-buttons');
+            
+            // Update toggle state
+            if (toggle) {
+                toggle.checked = isPaid;
+            }
+            
+            // Update toggle label
+            if (toggleLabel) {
+                toggleLabel.textContent = isPaid ? 'Ya pagó' : 'No ha pagado';
+                toggleLabel.classList.toggle('paid', isPaid);
+                toggleLabel.classList.toggle('unpaid', !isPaid);
+            }
+            
+            // Update payment buttons if present
+            if (container) {
+                container.querySelectorAll('.payment-btn').forEach(b => {
+                    b.classList.remove('active-green', 'active-red');
+                });
+                const activeBtn = container.querySelector(`.payment-btn[onclick*="${isPaid}"]`);
+                if (activeBtn) {
+                    activeBtn.classList.add(isPaid ? 'active-green' : 'active-red');
+                }
+            }
+            
+            // Update item state
+            if (isPaid) {
+                cardItem.classList.add('paid');
+                if (checkbox) checkbox.checked = false;
+                if (paymentSelect) paymentSelect.disabled = false;
+            } else {
+                cardItem.classList.remove('paid');
+                if (checkbox) checkbox.checked = true;
+                if (paymentSelect) {
+                    paymentSelect.disabled = true;
+                    paymentSelect.value = '';
+                }
+            }
+            
+            updateWhatsAppButton(cardItem, isPaid);
         }
         
         // Update property totals when payment status changes
@@ -4521,6 +4608,9 @@ HTML_TEMPLATE = """
                 showPersistentConfirmation('Guardado localmente (sin conexión)', 'warning');
             });
             
+            // Sync table view with card view state
+            syncTableView(tenantId, isPaid);
+            
             updateCounts();
         }
         
@@ -4599,6 +4689,9 @@ HTML_TEMPLATE = """
                 localStorage.setItem('pendingPayments', JSON.stringify(queue));
                 showPersistentConfirmation('Guardado localmente (sin conexión)', 'warning');
             });
+            
+            // Sync table view with card view state
+            syncTableView(tenantId, isPaid);
             
             updateCounts();
         }
@@ -5822,16 +5915,21 @@ HTML_TEMPLATE = """
 @app.route("/login", methods=["GET", "POST"])
 def login():
     """Simple PIN login for password protection."""
+    error = None
+    
     if request.method == "POST":
         pin = request.form.get("pin", "")
         if pin == RENTASCLARAS_PIN:
             session["authenticated"] = True
             return redirect(url_for("index"))
         else:
-            return render_template_string(
-                LOGIN_TEMPLATE, error="PIN incorrecto. Intente de nuevo."
-            )
-    return render_template_string(LOGIN_TEMPLATE, error=None)
+            error = "PIN incorrecto. Intente de nuevo."
+    
+    # Feature flag: use external template or inline
+    if get_feature_flag("use_external_templates"):
+        return render_template("login.html", error=error)
+    else:
+        return render_template_string(LOGIN_TEMPLATE, error=error)
 
 
 @app.route("/logout")
