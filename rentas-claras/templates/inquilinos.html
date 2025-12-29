@@ -355,7 +355,7 @@
         
         .form-row {
             grid-template-columns: 1fr;
-            gap: 8px;
+            gap: 10px;
         }
         
         .form-group {
@@ -517,7 +517,15 @@
     .form-row {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 12px;
+        gap: 16px;
+    }
+    
+    /* Stack form rows on small screens */
+    @media (max-width: 480px) {
+        .form-row {
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
     }
 
     .form-buttons {
@@ -737,7 +745,7 @@
                     </div>
                 </div>
 
-                <div class="form-row">
+                <div class="form-row date-row">
                     <div class="form-group">
                         <label class="form-label">Inicio Contrato</label>
                         <input type="date" class="form-input" id="contractStart">
