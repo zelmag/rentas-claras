@@ -22,6 +22,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY app.py .
 COPY database.py .
+COPY src/ ./src/
 
 # Create data directory for SQLite database persistence
 RUN mkdir -p /data
@@ -30,4 +31,4 @@ RUN mkdir -p /data
 EXPOSE 8080
 
 # Run with gunicorn
-CMD ["gunicorn", "app:app", "--bind", "0.0.0.0:8080", "--workers", "2", "--timeout", "30"]
+CMD ["gunicorn", "app:app", "--bind", "0.0.0.0:8080", "--workers", "1", "--timeout", "120"]

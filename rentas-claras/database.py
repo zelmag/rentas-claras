@@ -49,6 +49,11 @@ class Tenant:
     leaving_date: Optional[str] = None  # Date tenant is leaving
     replacement_name: Optional[str] = None  # Name of replacement tenant
     replacement_phone: Optional[str] = None  # Phone of replacement tenant
+    # New replacement candidate fields
+    replacement_contract_start: Optional[str] = None  # Start date of new tenant's contract
+    replacement_contract_end: Optional[str] = None  # End date of new tenant's contract
+    replacement_aval_name: Optional[str] = None  # Guarantor name
+    replacement_aval_phone: Optional[str] = None  # Guarantor phone
 
 
 def get_db_connection():
@@ -121,6 +126,23 @@ def init_database():
         pass
     try:
         cursor.execute("ALTER TABLE tenants ADD COLUMN replacement_phone TEXT")
+    except:
+        pass
+    # New replacement candidate fields
+    try:
+        cursor.execute("ALTER TABLE tenants ADD COLUMN replacement_contract_start TEXT")
+    except:
+        pass
+    try:
+        cursor.execute("ALTER TABLE tenants ADD COLUMN replacement_contract_end TEXT")
+    except:
+        pass
+    try:
+        cursor.execute("ALTER TABLE tenants ADD COLUMN replacement_aval_name TEXT")
+    except:
+        pass
+    try:
+        cursor.execute("ALTER TABLE tenants ADD COLUMN replacement_aval_phone TEXT")
     except:
         pass
 
@@ -648,7 +670,9 @@ def get_all_tenants() -> List[Tenant]:
         SELECT id, name, phone, property_name, unit, rent,
                emergency_contact, emergency_phone, contract_start, contract_end, bank,
                renewal_status, contract_delivered, contract_picked_up,
-               leaving_date, replacement_name, replacement_phone
+               leaving_date, replacement_name, replacement_phone,
+               replacement_contract_start, replacement_contract_end,
+               replacement_aval_name, replacement_aval_phone
         FROM tenants 
         WHERE active = 1
         ORDER BY property_name, unit
@@ -676,6 +700,10 @@ def get_all_tenants() -> List[Tenant]:
                 leaving_date=row["leaving_date"],
                 replacement_name=row["replacement_name"],
                 replacement_phone=row["replacement_phone"],
+                replacement_contract_start=row["replacement_contract_start"],
+                replacement_contract_end=row["replacement_contract_end"],
+                replacement_aval_name=row["replacement_aval_name"],
+                replacement_aval_phone=row["replacement_aval_phone"],
             )
         )
 
@@ -704,7 +732,9 @@ def get_tenant_by_id(tenant_id: str) -> Optional[Tenant]:
         SELECT id, name, phone, property_name, unit, rent,
                emergency_contact, emergency_phone, contract_start, contract_end, bank,
                renewal_status, contract_delivered, contract_picked_up,
-               leaving_date, replacement_name, replacement_phone
+               leaving_date, replacement_name, replacement_phone,
+               replacement_contract_start, replacement_contract_end,
+               replacement_aval_name, replacement_aval_phone
         FROM tenants
         WHERE id = ? AND active = 1
     """,
@@ -733,6 +763,10 @@ def get_tenant_by_id(tenant_id: str) -> Optional[Tenant]:
             leaving_date=row["leaving_date"],
             replacement_name=row["replacement_name"],
             replacement_phone=row["replacement_phone"],
+            replacement_contract_start=row["replacement_contract_start"],
+            replacement_contract_end=row["replacement_contract_end"],
+            replacement_aval_name=row["replacement_aval_name"],
+            replacement_aval_phone=row["replacement_aval_phone"],
         )
     return None
 
@@ -852,6 +886,10 @@ def update_renewal_status(
     leaving_date: Optional[str] = None,
     replacement_name: Optional[str] = None,
     replacement_phone: Optional[str] = None,
+    replacement_contract_start: Optional[str] = None,
+    replacement_contract_end: Optional[str] = None,
+    replacement_aval_name: Optional[str] = None,
+    replacement_aval_phone: Optional[str] = None,
 ):
     """Update contract renewal tracking for a tenant."""
     conn = get_db_connection()
@@ -878,6 +916,18 @@ def update_renewal_status(
     if replacement_phone is not None:
         updates.append("replacement_phone = ?")
         params.append(replacement_phone)
+    if replacement_contract_start is not None:
+        updates.append("replacement_contract_start = ?")
+        params.append(replacement_contract_start)
+    if replacement_contract_end is not None:
+        updates.append("replacement_contract_end = ?")
+        params.append(replacement_contract_end)
+    if replacement_aval_name is not None:
+        updates.append("replacement_aval_name = ?")
+        params.append(replacement_aval_name)
+    if replacement_aval_phone is not None:
+        updates.append("replacement_aval_phone = ?")
+        params.append(replacement_aval_phone)
 
     if updates:
         updates.append("updated_at = datetime('now')")
@@ -1154,6 +1204,48 @@ def get_message_history(tenant_id: str, limit: int = 10) -> List[Dict]:
     history = [dict(row) for row in cursor.fetchall()]
     conn.close()
     return history
+
+
+def get_message_counts_for_month(year: int, month: int) -> dict:
+    """
+    Get message counts for all tenants for a specific month.
+    
+    Returns dict: {tenant_id: {"sent": count, "failed": count, "has_phone": bool}}
+    """
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    # Get message counts grouped by tenant and status
+    cursor.execute(
+        """
+        SELECT 
+            tenant_id,
+            status,
+            COUNT(*) as count
+        FROM message_logs
+        WHERE year = ? AND month = ?
+        GROUP BY tenant_id, status
+        """,
+        (year, month)
+    )
+    
+    # Build result dict
+    result = {}
+    for row in cursor.fetchall():
+        tenant_id = row["tenant_id"]
+        status = row["status"]
+        count = row["count"]
+        
+        if tenant_id not in result:
+            result[tenant_id] = {"sent": 0, "failed": 0}
+        
+        if status == "sent" or status == "delivered" or status == "read":
+            result[tenant_id]["sent"] += count
+        elif status == "failed":
+            result[tenant_id]["failed"] += count
+    
+    conn.close()
+    return result
 
 
 # Initialize database when module is imported

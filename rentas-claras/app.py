@@ -15,6 +15,7 @@ Author: RentasClaras Engineering
 Date: December 2024
 """
 
+import atexit
 import locale
 import os
 import urllib.parse
@@ -24,11 +25,15 @@ from decimal import Decimal
 from functools import wraps
 from typing import Optional
 
+# Import scheduler for automated reminders
+from src.scheduler import start_scheduler, stop_scheduler, get_scheduler_status
+
 # Import database module
 from database import (
     get_all_tenants,
     get_available_months,
     get_expiring_contracts,
+    get_message_counts_for_month,
     get_monthly_status,
     get_tenant_by_id,
     get_tenants_by_property,
@@ -322,6 +327,9 @@ HTML_TEMPLATE = """
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RentasClaras - Envío de Recordatorios</title>
     <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <link rel="apple-touch-icon" href="/static/icon-192.png">
+    <link rel="manifest" href="/static/manifest.json">
+    <meta name="theme-color" content="#0A7A0A">
     <!-- SheetJS library for Excel export -->
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     <style>
@@ -514,6 +522,58 @@ HTML_TEMPLATE = """
         
         .search-clear-btn.visible {
             display: flex;
+        }
+        
+        /* ===========================================
+           PROMINENT SEARCH SECTION STYLES
+           Used for both Pagos and Contratos tabs
+           =========================================== */
+        .prominent-search-section {
+            margin-bottom: 20px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: var(--color-primary);
+            padding: 16px;
+            margin-left: -16px;
+            margin-right: -16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        
+        .prominent-search-label {
+            color: white;
+            font-size: 1.1rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .prominent-search-input {
+            font-size: 1.4rem;
+            padding: 20px 56px 20px 20px;
+            border: 4px solid #065F06;
+            border-radius: 16px;
+            box-shadow: inset 0 2px 8px rgba(0,0,0,0.1);
+            font-weight: 600;
+            background: white;
+        }
+        
+        .prominent-search-clear {
+            font-size: 2rem;
+            width: 56px;
+            color: var(--color-danger);
+            font-weight: bold;
+        }
+        
+        .prominent-search-results {
+            margin-top: 12px;
+            color: white;
+            font-size: 1.2rem;
+            font-weight: 700;
+            display: none;
+            text-align: center;
         }
         
         .status-pill.status-neutral:hover,
@@ -2926,18 +2986,26 @@ HTML_TEMPLATE = """
         </div>
         {% endif %}
         
-        <!-- #8: FALTA COBRAR moved to TOP - Now shows TOTAL including late fees -->
+        <!-- #8: FALTA COBRAR moved to TOP - Shows RENT total + multas -->
         <div style="background: white; border: 4px solid #CC0000; padding: 20px; border-radius: 16px; margin-bottom: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
-                <div style="font-size: 1.1rem; font-weight: 700; color: #333;">TOTAL A COBRAR:</div>
-                <div style="font-size: 1.8rem; font-weight: 800; color: #CC0000;" id="faltaCobrarTop">${{ "{:,.0f}".format(total_owed) }} MXN</div>
+                <div style="font-size: 0.9rem; font-weight: 600; color: #666;">Rentas por cobrar:</div>
+                <div style="font-size: 1.8rem; font-weight: 800; color: #CC0000;" id="faltaCobrarTop">${{ "{:,.0f}".format(total_owed - total_late_fees) }} MXN</div>
             </div>
             {% if total_late_fees > 0 %}
-            <div style="font-size: 0.95rem; margin-top: 6px; color: #92400E; background: #FEF3C7; padding: 8px 12px; border-radius: 8px; display: inline-block;">
-                Incluye <strong>${{ "{:,.0f}".format(total_late_fees) }}</strong> en multas por atraso
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-top: 8px; padding-top: 8px; border-top: 1px dashed #ddd;">
+                <div style="font-size: 0.9rem; font-weight: 600; color: #666;">Multas acumuladas:</div>
+                <div style="font-size: 1.4rem; font-weight: 700; color: #E65100;" id="multasTop">${{ "{:,.0f}".format(total_late_fees) }} MXN</div>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-top: 8px; padding-top: 8px; border-top: 1px solid #CC0000;">
+                <div style="font-size: 0.9rem; font-weight: 700; color: #333;">TOTAL A COBRAR:</div>
+                <div style="font-size: 1.6rem; font-weight: 800; color: #CC0000;">${{ "{:,.0f}".format(total_owed) }} MXN</div>
             </div>
             {% endif %}
-            <div style="font-size: 1rem; margin-top: 8px; color: #666;" id="faltaPersonasTop">{{ unpaid_count }} inquilino{% if unpaid_count != 1 %}s{% endif %} pendiente{% if unpaid_count != 1 %}s{% endif %}</div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+                <div style="font-size: 0.9rem; color: #666;" id="faltaPersonasTop">{{ unpaid_count }} inquilino{% if unpaid_count != 1 %}s{% endif %} pendiente{% if unpaid_count != 1 %}s{% endif %}</div>
+                <div style="font-size: 0.75rem; color: #999;">{{ now.strftime('%d %b, %H:%M') }}</div>
+            </div>
         </div>
         
         {% if test_mode %}
@@ -2974,24 +3042,25 @@ HTML_TEMPLATE = """
             </div>
         </div>
 
-        <!-- Search Bar - larger text, clearer placeholder -->
-        <div class="search-section" style="margin-bottom: 24px; position: relative; z-index: 5;">
+        <!-- PROMINENT SEARCH BAR - Big, colorful, impossible to miss on small phones -->
+        <div class="prominent-search-section" id="stickySearch">
+            <!-- Label above search -->
+            <div class="prominent-search-label">
+                ¿Quién pagó? Escribe su nombre:
+            </div>
             <div class="search-wrapper">
                 <input type="text" 
                        id="tenantSearch" 
-                       class="search-input-styled" 
-                       placeholder="Escriba nombre del inquilino..."
-                       style="font-size: 1.2rem; padding: 18px 48px 18px 52px;">
-                <svg class="search-icon" style="width: 24px; height: 24px; left: 18px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" stroke-width="2" d="m21 21-4.35-4.35"/></svg>
+                       class="search-input-styled prominent-search-input" 
+                       placeholder="Ej: Claudia, Juan, María...">
                 <button type="button" 
                         id="clearSearch" 
-                        class="search-clear-btn"
-                        onclick="clearSearchStandalone()"
-                        style="font-size: 1.5rem;">
+                        class="search-clear-btn prominent-search-clear"
+                        onclick="clearSearchStandalone()">
                     ✕
                 </button>
             </div>
-            <div id="searchResults" style="margin-top: 12px; color: #000; font-size: 1.1rem; font-weight: 600; display: none;"></div>
+            <div id="searchResults" class="prominent-search-results"></div>
         </div>
         
         <!-- STANDALONE SEARCH SCRIPT - Independent of main script -->
@@ -3168,12 +3237,9 @@ HTML_TEMPLATE = """
             </div>
         </div>
         
-        <!-- Last Saved Indicator - More visible for Excel users -->
-        <div id="lastSaved" style="display: flex; align-items: center; justify-content: center; gap: 8px; background: #dcfce7; border: 2px solid #0A7A0A; color: #0A7A0A; font-weight: 700; padding: 12px 20px; border-radius: 12px; margin-bottom: 16px; font-size: 1.05rem;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="20 6 9 17 4 12"></polyline>
-            </svg>
-            <span id="lastSavedText"></span>
+        <!-- Last Saved Indicator - Text-first design for small screens like iPhone Mini -->
+        <div id="lastSaved" style="text-align: center; background: #dcfce7; border: 2px solid #0A7A0A; color: #0A7A0A; font-weight: 700; padding: 12px 16px; border-radius: 12px; margin-bottom: 16px; font-size: 1rem;">
+            <span id="lastSavedText">Guardado ✓</span>
         </div>
           
         <!-- Offline Banner -->
@@ -3257,8 +3323,8 @@ HTML_TEMPLATE = """
                             {% endif %}
                         </div>
                         
-                        <!-- 3. LATE FEE BANNER - Only shown for unpaid tenants with fees (MOVED UP) -->
-                        {% if not tenant.paid and tenant.days_late >= 1 %}
+                        <!-- 3. LATE FEE BANNER - Only shown for unpaid tenants with fees, hidden after day 7 -->
+                        {% if not tenant.paid and tenant.days_late >= 1 and tenant.days_late <= 7 %}
                         <div style="{% if tenant.days_late >= 7 %}background: #FEE2E2; border: 2px solid #CC0000;{% else %}background: #FEF3C7; border: 2px solid #F59E0B;{% endif %} border-radius: 12px; padding: 14px 16px; margin-top: 12px;">
                             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
                                 <div style="display: flex; align-items: center; gap: 8px;">
@@ -3288,7 +3354,7 @@ HTML_TEMPLATE = """
                                 {% if tenant.paid %}Ya pagó{% else %}No ha pagado{% endif %}
                             </span>
                         </div>
-                        <div class="tenant-amount">
+                        <div class="tenant-amount" data-base-rent="{{ tenant.rent }}">
                             <!-- Show TOTAL with late fees for unpaid, or just rent for paid -->
                             {% if not tenant.paid and tenant.late_fee > 0 %}
                             <div class="tenant-rent" style="color: #CC0000; border-color: #CC0000; background: #FEE2E2;">${{ "{:,.0f}".format(tenant.total_owed) }}</div>
@@ -3360,6 +3426,7 @@ HTML_TEMPLATE = """
                             <th style="text-align: right; min-width: 80px; background: #FFF3CD; color: #856404;">MULTA</th>
                             <th style="text-align: right; min-width: 100px; font-weight: 800;">TOTAL</th>
                             <th style="text-align: right; min-width: 80px;">Pagado</th>
+                            <th style="text-align: center; width: 50px;" title="Mensajes enviados este mes">📨</th>
                             <th style="text-align: center; width: 80px;">Estado</th>
                         </tr>
                     </thead>
@@ -3372,9 +3439,9 @@ HTML_TEMPLATE = """
                                 {% if not tenant.phone %}<span style="color: #CC0000; font-size: 0.8rem;"> ⚠️</span>{% endif %}
                             </td>
                             <td class="rent-cell" style="{% if not tenant.paid %}color: #CC0000;{% endif %}">${{ "{:,.0f}".format(tenant.rent) }}</td>
-                            <!-- DÍAS SIN PAGAR column -->
-                            <td style="text-align: center; font-weight: 700; {% if not tenant.paid and tenant.days_late >= 7 %}background: #FEE2E2; color: #CC0000;{% elif not tenant.paid and tenant.days_late >= 2 %}background: #FEF3C7; color: #B45309;{% elif not tenant.paid and tenant.days_late >= 1 %}background: #FFF3CD; color: #856404;{% elif not tenant.paid and tenant.days_late == 0 %}background: #DCFCE7; color: #0A7A0A;{% endif %}">
-                                {% if tenant.paid %}—{% elif tenant.days_late == 0 %}✓{% else %}{{ tenant.days_late }}{% endif %}
+                            <!-- DÍAS SIN PAGAR column - hidden after day 7 -->
+                            <td style="text-align: center; font-weight: 700; {% if not tenant.paid and tenant.days_late >= 7 and tenant.days_late <= 7 %}background: #FEE2E2; color: #CC0000;{% elif not tenant.paid and tenant.days_late >= 2 and tenant.days_late <= 7 %}background: #FEF3C7; color: #B45309;{% elif not tenant.paid and tenant.days_late >= 1 and tenant.days_late <= 7 %}background: #FFF3CD; color: #856404;{% elif not tenant.paid and tenant.days_late == 0 %}background: #DCFCE7; color: #0A7A0A;{% endif %}">
+                                {% if tenant.paid %}—{% elif tenant.days_late == 0 %}✓{% elif tenant.days_late > 7 %}—{% else %}{{ tenant.days_late }}{% endif %}
                             </td>
                             <!-- MULTA column -->
                             <td style="text-align: right; font-weight: 700; {% if tenant.late_fee > 0 %}color: #CC0000;{% else %}color: #666;{% endif %}">
@@ -3386,6 +3453,18 @@ HTML_TEMPLATE = """
                             </td>
                             <td class="pagado-cell" data-tenant-id="{{ tenant.id }}" style="text-align: right; font-weight: 700; color: #0A7A0A;">
                                 {% if tenant.paid %}${{ "{:,.0f}".format(tenant.rent) }}{% endif %}
+                            </td>
+                            <!-- MESSAGE INDICATOR COLUMN -->
+                            <td style="text-align: center; font-size: 0.85rem;">
+                                {% if tenant.paid %}
+                                    <span style="color: #9CA3AF;">—</span>
+                                {% elif not tenant.phone %}
+                                    <span style="color: #DC2626;" title="Sin teléfono">⚠️</span>
+                                {% elif tenant.msg_count > 0 %}
+                                    <span style="color: #059669;" title="{{ tenant.msg_count }} mensaje(s) enviado(s)">✉️{{ tenant.msg_count }}</span>
+                                {% else %}
+                                    <span style="color: #9CA3AF;">—</span>
+                                {% endif %}
                             </td>
                             <td style="text-align: center;">
                                 <button type="button" class="status-pill status-pill--small tenant-status-btn-table {% if tenant.paid %}paid{% else %}unpaid{% endif %}"
@@ -3404,6 +3483,7 @@ HTML_TEMPLATE = """
                             <td style="border-top: 2px solid #333; text-align: right; color: #CC0000;">+${{ "{:,.0f}".format(tenants|rejectattr('paid')|sum(attribute='late_fee')) }}</td>
                             <td style="border-top: 2px solid #333; text-align: right; font-weight: 800; color: #CC0000;">${{ "{:,.0f}".format(tenants|rejectattr('paid')|sum(attribute='total_owed')) }}</td>
                             <td class="property-total-paid" data-property="{{ property_name }}" style="text-align: right; color: #0A7A0A; border-top: 2px solid #333;">${{ "{:,.0f}".format(tenants|selectattr('paid')|sum(attribute='rent')) }}</td>
+                            <td style="border-top: 2px solid #333;"></td>
                             <td></td>
                         </tr>
                     </tbody>
@@ -3424,26 +3504,10 @@ HTML_TEMPLATE = """
                             </td>
                         </tr>
                         {% endfor %}
-                        <tr style="border-top: 2px solid #999;">
-                            <td style="padding: 10px 16px; border: none; font-weight: 700;">Subtotal renta:</td>
-                            <td style="padding: 10px 16px; border: none; text-align: right; font-weight: 700;">
-                                ${{ "{:,.0f}".format(total_rent) }}
-                            </td>
-                            <td style="padding: 10px 16px; border: none;"></td>
-                        </tr>
-                        {% if total_late_fees > 0 %}
-                        <tr>
-                            <td style="padding: 8px 16px; border: none; color: #CC0000;">Total multas:</td>
-                            <td style="padding: 8px 16px; border: none; text-align: right; color: #CC0000; font-weight: 700;">
-                                +${{ "{:,.0f}".format(total_late_fees) }}
-                            </td>
-                            <td style="padding: 8px 16px; border: none;"></td>
-                        </tr>
-                        {% endif %}
                         <tr style="border-top: 3px solid #333; background: #FEE2E2;">
                             <td style="padding: 12px 16px; border: none; font-weight: 800; font-size: 1.2rem; color: #991B1B;">GRAN TOTAL:</td>
                             <td colspan="2" style="padding: 12px 16px; border: none; text-align: right; font-weight: 800; font-size: 1.3rem; color: #CC0000;">
-                                ${{ "{:,.0f}".format(total_owed) }}
+                                ${{ "{:,.0f}".format(total_rent) }}{% if total_late_fees > 0 %} <span style="font-size: 0.85rem; font-weight: 600; color: #991B1B;">+ ${{ "{:,.0f}".format(total_late_fees) }} multas</span>{% endif %}
                             </td>
                         </tr>
                     </tbody>
@@ -3493,7 +3557,7 @@ HTML_TEMPLATE = """
     <nav class="bottom-nav">
         <a href="/" class="bottom-nav-item active">
             <span class="bottom-nav-icon" style="font-size: 1.3rem; font-weight: 700;">$</span>
-            <span>Cobrar</span>
+            <span>Pagos</span>
         </a>
         <a href="/contratos" class="bottom-nav-item">
             <svg class="bottom-nav-icon" style="width: 24px; height: 24px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
@@ -4454,6 +4518,7 @@ HTML_TEMPLATE = """
             let paid = 0;
             let paidAmount = 0;
             let totalAmount = 0;
+            let pendingBaseRent = 0;  // Track base rent only (without late fees) for top banner
             
             // Track per-property counts and amounts
             const propertyPaidCounts = {};
@@ -4465,6 +4530,10 @@ HTML_TEMPLATE = """
                 const item = cb.closest('.tenant-item');
                 const rentText = item.querySelector('.tenant-rent')?.textContent || '$0';
                 const rent = parseFloat(rentText.replace(/[$,]/g, '')) || 0;
+                
+                // Get base rent from data attribute (without late fees)
+                const tenantAmountEl = item.querySelector('.tenant-amount');
+                const baseRent = parseFloat(tenantAmountEl?.dataset.baseRent) || rent;
                 
                 totalAmount += rent;
                 
@@ -4479,6 +4548,7 @@ HTML_TEMPLATE = """
                 if (cb.checked) {
                     pending++;
                     propertyPendingCounts[propertyName]++;
+                    pendingBaseRent += baseRent;  // Add base rent only for pending tenants
                 } else {
                     paid++;
                     paidAmount += rent;
@@ -4584,11 +4654,11 @@ HTML_TEMPLATE = """
                 }
             }
             
-            // #8: Update TOP "Falta Cobrar" section
+            // #8: Update TOP "Falta Cobrar" section (base rent only, without late fees)
             const faltaCobrarTop = document.getElementById('faltaCobrarTop');
             const faltaPersonasTop = document.getElementById('faltaPersonasTop');
             if (faltaCobrarTop) {
-                faltaCobrarTop.textContent = `$${pendingAmount.toLocaleString()} MXN`;
+                faltaCobrarTop.textContent = `$${pendingBaseRent.toLocaleString()} MXN`;
             }
             if (faltaPersonasTop) {
                 faltaPersonasTop.textContent = `de ${pending} personas`;
@@ -5572,6 +5642,9 @@ LOGIN_TEMPLATE = """
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <title>RentasClaras - Iniciar Sesión</title>
     <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <link rel="apple-touch-icon" href="/static/icon-192.png">
+    <link rel="manifest" href="/static/manifest.json">
+    <meta name="theme-color" content="#0A7A0A">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         
@@ -5859,13 +5932,27 @@ LOGIN_TEMPLATE = """
 def index():
     # Get year/month from query params or use current
     today = datetime.now()
-    year = request.args.get("year", today.year, type=int)
-    month = request.args.get("month", today.month, type=int)
+    
+    # AUTO-SWITCH: After day 7, default to next month (rent collection is done)
+    # This helps landlord focus on preparing for next month's collection
+    if today.day > 7:
+        if today.month == 12:
+            default_year = today.year + 1
+            default_month = 1
+        else:
+            default_year = today.year
+            default_month = today.month + 1
+    else:
+        default_year = today.year
+        default_month = today.month
+    
+    year = request.args.get("year", default_year, type=int)
+    month = request.args.get("month", default_month, type=int)
 
     # #5: Calculate prev/next month for month selector arrows
-    # MINIMUM DATE: December 2025 (no data before this)
-    MIN_YEAR = 2025
-    MIN_MONTH = 12
+    # MINIMUM DATE: January 2026 (no data before this)
+    MIN_YEAR = 2026
+    MIN_MONTH = 1
 
     if month == 1:
         prev_month = 12
@@ -5896,6 +5983,9 @@ def index():
 
     # Get payment status for this month
     monthly_status = get_monthly_status(year, month)
+    
+    # Get message counts for this month
+    message_counts = get_message_counts_for_month(year, month)
 
     # Get tenants grouped by property with payment status
     all_tenants = get_all_tenants()
@@ -5906,10 +5996,22 @@ def index():
         status = monthly_status.get(tenant.id, {})
         tenant.paid = bool(status.get("paid", 0))
         tenant.payment_method = status.get("payment_method")
+        
+        # Add message count for this tenant
+        msg_info = message_counts.get(tenant.id, {"sent": 0, "failed": 0})
+        tenant.msg_count = msg_info["sent"]
+        tenant.msg_failed = msg_info["failed"]
 
         if tenant.property_name not in tenants_by_property:
             tenants_by_property[tenant.property_name] = []
         tenants_by_property[tenant.property_name].append(tenant)
+
+    # Sort tenants: UNPAID FIRST (so mom doesn't have to scroll past paid ones)
+    # Within each group, sort by unit number for consistency
+    for property_name in tenants_by_property:
+        tenants_by_property[property_name].sort(
+            key=lambda t: (t.paid, t.unit)  # False (unpaid) comes before True (paid)
+        )
 
     # Get Spanish month name
     spanish_months = [
@@ -6068,6 +6170,7 @@ def index():
         expiring_critical=expiring_critical,
         expiring_warning=expiring_warning,
         expiring_expired=expiring_expired,
+        now=datetime.now(),
     )
 
 
@@ -6237,6 +6340,10 @@ def update_renewal():
         leaving_date=data.get("leaving_date"),
         replacement_name=data.get("replacement_name"),
         replacement_phone=data.get("replacement_phone"),
+        replacement_contract_start=data.get("replacement_contract_start"),
+        replacement_contract_end=data.get("replacement_contract_end"),
+        replacement_aval_name=data.get("replacement_aval_name"),
+        replacement_aval_phone=data.get("replacement_aval_phone"),
     )
 
     return jsonify({"success": True})
@@ -6461,6 +6568,9 @@ CONTRACTS_TEMPLATE = """
     <meta name="apple-mobile-web-app-capable" content="yes">
     <title>RentasClaras - Contratos</title>
     <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <link rel="apple-touch-icon" href="/static/icon-192.png">
+    <link rel="manifest" href="/static/manifest.json">
+    <meta name="theme-color" content="#0A7A0A">
     <style>
         * {
             box-sizing: border-box;
@@ -6548,6 +6658,58 @@ CONTRACTS_TEMPLATE = """
         
         .search-clear-btn.visible {
             display: flex;
+        }
+        
+        /* ===========================================
+           PROMINENT SEARCH SECTION STYLES
+           Used for both Pagos and Contratos tabs
+           =========================================== */
+        .prominent-search-section {
+            margin-bottom: 20px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: var(--color-primary);
+            padding: 16px;
+            margin-left: -16px;
+            margin-right: -16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        
+        .prominent-search-label {
+            color: white;
+            font-size: 1.1rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .prominent-search-input {
+            font-size: 1.4rem;
+            padding: 20px 56px 20px 20px;
+            border: 4px solid #065F06;
+            border-radius: 16px;
+            box-shadow: inset 0 2px 8px rgba(0,0,0,0.1);
+            font-weight: 600;
+            background: white;
+        }
+        
+        .prominent-search-clear {
+            font-size: 2rem;
+            width: 56px;
+            color: var(--color-danger);
+            font-weight: bold;
+        }
+        
+        .prominent-search-results {
+            margin-top: 12px;
+            color: white;
+            font-size: 1.2rem;
+            font-weight: 700;
+            display: none;
+            text-align: center;
         }
         
         body {
@@ -7268,6 +7430,168 @@ CONTRACTS_TEMPLATE = """
             50% { opacity: 0.6; }
         }
         
+        /* Expandable upcoming items - inline editing from bird's eye view */
+        .upcoming-item {
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .upcoming-item:hover {
+            background: rgba(0,0,0,0.02);
+        }
+        
+        .upcoming-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        
+        .upcoming-expand-form {
+            display: none;
+            padding: 16px 0 8px 0;
+            border-top: 2px dashed #e5e5e5;
+            margin-top: 16px;
+        }
+        
+        .upcoming-item.expanded .upcoming-expand-form {
+            display: block;
+        }
+        
+        .upcoming-item.expanded {
+            background: #fefefe;
+            box-shadow: inset 0 0 0 3px #7c3aed;
+        }
+        
+        .expand-icon {
+            font-size: 1.2rem;
+            transition: transform 0.2s;
+            color: #7c3aed;
+            font-weight: bold;
+        }
+        
+        .upcoming-item.expanded .expand-icon {
+            transform: rotate(180deg);
+        }
+        
+        /* Tenant ID badge - prominent for disambiguation */
+        .tenant-id-badge {
+            display: inline-block;
+            background: #7c3aed;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 800;
+            font-family: monospace;
+            margin-right: 8px;
+        }
+        
+        /* Inline form styling for bird's eye view */
+        .inline-renewal-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+        
+        .inline-renewal-btn {
+            flex: 1;
+            min-width: 100px;
+            padding: 10px 16px;
+            border: 2px solid #d4d4d4;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 600;
+            transition: all 0.2s;
+            text-align: center;
+        }
+        
+        .inline-renewal-btn:hover {
+            background: #f5f5f5;
+        }
+        
+        .inline-renewal-btn.active-green {
+            background: #dcfce7;
+            border-color: #0A7A0A;
+            color: #0A7A0A;
+        }
+        
+        .inline-renewal-btn.active-red {
+            background: #fee2e2;
+            border-color: #CC0000;
+            color: #CC0000;
+        }
+        
+        .inline-renewal-btn.active-yellow {
+            background: #F5F5F5;
+            border-color: #333333;
+            color: #333333;
+        }
+        
+        .inline-replacement-section {
+            padding: 12px;
+            background: #fef2f2;
+            border-radius: 8px;
+            border: 2px solid #fca5a5;
+            margin-top: 12px;
+        }
+        
+        .inline-replacement-section.hidden {
+            display: none;
+        }
+        
+        .inline-replacement-title {
+            font-weight: 700;
+            font-size: 1rem;
+            margin-bottom: 10px;
+            color: #dc2626;
+        }
+        
+        .inline-form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        
+        @media (max-width: 600px) {
+            .inline-form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .inline-form-input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #d4d4d4;
+            border-radius: 6px;
+            font-size: 0.95rem;
+        }
+        
+        .inline-form-input:focus {
+            outline: none;
+            border-color: #7c3aed;
+        }
+        
+        .inline-form-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #666;
+            margin-bottom: 4px;
+            display: block;
+        }
+        
+        .inline-form-group {
+            margin-bottom: 8px;
+        }
+        
+        .inline-form-group.full-width {
+            grid-column: 1 / -1;
+        }
+        
         /* Toast notification */
         .toast {
             position: fixed;
@@ -7359,23 +7683,26 @@ CONTRACTS_TEMPLATE = """
             </div>
         </div>
         
-        <!-- Search Bar for Contratos -->
-        <div style="margin-bottom: 24px;">
+        <!-- Search Bar for Contratos - Prominent style matching Pagos -->
+        <div class="prominent-search-section" id="stickyContractSearch">
+            <!-- Label above search -->
+            <div class="prominent-search-label">
+                ¿Cuál contrato buscas? Escribe su nombre:
+            </div>
             <div class="search-wrapper">
                 <input type="text" 
                        id="contractSearch" 
-                       class="search-input-styled"
-                       placeholder="Buscar inquilino..." 
+                       class="search-input-styled prominent-search-input"
+                       placeholder="Ej: Claudia, Juan, María..." 
                        oninput="filterContracts(this.value)">
-                <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" stroke-width="2" d="m21 21-4.35-4.35"/></svg>
                 <button type="button" 
                         id="clearContractSearch" 
-                        class="search-clear-btn"
+                        class="search-clear-btn prominent-search-clear"
                         onclick="clearContractSearch()">
                     ✕
                 </button>
             </div>
-            <div id="contractSearchResults" style="margin-top: 8px; color: #000; font-size: 1rem; display: none;"></div>
+            <div id="contractSearchResults" class="prominent-search-results"></div>
         </div>
         
         <!-- Property Filter Tabs for Contratos -->
@@ -7422,11 +7749,11 @@ CONTRACTS_TEMPLATE = """
         </div>
         {% endif %}
         
-        <!-- Bird's Eye View: Upcoming Renewals Grouped by Month -->
+        <!-- Bird's Eye View: Upcoming Renewals Grouped by Month - NOW EXPANDABLE -->
         {% if upcoming_renewals_by_month %}
         <div class="upcoming-section" style="background: white; border-radius: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 24px; overflow: hidden;">
             <div class="upcoming-header" style="background: #CC0000; color: white; padding: 16px; font-weight: 700; font-size: 1rem;">
-                Próximos Vencimientos
+                📋 Próximos Vencimientos <span style="font-weight: 400; opacity: 0.9; font-size: 0.9rem;">(toca para editar)</span>
             </div>
             <div class="upcoming-list">
                 {% for month_group in upcoming_renewals_by_month %}
@@ -7434,29 +7761,112 @@ CONTRACTS_TEMPLATE = """
                     <div class="month-header" style="background: #f3f4f6; padding: 14px 24px; font-size: 1.1rem; font-weight: 700; color: #1a1a1a; border-bottom: 2px solid #e5e5e5;">{{ month_group.month }}</div>
                     {% for tenant in month_group.tenants %}
                     <div class="upcoming-item {{ 'renewing' if tenant.renewal_status == 'renovará' else 'not-renewing' if tenant.renewal_status == 'no_renovará' else 'pending' }} {{ 'expiring-soon' if tenant.days_until_expiry is defined and tenant.days_until_expiry <= 30 else '' }}"
-                         id="upcoming-{{ tenant.id }}">
-                        <div class="upcoming-info">
-                            <span class="upcoming-name">
-                                <strong>{{ tenant.property_name }}</strong> ({{ tenant.unit }}) — {{ tenant.name }}
-                            </span>
-                            <span class="upcoming-date">{{ tenant.contract_end_formatted }}</span>
-                            {% if tenant.days_until_expiry is defined and tenant.days_until_expiry <= 30 %}
-                            <span class="expiring-soon-badge" style="background: #CC0000; color: white; padding: 4px 10px; border-radius: 12px; font-size: 0.85rem; font-weight: 700; margin-left: 8px;">{{ tenant.days_until_expiry }} días</span>
-                            {% endif %}
+                         id="upcoming-{{ tenant.id }}"
+                         data-tenant-id="{{ tenant.id }}"
+                         onclick="toggleUpcomingExpand(this, event)">
+                        
+                        <!-- Clickable header row -->
+                        <div class="upcoming-item-header">
+                            <div class="upcoming-info">
+                                <span class="tenant-id-badge">{{ tenant.id }}</span>
+                                <span class="upcoming-name">
+                                    <strong>{{ tenant.property_name }}</strong> ({{ tenant.unit }}) — {{ tenant.name }}
+                                </span>
+                                <span class="upcoming-date">{{ tenant.contract_end_formatted }}</span>
+                                {% if tenant.days_until_expiry is defined and tenant.days_until_expiry <= 30 %}
+                                <span class="expiring-soon-badge" style="background: #CC0000; color: white; padding: 4px 10px; border-radius: 12px; font-size: 0.85rem; font-weight: 700; margin-left: 8px;">{{ tenant.days_until_expiry }} días</span>
+                                {% endif %}
+                            </div>
+                            <div class="upcoming-status" style="display: flex; align-items: center; gap: 8px;">
+                                {% if tenant.renewal_status == 'renovará' %}
+                                <span class="status-badge green">Renovará</span>
+                                {% elif tenant.renewal_status == 'no_renovará' %}
+                                <span class="status-badge red">No renovará</span>
+                                {% if tenant.replacement_name %}
+                                <span class="replacement-badge">{{ tenant.replacement_name }}</span>
+                                {% else %}
+                                <span class="replacement-badge needs-candidate" style="background: #FEE2E2; color: #CC0000;">Sin candidato</span>
+                                {% endif %}
+                                {% else %}
+                                <span class="status-badge yellow" style="background: #F5F5F5; color: #333333;">Pendiente</span>
+                                {% endif %}
+                                <span class="expand-icon">▼</span>
+                            </div>
                         </div>
-                        <div class="upcoming-status">
-                            {% if tenant.renewal_status == 'renovará' %}
-                            <span class="status-badge green">Renovará</span>
-                            {% elif tenant.renewal_status == 'no_renovará' %}
-                            <span class="status-badge red">No renovará</span>
-                            {% if tenant.replacement_name %}
-                            <span class="replacement-badge">{{ tenant.replacement_name }}</span>
-                            {% else %}
-                            <span class="replacement-badge needs-candidate" style="background: #FEE2E2; color: #CC0000;">Sin candidato</span>
-                            {% endif %}
-                            {% else %}
-                            <span class="status-badge yellow" style="background: #F5F5F5; color: #333333;">Pendiente</span>
-                            {% endif %}
+                        
+                        <!-- Expandable inline edit form -->
+                        <div class="upcoming-expand-form" onclick="event.stopPropagation()">
+                            <div style="margin-bottom: 12px; padding: 8px 12px; background: #7c3aed; color: white; border-radius: 8px; font-weight: 700;">
+                                ✏️ Editando: <span class="tenant-id-badge" style="background: white; color: #7c3aed;">{{ tenant.id }}</span> {{ tenant.name }} — {{ tenant.property_name }} ({{ tenant.unit }})
+                            </div>
+                            
+                            <!-- Renewal status buttons -->
+                            <div class="inline-renewal-buttons">
+                                <button type="button" 
+                                        class="inline-renewal-btn {% if tenant.renewal_status == 'renovará' %}active-green{% endif %}" 
+                                        onclick="setInlineRenewalStatus('{{ tenant.id }}', 'renovará', this)">
+                                    ✓ Sí Renovará
+                                </button>
+                                <button type="button" 
+                                        class="inline-renewal-btn {% if tenant.renewal_status == 'no_renovará' %}active-red{% endif %}" 
+                                        onclick="setInlineRenewalStatus('{{ tenant.id }}', 'no_renovará', this)">
+                                    ✗ No Renovará
+                                </button>
+                                <button type="button" 
+                                        class="inline-renewal-btn {% if tenant.renewal_status == 'pendiente' %}active-yellow{% endif %}" 
+                                        onclick="setInlineRenewalStatus('{{ tenant.id }}', 'pendiente', this)">
+                                    ? Pendiente
+                                </button>
+                            </div>
+                            
+                            <!-- Replacement section - shown when "No Renovará" -->
+                            <div class="inline-replacement-section {% if tenant.renewal_status != 'no_renovará' %}hidden{% endif %}" 
+                                 id="inline-replacement-{{ tenant.id }}">
+                                <div class="inline-replacement-title">🔄 Datos del Nuevo Inquilino</div>
+                                
+                                <div class="inline-form-grid">
+                                    <div class="inline-form-group">
+                                        <label class="inline-form-label">Nombre</label>
+                                        <input type="text" class="inline-form-input" 
+                                               placeholder="Nombre del nuevo inquilino"
+                                               value="{{ tenant.replacement_name or '' }}"
+                                               onchange="updateInlineReplacement('{{ tenant.id }}', 'replacement_name', this.value)">
+                                    </div>
+                                    <div class="inline-form-group">
+                                        <label class="inline-form-label">Teléfono</label>
+                                        <input type="tel" class="inline-form-input" 
+                                               placeholder="Teléfono"
+                                               value="{{ tenant.replacement_phone or '' }}"
+                                               onchange="updateInlineReplacement('{{ tenant.id }}', 'replacement_phone', this.value)">
+                                    </div>
+                                    <div class="inline-form-group">
+                                        <label class="inline-form-label">Inicio Contrato</label>
+                                        <input type="date" class="inline-form-input" 
+                                               value="{{ tenant.replacement_contract_start or '' }}"
+                                               onchange="updateInlineReplacement('{{ tenant.id }}', 'replacement_contract_start', this.value)">
+                                    </div>
+                                    <div class="inline-form-group">
+                                        <label class="inline-form-label">Fin Contrato</label>
+                                        <input type="date" class="inline-form-input" 
+                                               value="{{ tenant.replacement_contract_end or '' }}"
+                                               onchange="updateInlineReplacement('{{ tenant.id }}', 'replacement_contract_end', this.value)">
+                                    </div>
+                                    <div class="inline-form-group">
+                                        <label class="inline-form-label">Nombre del Aval</label>
+                                        <input type="text" class="inline-form-input" 
+                                               placeholder="Nombre del aval/fiador"
+                                               value="{{ tenant.replacement_aval_name or '' }}"
+                                               onchange="updateInlineReplacement('{{ tenant.id }}', 'replacement_aval_name', this.value)">
+                                    </div>
+                                    <div class="inline-form-group">
+                                        <label class="inline-form-label">Teléfono del Aval</label>
+                                        <input type="tel" class="inline-form-input" 
+                                               placeholder="Teléfono del aval"
+                                               value="{{ tenant.replacement_aval_phone or '' }}"
+                                               onchange="updateInlineReplacement('{{ tenant.id }}', 'replacement_aval_phone', this.value)">
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     {% endfor %}
@@ -7478,6 +7888,7 @@ CONTRACTS_TEMPLATE = """
                 
                 <div class="tenant-header">
                     <div class="tenant-name">
+                        <span class="tenant-id-badge">{{ tenant.id }}</span>
                         <span class="tenant-unit">({{ tenant.unit }})</span> {{ tenant.name }}
                     </div>
                     {% if tenant.contract_start_formatted and tenant.contract_end_formatted %}
@@ -7517,15 +7928,50 @@ CONTRACTS_TEMPLATE = """
                 
                 <div class="replacement-section" id="replacement-{{ tenant.id }}" 
                      style="{% if tenant.renewal_status != 'no_renovará' %}display:none;{% endif %}">
-                    <div class="replacement-title">🔄 Datos del Reemplazo</div>
-                    <input type="text" class="replacement-input" 
-                           placeholder="Nombre del nuevo inquilino" 
-                           value="{{ tenant.replacement_name or '' }}"
-                           onchange="updateReplacement(this, '{{ tenant.id }}', 'name')">
-                    <input type="text" class="replacement-input" 
-                           placeholder="Teléfono del nuevo inquilino" 
-                           value="{{ tenant.replacement_phone or '' }}"
-                           onchange="updateReplacement(this, '{{ tenant.id }}', 'phone')">
+                    <div class="replacement-title">🔄 Datos del Nuevo Inquilino</div>
+                    
+                    <div class="inline-form-grid" style="margin-bottom: 12px;">
+                        <div class="inline-form-group">
+                            <label class="inline-form-label">Nombre</label>
+                            <input type="text" class="replacement-input" 
+                                   placeholder="Nombre del nuevo inquilino" 
+                                   value="{{ tenant.replacement_name or '' }}"
+                                   onchange="updateReplacementField(this, '{{ tenant.id }}', 'replacement_name')">
+                        </div>
+                        <div class="inline-form-group">
+                            <label class="inline-form-label">Teléfono</label>
+                            <input type="tel" class="replacement-input" 
+                                   placeholder="Teléfono" 
+                                   value="{{ tenant.replacement_phone or '' }}"
+                                   onchange="updateReplacementField(this, '{{ tenant.id }}', 'replacement_phone')">
+                        </div>
+                        <div class="inline-form-group">
+                            <label class="inline-form-label">Inicio Contrato</label>
+                            <input type="date" class="replacement-input" 
+                                   value="{{ tenant.replacement_contract_start or '' }}"
+                                   onchange="updateReplacementField(this, '{{ tenant.id }}', 'replacement_contract_start')">
+                        </div>
+                        <div class="inline-form-group">
+                            <label class="inline-form-label">Fin Contrato</label>
+                            <input type="date" class="replacement-input" 
+                                   value="{{ tenant.replacement_contract_end or '' }}"
+                                   onchange="updateReplacementField(this, '{{ tenant.id }}', 'replacement_contract_end')">
+                        </div>
+                        <div class="inline-form-group">
+                            <label class="inline-form-label">Nombre del Aval</label>
+                            <input type="text" class="replacement-input" 
+                                   placeholder="Nombre del aval/fiador" 
+                                   value="{{ tenant.replacement_aval_name or '' }}"
+                                   onchange="updateReplacementField(this, '{{ tenant.id }}', 'replacement_aval_name')">
+                        </div>
+                        <div class="inline-form-group">
+                            <label class="inline-form-label">Teléfono del Aval</label>
+                            <input type="tel" class="replacement-input" 
+                                   placeholder="Teléfono del aval" 
+                                   value="{{ tenant.replacement_aval_phone or '' }}"
+                                   onchange="updateReplacementField(this, '{{ tenant.id }}', 'replacement_aval_phone')">
+                        </div>
+                    </div>
                 </div>
             </div>
             {% endfor %}
@@ -7537,7 +7983,7 @@ CONTRACTS_TEMPLATE = """
     <nav class="bottom-nav">
         <a href="/" class="bottom-nav-item">
             <span class="bottom-nav-icon" style="font-size: 1.3rem; font-weight: 700;">$</span>
-            <span>Cobrar</span>
+            <span>Pagos</span>
         </a>
         <a href="/contratos" class="bottom-nav-item active">
             <svg class="bottom-nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
@@ -7648,6 +8094,192 @@ CONTRACTS_TEMPLATE = """
                 data.replacement_name = value;
             } else if (field === 'phone') {
                 data.replacement_phone = value;
+            }
+            
+            fetch('/api/renewal', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            }).then(response => {
+                if (response.ok) {
+                    showToast('Guardado');
+                }
+            });
+        }
+        
+        // Generic field update function for replacement fields
+        function updateReplacementField(input, tenantId, field) {
+            const value = input.value;
+            const data = { tenant_id: tenantId };
+            data[field] = value;
+            
+            fetch('/api/renewal', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            }).then(response => {
+                if (response.ok) {
+                    showToast('Guardado');
+                }
+            });
+        }
+        
+        // =============================================
+        // INLINE EDITING from Bird's Eye View
+        // =============================================
+        
+        function toggleUpcomingExpand(item, event) {
+            // Don't toggle if clicking on form elements inside
+            if (event.target.closest('.upcoming-expand-form')) {
+                return;
+            }
+            
+            // Close other expanded items
+            document.querySelectorAll('.upcoming-item.expanded').forEach(other => {
+                if (other !== item) {
+                    other.classList.remove('expanded');
+                }
+            });
+            
+            // Toggle this item
+            item.classList.toggle('expanded');
+        }
+        
+        function setInlineRenewalStatus(tenantId, status, btn) {
+            const item = btn.closest('.upcoming-item');
+            const container = btn.closest('.inline-renewal-buttons');
+            
+            // Update button states in the inline form
+            container.querySelectorAll('.inline-renewal-btn').forEach(b => {
+                b.classList.remove('active-green', 'active-red', 'active-yellow');
+            });
+            
+            // Set active state
+            if (status === 'renovará') {
+                btn.classList.add('active-green');
+            } else if (status === 'no_renovará') {
+                btn.classList.add('active-red');
+            } else {
+                btn.classList.add('active-yellow');
+            }
+            
+            // Update the item's visual state
+            item.classList.remove('renewing', 'not-renewing', 'pending');
+            if (status === 'renovará') {
+                item.classList.add('renewing');
+            } else if (status === 'no_renovará') {
+                item.classList.add('not-renewing');
+            } else {
+                item.classList.add('pending');
+            }
+            
+            // Show/hide inline replacement section
+            const inlineReplacementSection = document.getElementById(`inline-replacement-${tenantId}`);
+            if (inlineReplacementSection) {
+                if (status === 'no_renovará') {
+                    inlineReplacementSection.classList.remove('hidden');
+                } else {
+                    inlineReplacementSection.classList.add('hidden');
+                }
+            }
+            
+            // Update the status badge in the header
+            const statusContainer = item.querySelector('.upcoming-status');
+            const statusBadge = statusContainer.querySelector('.status-badge');
+            if (statusBadge) {
+                statusBadge.className = 'status-badge';
+                if (status === 'renovará') {
+                    statusBadge.classList.add('green');
+                    statusBadge.textContent = 'Renovará';
+                } else if (status === 'no_renovará') {
+                    statusBadge.classList.add('red');
+                    statusBadge.textContent = 'No renovará';
+                } else {
+                    statusBadge.classList.add('yellow');
+                    statusBadge.style.background = '#F5F5F5';
+                    statusBadge.style.color = '#333333';
+                    statusBadge.textContent = 'Pendiente';
+                }
+            }
+            
+            // Also update the corresponding contract card below (if visible)
+            const contractCard = document.querySelector(`.contract-card[data-tenant-id="${tenantId}"]`);
+            if (contractCard) {
+                contractCard.classList.remove('renewing', 'not-renewing', 'pending');
+                if (status === 'renovará') {
+                    contractCard.classList.add('renewing');
+                } else if (status === 'no_renovará') {
+                    contractCard.classList.add('not-renewing');
+                } else {
+                    contractCard.classList.add('pending');
+                }
+                
+                // Update buttons in the card
+                const cardButtons = contractCard.querySelectorAll('.renewal-btn');
+                cardButtons.forEach(b => {
+                    b.classList.remove('active-green', 'active-red', 'active-yellow');
+                    if (b.textContent.includes('Sí') && status === 'renovará') {
+                        b.classList.add('active-green');
+                    } else if (b.textContent.includes('No') && status === 'no_renovará') {
+                        b.classList.add('active-red');
+                    } else if (b.textContent.includes('Pendiente') && status === 'pendiente') {
+                        b.classList.add('active-yellow');
+                    }
+                });
+                
+                // Show/hide replacement section in card
+                const cardReplacementSection = document.getElementById(`replacement-${tenantId}`);
+                if (cardReplacementSection) {
+                    cardReplacementSection.style.display = status === 'no_renovará' ? 'block' : 'none';
+                }
+            }
+            
+            // Save to database
+            fetch('/api/renewal', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tenant_id: tenantId,
+                    renewal_status: status
+                })
+            }).then(response => {
+                if (response.ok) {
+                    showToast('Guardado');
+                    updateCounts();
+                }
+            });
+        }
+        
+        function updateInlineReplacement(tenantId, field, value) {
+            const data = { tenant_id: tenantId };
+            data[field] = value;
+            
+            // Also update the corresponding input in the contract card below
+            const contractCard = document.querySelector(`.contract-card[data-tenant-id="${tenantId}"]`);
+            if (contractCard) {
+                const correspondingInput = contractCard.querySelector(`input[onchange*="${field}"]`);
+                if (correspondingInput) {
+                    correspondingInput.value = value;
+                }
+            }
+            
+            // Update replacement badge if it's the name field
+            if (field === 'replacement_name') {
+                const upcomingItem = document.getElementById(`upcoming-${tenantId}`);
+                if (upcomingItem) {
+                    const replacementBadge = upcomingItem.querySelector('.replacement-badge');
+                    if (replacementBadge && value) {
+                        replacementBadge.textContent = value;
+                        replacementBadge.classList.remove('needs-candidate');
+                        replacementBadge.style.background = '#dbeafe';
+                        replacementBadge.style.color = '#1d4ed8';
+                    } else if (replacementBadge && !value) {
+                        replacementBadge.textContent = 'Sin candidato';
+                        replacementBadge.classList.add('needs-candidate');
+                        replacementBadge.style.background = '#FEE2E2';
+                        replacementBadge.style.color = '#CC0000';
+                    }
+                }
             }
             
             fetch('/api/renewal', {
@@ -8097,7 +8729,13 @@ def admin_scheduler_status(secret_key):
 # MAIN
 # =============================================================================
 
+# Register scheduler shutdown on app exit
+atexit.register(stop_scheduler)
+
 if __name__ == "__main__":
+    # Start the automated reminder scheduler
+    start_scheduler()
+    
     print(
         """
 ╔══════════════════════════════════════════════════════════════════╗
@@ -8112,8 +8750,9 @@ if __name__ == "__main__":
 ║  2. Click en "Generar Enlaces de WhatsApp"                       ║
 ║  3. Click en cada enlace para enviar el mensaje                  ║
 ║                                                                   ║
-║  ⚠️  MODO PRUEBA: Los mensajes irán a tu número                  ║
-║      Cambia TEST_MODE = False para producción                    ║
+║  🤖 SCHEDULER ACTIVO: Recordatorios automáticos                   ║
+║     - 8:00 AM: Recordatorio de mañana (Día 1)                    ║
+║     - 5:00 PM: Recordatorio de tarde (Día 1)                     ║
 ║                                                                   ║
 ╚══════════════════════════════════════════════════════════════════╝
 """

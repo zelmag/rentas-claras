@@ -9,7 +9,7 @@ Implements the Mexican landlord late fee structure:
 - Day 8+: Contract termination warning territory
 
 Author: RentasClaras Engineering
-Date: December 2024
+Date: Enero 2026
 """
 
 from dataclasses import dataclass
