@@ -620,7 +620,7 @@
     /* Property Section Header - CLEAR for 60yr old */
     .property-section-header {
         color: #222;
-        padding: 16px 20px;
+        padding: 12px 20px;
         font-size: 1.1rem;
         font-weight: 800;
         display: flex;
@@ -630,6 +630,22 @@
         background: #e8e8e8;
         border-bottom: 2px solid #ccc;
         border-left: 5px solid #333;
+    }
+
+    .property-mark-all {
+        background: var(--green);
+        color: white;
+        border: none;
+        padding: 8px 14px;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        font-weight: 700;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+
+    .property-mark-all:active {
+        transform: scale(0.95);
     }
 
     /* Different colors for different properties - BOLD borders */
@@ -690,7 +706,7 @@
         border-color: var(--green);
     }
 
-    /* Confirmation Modal */
+    /* Confirmation Modal - Bottom sheet on mobile */
     .modal-overlay {
         display: none;
         position: fixed;
@@ -700,9 +716,9 @@
         bottom: 0;
         background: rgba(0,0,0,0.5);
         z-index: 1000;
-        align-items: center;
+        align-items: flex-end;
         justify-content: center;
-        padding: 12px;
+        padding: 0;
         overflow-y: auto;
     }
 
@@ -712,14 +728,46 @@
 
     .modal-content {
         background: white;
-        border-radius: 20px;
+        border-radius: 20px 20px 0 0;
         padding: 20px;
-        max-width: 360px;
+        padding-bottom: calc(20px + env(safe-area-inset-bottom));
         width: 100%;
+        max-width: 100%;
         text-align: center;
-        animation: modalPop 0.2s ease-out;
-        max-height: calc(100vh - 24px);
+        animation: modalSlideUp 0.3s ease-out;
+        max-height: 90vh;
         overflow-y: auto;
+    }
+
+    .modal-handle {
+        width: 40px;
+        height: 5px;
+        background: #ddd;
+        border-radius: 3px;
+        margin: 0 auto 16px;
+    }
+
+    @keyframes modalSlideUp {
+        from { transform: translateY(100%); }
+        to { transform: translateY(0); }
+    }
+
+    /* Desktop: centered modal */
+    @media (min-width: 768px) {
+        .modal-overlay {
+            align-items: center;
+            padding: 20px;
+        }
+
+        .modal-content {
+            border-radius: 20px;
+            max-width: 420px;
+            animation: modalPop 0.2s ease-out;
+        }
+
+        .modal-handle {
+            display: none;
+        }
     }
     
     /* Small screens (iPhone SE and smaller) */
@@ -873,6 +921,97 @@
     @keyframes modalPop {
         from { transform: scale(0.9); opacity: 0; }
         to { transform: scale(1); opacity: 1; }
+    }
+
+    /* Pull to refresh */
+    .pull-to-refresh {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--green);
+        color: white;
+        font-weight: 700;
+        transform: translateY(-100%);
+        transition: transform 0.3s;
+        z-index: 999;
+    }
+
+    .pull-to-refresh.show {
+        transform: translateY(0);
+    }
+
+    .pull-to-refresh.refreshing {
+        transform: translateY(0);
+    }
+
+    /* Quick contact buttons on tenant */
+    .tenant-quick-actions {
+        display: flex;
+        gap: 8px;
+        margin-left: 8px;
+    }
+
+    .quick-action-btn {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        border: 2px solid #ddd;
+        background: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        cursor: pointer;
+        flex-shrink: 0;
+    }
+
+    .quick-action-btn.whatsapp {
+        border-color: #25D366;
+        color: #25D366;
+    }
+
+    .quick-action-btn.call {
+        border-color: #007AFF;
+        color: #007AFF;
+    }
+
+    .quick-action-btn:active {
+        transform: scale(0.9);
+    }
+
+    /* Month context dots */
+    .month-context {
+        display: flex;
+        justify-content: center;
+        gap: 6px;
+        margin-top: 8px;
+    }
+
+    .month-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #ddd;
+    }
+
+    .month-dot.has-data {
+        background: var(--green);
+    }
+
+    .month-dot.current {
+        width: 12px;
+        height: 12px;
+        border: 2px solid #333;
+    }
+
+    .month-dot.future {
+        background: #f0f0f0;
+        border: 1px dashed #ccc;
     }
 
     .modal-icon {
@@ -1030,7 +1169,7 @@
         color: white;
     }
 
-    /* Toast */
+    /* Toast - with undo button */
     .toast {
         position: fixed;
         bottom: 100px;
@@ -1038,7 +1177,7 @@
         transform: translateX(-50%);
         background: #333;
         color: white;
-        padding: 16px 32px;
+        padding: 14px 20px;
         border-radius: 12px;
         font-weight: 700;
         font-size: 1.1rem;
@@ -1046,10 +1185,15 @@
         opacity: 0;
         transition: opacity 0.3s;
         pointer-events: none;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        max-width: 90%;
     }
 
     .toast.show {
         opacity: 1;
+        pointer-events: auto;
     }
 
     .toast.success {
@@ -1058,6 +1202,41 @@
 
     .toast.pending {
         background: var(--red);
+    }
+
+    .toast-message {
+        flex: 1;
+    }
+
+    .toast-undo {
+        background: rgba(255,255,255,0.2);
+        border: 2px solid white;
+        color: white;
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 1rem;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+
+    .toast-undo:active {
+        background: rgba(255,255,255,0.3);
+    }
+
+    /* Section headers - sticky */
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 20px;
+        background: white;
+        border-radius: 16px 16px 0 0;
+        cursor: pointer;
+        margin-top: 16px;
+        position: sticky;
+        top: 0;
+        z-index: 10;
     }
 
     /* Bottom Nav - uses shared styles from base.html */
@@ -1229,11 +1408,14 @@
                 {% set pending_tenants = tenants|rejectattr('paid')|list %}
                 {% if pending_tenants|length > 0 %}
                 <!-- Property Section Header -->
-                <div class="property-section-header" data-color="{{ colors[loop.index0 % 5] }}">
+                <div class="property-section-header" data-color="{{ colors[loop.index0 % 5] }}" data-property-name="{{ property_name }}">
                     <div class="property-section-name">
                         <span>{{ property_name }}</span>
                     </div>
-                    <div class="property-section-amount" data-property-pending="{{ property_name }}">${{ "{:,.0f}".format(pending_tenants|sum(attribute='rent')) }}</div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <button class="property-mark-all" onclick="event.stopPropagation(); markAllPropertyPaid('{{ property_name }}')">✓ Todos</button>
+                        <div class="property-section-amount" data-property-pending="{{ property_name }}">${{ "{:,.0f}".format(pending_tenants|sum(attribute='rent')) }}</div>
+                    </div>
                 </div>
                 {% for tenant in pending_tenants %}
                 <div class="tenant-item pending" 
@@ -1323,7 +1505,7 @@
         </div>
 
         <!-- Action Buttons - AT BOTTOM -->
-        <div class="action-buttons" style="margin-top: 24px; margin-bottom: 100px;">
+        <div class="action-buttons" style="margin-top: 24px;">
             <button class="action-btn print" onclick="printSummary()">
                 <span>Imprimir</span>
             </button>
@@ -1338,6 +1520,7 @@
     <!-- Confirmation Modal -->
     <div class="modal-overlay" id="confirmModal">
         <div class="modal-content">
+            <div class="modal-handle"></div>
             <div class="modal-icon" id="modalIcon"></div>
             <div class="modal-title" id="modalTitle">¿Confirmar pago?</div>
             <div class="modal-tenant" id="modalTenant">Nombre del inquilino</div>
@@ -1398,8 +1581,16 @@
         </div>
     </div>
 
-    <!-- Toast -->
-    <div class="toast" id="toast">Guardado</div>
+    <!-- Toast with Undo -->
+    <div class="toast" id="toast">
+        <span class="toast-message">Guardado</span>
+        <button class="toast-undo" id="toastUndo" style="display: none;" onclick="undoLastAction()">Deshacer</button>
+    </div>
+
+    <!-- Pull to refresh indicator -->
+    <div class="pull-to-refresh" id="pullToRefresh">
+        ↓ Suelta para actualizar
+    </div>
 
     <!-- Celebration -->
     <div class="celebration" id="celebration">
@@ -1417,11 +1608,24 @@
     <script>
         // State
         let pendingAction = null;
+        let lastAction = null; // For undo functionality
+        let undoTimeout = null;
         const totalRent = {{ total_rent }};
         const configEl = document.getElementById('config');
         const currentYear = parseInt(configEl.dataset.year);
         const currentMonth = parseInt(configEl.dataset.month);
         const monthName = configEl.dataset.monthName;
+
+        // Haptic feedback helper
+        function hapticFeedback(type = 'light') {
+            if (navigator.vibrate) {
+                switch(type) {
+                    case 'success': navigator.vibrate([50, 30, 50]); break;
+                    case 'error': navigator.vibrate([100, 50, 100]); break;
+                    default: navigator.vibrate(30);
+                }
+            }
+        }
 
         // SOT Key for this month
         function getSOTKey() {
@@ -1448,6 +1652,255 @@
             const arrow = document.getElementById(section + 'Arrow');
             list.classList.toggle('collapsed');
             arrow.classList.toggle('collapsed');
+        }
+
+        // Mark all property tenants as paid
+        function markAllPropertyPaid(propertyName) {
+            const propertyTenants = document.querySelectorAll(`#pendingList .tenant-item[data-property="${propertyName}"]`);
+            if (propertyTenants.length === 0) return;
+
+            const tenantCount = propertyTenants.length;
+            const confirmMsg = `¿Marcar ${tenantCount} inquilino${tenantCount > 1 ? 's' : ''} de ${propertyName} como pagados?`;
+            
+            if (!confirm(confirmMsg)) return;
+
+            hapticFeedback('success');
+            
+            // Store for undo
+            const tenantIds = [];
+            
+            propertyTenants.forEach(item => {
+                const tenantId = item.dataset.tenantId;
+                const name = item.dataset.name;
+                const rent = parseInt(item.dataset.rent);
+                
+                tenantIds.push({ tenantId, name, rent });
+                
+                // Update SOT
+                updateSOT(tenantId, true);
+                
+                // Update UI
+                updateTenantUI(tenantId, true, name, rent, 0);
+                
+                // Save to server
+                fetch('/api/payment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        tenant_id: tenantId, 
+                        paid: true,
+                        payment_method: 'Efectivo',
+                        visits: 0,
+                        visit_charge: 0,
+                        year: currentYear,
+                        month: currentMonth
+                    })
+                }).catch(err => console.error('Error:', err));
+            });
+            
+            lastAction = {
+                type: 'markAllPaid',
+                propertyName,
+                tenants: tenantIds
+            };
+            
+            showToastWithUndo(`✓ ${tenantCount} pagos en ${propertyName}`, 'success');
+            updateSummary();
+            updateSyncIndicator();
+            
+            setTimeout(() => showMotivation(), 500);
+        }
+
+        // Undo last action
+        function undoLastAction() {
+            if (!lastAction) return;
+            
+            hapticFeedback('light');
+            
+            if (lastAction.type === 'markAllPaid') {
+                lastAction.tenants.forEach(({ tenantId, name, rent }) => {
+                    updateSOT(tenantId, false);
+                    updateTenantUI(tenantId, false, name, rent, 0);
+                    
+                    fetch('/api/payment', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                            tenant_id: tenantId, 
+                            paid: false,
+                            year: currentYear,
+                            month: currentMonth
+                        })
+                    }).catch(err => console.error('Error:', err));
+                });
+                
+                showToast('Deshecho', 'pending');
+            } else if (lastAction.type === 'singlePayment') {
+                const { tenantId, name, rent, wasPaid } = lastAction;
+                updateSOT(tenantId, wasPaid);
+                updateTenantUI(tenantId, wasPaid, name, rent, 0);
+                
+                fetch('/api/payment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        tenant_id: tenantId, 
+                        paid: wasPaid,
+                        year: currentYear,
+                        month: currentMonth
+                    })
+                }).catch(err => console.error('Error:', err));
+                
+                showToast('Deshecho', 'pending');
+            }
+            
+            lastAction = null;
+            updateSummary();
+            hideUndoButton();
+        }
+
+        function showToastWithUndo(message, type) {
+            const toast = document.getElementById('toast');
+            const toastMessage = toast.querySelector('.toast-message');
+            const toastUndo = document.getElementById('toastUndo');
+            
+            toastMessage.textContent = message;
+            toast.className = 'toast show ' + type;
+            toastUndo.style.display = 'inline-block';
+            
+            // Clear previous timeout
+            if (undoTimeout) clearTimeout(undoTimeout);
+            
+            // Hide after 5 seconds
+            undoTimeout = setTimeout(() => {
+                toast.classList.remove('show');
+                toastUndo.style.display = 'none';
+                lastAction = null;
+            }, 5000);
+        }
+
+        function hideUndoButton() {
+            const toastUndo = document.getElementById('toastUndo');
+            toastUndo.style.display = 'none';
+            if (undoTimeout) clearTimeout(undoTimeout);
+        }
+
+        // Quick contact functions
+        function sendWhatsApp(phone, tenantName, rent, event) {
+            event.stopPropagation();
+            if (!phone) {
+                alert('No hay número de teléfono registrado');
+                return;
+            }
+            hapticFeedback('light');
+            const message = encodeURIComponent(`Hola ${tenantName}, te recuerdo que tu renta de ${monthName} ($${rent.toLocaleString()}) está pendiente. ¡Gracias!`);
+            const cleanPhone = phone.replace(/[^0-9+]/g, '');
+            window.open(`https://wa.me/${cleanPhone}?text=${message}`, '_blank');
+        }
+
+        function callTenant(phone, event) {
+            event.stopPropagation();
+            if (!phone) {
+                alert('No hay número de teléfono registrado');
+                return;
+            }
+            hapticFeedback('light');
+            window.location.href = `tel:${phone}`;
+        }
+
+        // Share functionality (native share or fallback)
+        function shareReport() {
+            const paidTotal = document.getElementById('totalPaid').textContent;
+            const pendingTotal = document.getElementById('totalPending').textContent;
+            const percent = document.getElementById('progressPercent').textContent;
+            
+            const shareText = `RentasClaras - ${monthName} ${currentYear}\n\n` +
+                `✓ Cobrado: ${paidTotal} (${percent})\n` +
+                `✗ Pendiente: ${pendingTotal}\n\n` +
+                `Generado: ${new Date().toLocaleDateString('es-MX')}`;
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: `RentasClaras - ${monthName} ${currentYear}`,
+                    text: shareText
+                }).catch(err => console.log('Share cancelled'));
+            } else {
+                // Fallback: copy to clipboard
+                navigator.clipboard.writeText(shareText).then(() => {
+                    showToast('Copiado al portapapeles', 'success');
+                });
+            }
+        }
+
+        // Pull to refresh
+        let touchStartY = 0;
+        let isPulling = false;
+        
+        document.addEventListener('touchstart', (e) => {
+            if (window.scrollY === 0) {
+                touchStartY = e.touches[0].clientY;
+            }
+        }, { passive: true });
+
+        document.addEventListener('touchmove', (e) => {
+            if (window.scrollY === 0 && touchStartY > 0) {
+                const touchY = e.touches[0].clientY;
+                const diff = touchY - touchStartY;
+                
+                if (diff > 60 && !isPulling) {
+                    isPulling = true;
+                    document.getElementById('pullToRefresh').classList.add('show');
+                }
+            }
+        }, { passive: true });
+
+        document.addEventListener('touchend', () => {
+            if (isPulling) {
+                const pullIndicator = document.getElementById('pullToRefresh');
+                pullIndicator.textContent = 'Actualizando...';
+                pullIndicator.classList.add('refreshing');
+                
+                hapticFeedback('success');
+                
+                setTimeout(() => {
+                    window.location.reload();
+                }, 500);
+            }
+            touchStartY = 0;
+            isPulling = false;
+        });
+
+        // Swipe for month navigation
+        let swipeStartX = 0;
+        const monthSelector = document.querySelector('.month-selector');
+        
+        if (monthSelector) {
+            monthSelector.addEventListener('touchstart', (e) => {
+                swipeStartX = e.touches[0].clientX;
+            }, { passive: true });
+
+            monthSelector.addEventListener('touchend', (e) => {
+                const swipeEndX = e.changedTouches[0].clientX;
+                const diff = swipeEndX - swipeStartX;
+                
+                if (Math.abs(diff) > 50) {
+                    hapticFeedback('light');
+                    if (diff > 0) {
+                        // Swipe right - go to previous month
+                        const prevBtn = document.querySelector('.month-btn:first-child');
+                        if (prevBtn && prevBtn.href) {
+                            window.location.href = prevBtn.href;
+                        }
+                    } else {
+                        // Swipe left - go to next month
+                        const nextBtn = document.querySelector('.month-btn:last-child');
+                        if (nextBtn && nextBtn.href) {
+                            window.location.href = nextBtn.href;
+                        }
+                    }
+                }
+                swipeStartX = 0;
+            });
         }
 
         // Selected payment method - default to "Envío sin tarjeta"

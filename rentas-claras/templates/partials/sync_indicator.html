@@ -32,7 +32,7 @@
     function updateSyncIndicator() {
         const indicator = document.getElementById('syncIndicator');
         if (!indicator) return;
-        
+
         const now = new Date();
         const timeStr = now.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
         const dateStr = now.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' });

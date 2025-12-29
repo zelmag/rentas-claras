@@ -1,0 +1,466 @@
+{% extends "base.html" %}
+
+{% block title %}RentasClaras - Resumen{% endblock %}
+
+{% block styles %}
+<style>
+    :root {
+        --green: #0A7A0A;
+        --green-light: #dcfce7;
+        --red: #CC0000;
+        --red-light: #FEE2E2;
+        --yellow: #F59E0B;
+        --yellow-light: #FEF3C7;
+        --blue: #1e3a5f;
+        --gray: #666;
+        --gray-light: #F5F5F5;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: #F0F0F0;
+        margin: 0;
+        padding: 0;
+        padding-bottom: 100px;
+    }
+
+    .container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 16px;
+    }
+
+    /* ========== RESPONSIVE DESIGN ========== */
+    @media (min-width: 768px) {
+        .container {
+            max-width: 700px;
+            padding: 24px;
+        }
+
+        .greeting {
+            font-size: 2rem;
+        }
+
+        .main-stat-value {
+            font-size: 3.5rem;
+        }
+
+        .quick-action {
+            padding: 24px 20px;
+        }
+
+        .quick-action-title {
+            font-size: 1.3rem;
+        }
+    }
+
+    @media (min-width: 1024px) {
+        body {
+            padding-bottom: 0;
+        }
+
+        .container {
+            max-width: 900px;
+            padding: 32px;
+        }
+
+        .greeting {
+            font-size: 2.5rem;
+        }
+
+        .main-stat-card {
+            padding: 40px;
+        }
+
+        .main-stat-value {
+            font-size: 4rem;
+        }
+
+        .quick-actions-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .quick-action {
+            padding: 28px 24px;
+        }
+    }
+
+    /* Header */
+    .header {
+        text-align: center;
+        margin-bottom: 24px;
+    }
+
+    .greeting {
+        font-size: 1.6rem;
+        font-weight: 800;
+        color: var(--blue);
+        margin: 0 0 4px 0;
+    }
+
+    .date-display {
+        font-size: 1.1rem;
+        color: var(--gray);
+        text-transform: capitalize;
+    }
+
+    /* Main Stat Card */
+    .main-stat-card {
+        background: linear-gradient(135deg, var(--green) 0%, #086608 100%);
+        border-radius: 20px;
+        padding: 32px 24px;
+        margin-bottom: 20px;
+        box-shadow: 0 8px 24px rgba(10, 122, 10, 0.3);
+        text-align: center;
+        color: white;
+    }
+
+    .main-stat-label {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        margin-bottom: 8px;
+    }
+
+    .main-stat-value {
+        font-size: 3rem;
+        font-weight: 800;
+        margin-bottom: 8px;
+    }
+
+    .main-stat-sublabel {
+        font-size: 1rem;
+        opacity: 0.8;
+    }
+
+    .main-stat-progress {
+        margin-top: 20px;
+        background: rgba(255,255,255,0.3);
+        border-radius: 10px;
+        height: 12px;
+        overflow: hidden;
+    }
+
+    .main-stat-progress-fill {
+        height: 100%;
+        background: white;
+        border-radius: 10px;
+        transition: width 0.5s ease-out;
+    }
+
+    /* Alert Cards */
+    .alert-card {
+        background: white;
+        border-radius: 16px;
+        padding: 20px;
+        margin-bottom: 16px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+
+    .alert-card:active {
+        transform: scale(0.98);
+    }
+
+    .alert-card.urgent {
+        border-left: 5px solid var(--red);
+        background: var(--red-light);
+    }
+
+    .alert-card.warning {
+        border-left: 5px solid var(--yellow);
+        background: var(--yellow-light);
+    }
+
+    .alert-card.success {
+        border-left: 5px solid var(--green);
+        background: var(--green-light);
+    }
+
+    .alert-icon {
+        font-size: 2rem;
+        flex-shrink: 0;
+    }
+
+    .alert-content {
+        flex: 1;
+    }
+
+    .alert-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #333;
+        margin-bottom: 4px;
+    }
+
+    .alert-description {
+        font-size: 0.95rem;
+        color: var(--gray);
+    }
+
+    .alert-value {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: #333;
+    }
+
+    /* Quick Actions */
+    .section-title {
+        font-size: 1.2rem;
+        font-weight: 800;
+        color: var(--blue);
+        margin: 24px 0 12px 0;
+    }
+
+    .quick-actions-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .quick-action {
+        background: white;
+        border-radius: 16px;
+        padding: 20px 16px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        text-decoration: none;
+        color: inherit;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .quick-action:active {
+        transform: scale(0.98);
+    }
+
+    .quick-action-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+        flex-shrink: 0;
+    }
+
+    .quick-action-icon.pagos {
+        background: var(--green-light);
+    }
+
+    .quick-action-icon.contratos {
+        background: var(--yellow-light);
+    }
+
+    .quick-action-icon.inquilinos {
+        background: #E0E7FF;
+    }
+
+    .quick-action-content {
+        flex: 1;
+    }
+
+    .quick-action-title {
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: #333;
+        margin-bottom: 4px;
+    }
+
+    .quick-action-description {
+        font-size: 0.95rem;
+        color: var(--gray);
+    }
+
+    .quick-action-arrow {
+        font-size: 1.5rem;
+        color: #ccc;
+    }
+
+    /* Stats Row */
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 16px 12px;
+        text-align: center;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .stat-value {
+        font-size: 1.8rem;
+        font-weight: 800;
+        color: var(--blue);
+    }
+
+    .stat-label {
+        font-size: 0.85rem;
+        color: var(--gray);
+        margin-top: 4px;
+    }
+
+    /* Offline banner */
+    .offline-banner {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        background: #333;
+        color: white;
+        text-align: center;
+        padding: 8px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        z-index: 1000;
+        display: none;
+    }
+
+    .offline-banner.show {
+        display: block;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+    <!-- Offline banner -->
+    <div class="offline-banner" id="offlineBanner">
+        📴 Sin conexión
+    </div>
+
+    <div class="container">
+        <!-- Header with Greeting -->
+        <div class="header">
+            <h1 class="greeting">{{ greeting }}, Don Raúl</h1>
+            <div class="date-display">{{ today_formatted }}</div>
+        </div>
+
+        <!-- Main Stat: Money Collected This Month -->
+        <div class="main-stat-card">
+            <div class="main-stat-label">Cobrado en {{ month_name }}</div>
+            <div class="main-stat-value">${{ "{:,.0f}".format(total_collected) }}</div>
+            <div class="main-stat-sublabel">de ${{ "{:,.0f}".format(total_expected) }} esperados</div>
+            <div class="main-stat-progress">
+                <div class="main-stat-progress-fill" style="width: {{ collection_percent }}%;"></div>
+            </div>
+        </div>
+
+        <!-- Alert Cards -->
+        {% if pending_payments > 0 %}
+        <a href="/" class="alert-card {{ 'urgent' if pending_payments > 5 else 'warning' }}" style="text-decoration: none;">
+            <div class="alert-icon">💰</div>
+            <div class="alert-content">
+                <div class="alert-title">Pagos pendientes</div>
+                <div class="alert-description">${{ "{:,.0f}".format(pending_amount) }} por cobrar</div>
+            </div>
+            <div class="alert-value">{{ pending_payments }}</div>
+        </a>
+        {% else %}
+        <div class="alert-card success">
+            <div class="alert-icon">🎉</div>
+            <div class="alert-content">
+                <div class="alert-title">¡Todos pagaron!</div>
+                <div class="alert-description">Este mes está completo</div>
+            </div>
+            <div class="alert-value">✓</div>
+        </div>
+        {% endif %}
+
+        {% if expiring_contracts > 0 %}
+        <a href="/contratos" class="alert-card warning" style="text-decoration: none;">
+            <div class="alert-icon">📄</div>
+            <div class="alert-content">
+                <div class="alert-title">Contratos por vencer</div>
+                <div class="alert-description">En los próximos 30 días</div>
+            </div>
+            <div class="alert-value">{{ expiring_contracts }}</div>
+        </a>
+        {% endif %}
+
+        <!-- Stats Row -->
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="stat-value">{{ total_tenants }}</div>
+                <div class="stat-label">Inquilinos</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ total_properties }}</div>
+                <div class="stat-label">Propiedades</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ collection_percent }}%</div>
+                <div class="stat-label">Cobrado</div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="section-title">Acciones rápidas</div>
+        <div class="quick-actions-grid">
+            <a href="/" class="quick-action">
+                <div class="quick-action-icon pagos">💵</div>
+                <div class="quick-action-content">
+                    <div class="quick-action-title">Registrar pagos</div>
+                    <div class="quick-action-description">{{ pending_payments }} pendiente{{ 's' if pending_payments != 1 else '' }}</div>
+                </div>
+                <div class="quick-action-arrow">›</div>
+            </a>
+
+            <a href="/contratos" class="quick-action">
+                <div class="quick-action-icon contratos">📋</div>
+                <div class="quick-action-content">
+                    <div class="quick-action-title">Ver contratos</div>
+                    <div class="quick-action-description">{{ expiring_contracts }} por vencer</div>
+                </div>
+                <div class="quick-action-arrow">›</div>
+            </a>
+
+            <a href="/inquilinos" class="quick-action">
+                <div class="quick-action-icon inquilinos">👥</div>
+                <div class="quick-action-content">
+                    <div class="quick-action-title">Inquilinos</div>
+                    <div class="quick-action-description">{{ total_tenants }} activos</div>
+                </div>
+                <div class="quick-action-arrow">›</div>
+            </a>
+        </div>
+    </div>
+
+    {% include 'partials/bottom_nav.html' %}
+
+    <script>
+        // Offline detection
+        function updateOfflineStatus() {
+            const banner = document.getElementById('offlineBanner');
+            if (!navigator.onLine) {
+                banner.classList.add('show');
+            } else {
+                banner.classList.remove('show');
+            }
+        }
+
+        window.addEventListener('online', updateOfflineStatus);
+        window.addEventListener('offline', updateOfflineStatus);
+        updateOfflineStatus();
+
+        // Haptic on card tap
+        document.querySelectorAll('.alert-card, .quick-action').forEach(el => {
+            el.addEventListener('click', () => {
+                if (navigator.vibrate) navigator.vibrate(30);
+            });
+        });
+    </script>
+{% endblock %}
+
+{% block bottom_nav %}{% endblock %}
