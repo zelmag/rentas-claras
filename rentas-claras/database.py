@@ -74,7 +74,117 @@ def get_db_connection():
     # Checkpoint WAL file after every 1000 pages
     cursor.execute("PRAGMA wal_autocheckpoint=1000")
     
+    # Enable foreign keys for data integrity
+    cursor.execute("PRAGMA foreign_keys=ON")
+    
     return conn
+
+
+class DatabaseConnection:
+    """
+    Context manager for database connections.
+    
+    Ensures proper cleanup and commit/rollback handling.
+    
+    Usage:
+        with DatabaseConnection() as (conn, cursor):
+            cursor.execute(...)
+            # Auto-commits on success, rollbacks on exception
+    """
+    
+    def __init__(self, readonly: bool = False):
+        self.conn = None
+        self.readonly = readonly
+    
+    def __enter__(self):
+        self.conn = get_db_connection()
+        cursor = self.conn.cursor()
+        return self.conn, cursor
+    
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.conn:
+            if exc_type is not None:
+                # Exception occurred - rollback
+                self.conn.rollback()
+            elif not self.readonly:
+                # No exception - commit
+                self.conn.commit()
+            self.conn.close()
+        return False  # Don't suppress exceptions
+
+
+def verify_database_integrity() -> tuple[bool, str]:
+    """
+    Check database integrity on startup.
+    
+    Returns:
+        (is_ok, message) - True if database is healthy
+    """
+    if not DB_PATH.exists():
+        return True, "Database does not exist yet (will be created)"
+    
+    try:
+        conn = sqlite3.connect(DB_PATH, timeout=30)
+        cursor = conn.cursor()
+        
+        # Run integrity check
+        cursor.execute("PRAGMA integrity_check")
+        result = cursor.fetchone()[0]
+        
+        conn.close()
+        
+        if result == "ok":
+            return True, "Database integrity check passed ✅"
+        else:
+            return False, f"Database integrity check failed: {result}"
+            
+    except Exception as e:
+        return False, f"Database integrity check error: {str(e)}"
+
+
+def startup_health_check():
+    """
+    Run comprehensive health checks on startup.
+    Logs warnings but doesn't prevent startup.
+    """
+    import logging
+    logger = logging.getLogger(__name__)
+    
+    print("🔍 Running database health checks...")
+    
+    # 1. Check integrity
+    is_ok, message = verify_database_integrity()
+    if is_ok:
+        print(f"   {message}")
+    else:
+        print(f"   ⚠️  WARNING: {message}")
+        logger.warning(f"Database integrity issue: {message}")
+    
+    # 2. Check if volume is mounted (production only)
+    if os.path.exists("/data"):
+        # Check if it's actually a mount point with sufficient space
+        try:
+            stat = os.statvfs("/data")
+            free_mb = (stat.f_frsize * stat.f_bavail) / (1024 * 1024)
+            total_mb = (stat.f_frsize * stat.f_blocks) / (1024 * 1024)
+            print(f"   📁 Volume /data mounted: {free_mb:.0f}MB free of {total_mb:.0f}MB")
+            
+            if free_mb < 50:
+                print(f"   ⚠️  WARNING: Low disk space on volume!")
+                logger.warning(f"Low disk space on /data volume: {free_mb:.0f}MB free")
+        except Exception as e:
+            print(f"   ⚠️  Could not check volume: {e}")
+    else:
+        print("   📁 Running locally (no /data volume)")
+    
+    # 3. Check if database exists
+    if DB_PATH.exists():
+        size_mb = DB_PATH.stat().st_size / (1024 * 1024)
+        print(f"   📊 Database: {DB_PATH} ({size_mb:.2f}MB)")
+    else:
+        print(f"   📊 Database will be created at: {DB_PATH}")
+    
+    print("✅ Health check complete")
 
 
 def init_database():
@@ -1260,6 +1370,33 @@ def get_message_counts_for_month(year: int, month: int) -> dict:
     
     conn.close()
     return result
+
+
+def get_last_sync_time() -> Optional[str]:
+    """
+    Get the timestamp of the most recent database update.
+    
+    Returns:
+        ISO timestamp string of last update, or None if no records exist
+    """
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    # Check monthly_records for most recent update
+    cursor.execute(
+        """
+        SELECT MAX(updated_at) as last_update 
+        FROM monthly_records
+        """
+    )
+    
+    row = cursor.fetchone()
+    conn.close()
+    
+    if row and row["last_update"]:
+        return row["last_update"]
+    
+    return None
 
 
 # Initialize database when module is imported

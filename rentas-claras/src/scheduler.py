@@ -100,6 +100,39 @@ def run_afternoon_reminder():
     )
 
 
+def run_daily_backup():
+    """
+    6:00 AM backup job - runs every day.
+    
+    Creates a backup of the SQLite database.
+    """
+    logger.info("=" * 60)
+    logger.info("💾 Running DAILY BACKUP job (6:00 AM)")
+    logger.info("=" * 60)
+    
+    try:
+        from src.backup import create_backup, get_backup_stats
+        
+        # Create backup
+        result = create_backup(verify_first=True)
+        
+        if result["success"]:
+            logger.info(f"✅ Backup created: {result['backup_path']}")
+            logger.info(f"   Size: {result['size_mb']} MB")
+            
+            # Log backup stats
+            stats = get_backup_stats()
+            logger.info(f"   Total backups: {stats['total_backups']}")
+            logger.info(f"   Total size: {stats['total_size_mb']} MB")
+        else:
+            logger.error(f"❌ Backup failed: {result['message']}")
+            
+    except ImportError as e:
+        logger.error(f"❌ Backup module not found: {e}")
+    except Exception as e:
+        logger.error(f"❌ Backup error: {e}")
+
+
 def _send_reminders(message_type: str, template_name: str, is_morning: bool):
     """
     Core logic to send reminders to all unpaid tenants.
@@ -233,11 +266,21 @@ def start_scheduler():
         replace_existing=True,
     )
     
+    # Job 3: Daily database backup at 6:00 AM Mexico time
+    _scheduler.add_job(
+        run_daily_backup,
+        trigger=CronTrigger(hour=6, minute=0, timezone=TIMEZONE),
+        id="daily_backup",
+        name="6:00 AM Daily Backup",
+        replace_existing=True,
+    )
+    
     _scheduler.start()
     
     logger.info("✅ Scheduler started successfully!")
     logger.info("   📅 Morning reminder: 8:00 AM (Day 1 only)")
     logger.info("   📅 Afternoon reminder: 5:00 PM (Day 1 only)")
+    logger.info("   💾 Daily backup: 6:00 AM")
     logger.info(f"   🌎 Timezone: {TIMEZONE}")
     
     # List all jobs

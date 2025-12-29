@@ -18,6 +18,10 @@ Date: December 2024
 import atexit
 import locale
 import os
+
+# Load environment variables from .env file BEFORE any other imports
+from dotenv import load_dotenv
+load_dotenv()
 import urllib.parse
 from dataclasses import dataclass
 from datetime import datetime
@@ -39,6 +43,7 @@ from database import (
     get_tenants_by_property,
     init_database,
     seed_tenants,
+    startup_health_check,
     Tenant,
     update_payment_status,
     update_renewal_status,
@@ -88,7 +93,8 @@ def login_required(f):
     return decorated_function
 
 
-# Initialize database on startup
+# Initialize database on startup with health check
+startup_health_check()  # Run health checks first
 init_database()
 seed_tenants()
 
@@ -141,6 +147,27 @@ scheduler.add_job(
     trigger=CronTrigger(day="2,3,5,7,8", hour=9, minute=0, timezone=MX_TZ),
     args=["Late Payment Escalation"],
     id="late_escalation",
+    replace_existing=True,
+)
+
+# Job 3: Daily database backup at 6 AM Mexico City time
+def run_backup():
+    """Run backup within Flask app context."""
+    with app.app_context():
+        from src.backup import scheduled_backup
+        scheduler_logger.info("🔄 Starting daily database backup...")
+        success = scheduled_backup()
+        if success:
+            scheduler_logger.info("✅ Daily backup completed successfully")
+        else:
+            scheduler_logger.error("❌ Daily backup FAILED - check logs")
+        return success
+
+scheduler.add_job(
+    func=run_backup,
+    trigger=CronTrigger(hour=6, minute=0, timezone=MX_TZ),
+    id="daily_backup",
+    name="Daily Database Backup",
     replace_existing=True,
 )
 
@@ -847,7 +874,7 @@ HTML_TEMPLATE = """
             font-size: 1.3rem;
         }
         
-        @media (min-width: 768px) {
+@media (min-width: 768px) {
             .top-navbar {
                 max-width: 500px;
                 margin: var(--space-lg) auto;
@@ -861,6 +888,52 @@ HTML_TEMPLATE = """
             .top-navbar-icon {
                 font-size: 1.5rem;
             }
+        }
+        
+        /* ===========================================
+           SYNC INDICATOR - Shows last save time
+           =========================================== */
+        .sync-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 8px 16px;
+            font-size: 0.85rem;
+            color: #666;
+            background: #f5f5f5;
+            border-radius: 20px;
+            margin: 0 auto 16px auto;
+            max-width: fit-content;
+            transition: all 0.3s ease;
+        }
+        
+        .sync-indicator.syncing {
+            color: #0A7A0A;
+            background: #e8f5e9;
+        }
+        
+        .sync-indicator.synced {
+            color: #0A7A0A;
+            background: #e8f5e9;
+        }
+        
+        .sync-indicator.error {
+            color: #CC0000;
+            background: #ffebee;
+        }
+        
+        .sync-icon {
+            font-size: 1rem;
+        }
+        
+        .sync-icon.spinning {
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
         }
         
         /* Top Navigation (visible on tablet+) - LEGACY, can remove */
@@ -2912,7 +2985,13 @@ HTML_TEMPLATE = """
                 </a>
             </nav>
               
-            <p class="subtitle" style="font-size: 1.3rem; font-weight: 700; color: #000;">¿Quién ya pagó este mes?</p>
+<p class="subtitle" style="font-size: 1.3rem; font-weight: 700; color: #000;">¿Quién ya pagó este mes?</p>
+            
+            <!-- Sync Indicator - Shows last save time -->
+            <div id="sync-indicator" class="sync-indicator synced">
+                <span class="sync-icon">✓</span>
+                <span id="sync-text">{% if last_sync %}Guardado {{ last_sync_relative }}{% else %}Sin cambios aún{% endif %}</span>
+            </div>
             
             <!-- Month Selector with SVG arrows and integrated Hoy button -->
             <div style="display: flex; flex-direction: column; align-items: center; gap: 12px; margin: 24px 0;">
@@ -3264,26 +3343,49 @@ HTML_TEMPLATE = """
                 </button>
                 {% endfor %}
             </div>
-            <!-- Scroll indicator arrows (visible when content overflows) -->
-            <div id="scrollIndicatorRight" style="position: absolute; right: 0; top: 0; bottom: 0; width: 48px; background: linear-gradient(90deg, transparent, rgba(245,245,245,0.95)); display: flex; align-items: center; justify-content: center; pointer-events: none; border-radius: 0 12px 12px 0;">
-                <span style="font-size: 1.5rem; color: #666; animation: pulse 1.5s infinite;">›</span>
+            <!-- Scroll indicator arrow (visible when content overflows) -->
+            <div id="scrollIndicatorRight" class="scroll-indicator-arrow" style="position: absolute; right: 0; top: 0; bottom: 0; width: 48px; background: linear-gradient(90deg, transparent, rgba(245,245,245,0.95)); display: flex; align-items: center; justify-content: center; pointer-events: none; border-radius: 0 12px 12px 0;">
+                <span style="font-size: 1.5rem; color: #666; animation: pulseArrow 1.5s infinite;">›</span>
+            </div>
+            <!-- First-time "Desliza" tooltip -->
+            <div id="deslizaTooltipPagos" class="desliza-tooltip" style="display: none; position: absolute; right: 8px; top: -32px; background: #333; color: white; padding: 6px 12px; border-radius: 8px; font-size: 0.8rem; font-weight: 600; white-space: nowrap; box-shadow: 0 2px 8px rgba(0,0,0,0.2); z-index: 1000;">
+                Desliza para ver mas
+                <div style="position: absolute; bottom: -6px; right: 16px; width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 6px solid #333;"></div>
             </div>
             <style>
-                @keyframes pulse {
+                @keyframes pulseArrow {
                     0%, 100% { opacity: 0.5; transform: translateX(0); }
                     50% { opacity: 1; transform: translateX(4px); }
                 }
             </style>
             <script>
-                // Hide scroll indicator if tabs don't overflow
+                // Hide scroll indicator if tabs don't overflow + show desliza tooltip
                 (function() {
                     var tabs = document.getElementById('propertyFilterTabs');
                     var indicator = document.getElementById('scrollIndicatorRight');
+                    var tooltip = document.getElementById('deslizaTooltipPagos');
+                    var tooltipKey = 'rentasclaras_desliza_shown_pagos';
+                    
                     if (tabs && indicator) {
                         function checkScroll() {
                             var isOverflowing = tabs.scrollWidth > tabs.clientWidth;
                             var isScrolledToEnd = tabs.scrollLeft + tabs.clientWidth >= tabs.scrollWidth - 10;
                             indicator.style.display = (isOverflowing && !isScrolledToEnd) ? 'flex' : 'none';
+                            
+                            // Show tooltip only once if overflowing and not seen before
+                            if (isOverflowing && tooltip && !localStorage.getItem(tooltipKey)) {
+                                tooltip.style.display = 'block';
+                                setTimeout(function() {
+                                    tooltip.style.display = 'none';
+                                    localStorage.setItem(tooltipKey, 'true');
+                                }, 4000);
+                            }
+                            
+                            // Hide tooltip once user scrolls
+                            if (tabs.scrollLeft > 20 && tooltip) {
+                                tooltip.style.display = 'none';
+                                localStorage.setItem(tooltipKey, 'true');
+                            }
                         }
                         checkScroll();
                         tabs.addEventListener('scroll', checkScroll);
@@ -5513,7 +5615,7 @@ HTML_TEMPLATE = """
             updateLastSaved();
         }
         
-        // =============================================
+// =============================================
         // Last Saved Timestamp - More visible for Excel users
         // =============================================
         
@@ -5521,7 +5623,9 @@ HTML_TEMPLATE = """
             console.log('updateLastSaved() called');
             const el = document.getElementById('lastSaved');
             const textEl = document.getElementById('lastSavedText');
-            console.log('Elements found:', { el: !!el, textEl: !!textEl });
+            const syncIndicator = document.getElementById('sync-indicator');
+            const syncText = document.getElementById('sync-text');
+            console.log('Elements found:', { el: !!el, textEl: !!textEl, syncIndicator: !!syncIndicator });
             const now = new Date();
             
             // Save timestamp to localStorage for persistence across page reloads
@@ -5540,8 +5644,35 @@ HTML_TEMPLATE = """
                 el.textContent = displayText;
                 el.style.color = '#0A7A0A';
                 console.log('Updated el.textContent to:', el.textContent);
-            } else {
-                console.error('ERROR: Could not find lastSaved elements!');
+            }
+            
+            // Update the sync indicator
+            if (syncIndicator && syncText) {
+                syncIndicator.classList.remove('error');
+                syncIndicator.classList.add('synced');
+                syncText.textContent = 'Guardado hace unos segundos';
+                
+                // Show brief "syncing" animation
+                const syncIcon = syncIndicator.querySelector('.sync-icon');
+                if (syncIcon) {
+                    syncIcon.textContent = '↻';
+                    syncIcon.classList.add('spinning');
+                    setTimeout(() => {
+                        syncIcon.textContent = '✓';
+                        syncIcon.classList.remove('spinning');
+                    }, 500);
+                }
+            }
+        }
+        
+        // Update sync indicator on errors
+        function showSyncError() {
+            const syncIndicator = document.getElementById('sync-indicator');
+            const syncText = document.getElementById('sync-text');
+            if (syncIndicator && syncText) {
+                syncIndicator.classList.remove('synced');
+                syncIndicator.classList.add('error');
+                syncText.textContent = 'Error al guardar - reintentando...';
             }
         }
         
@@ -5857,17 +5988,17 @@ LOGIN_TEMPLATE = """
         
         /* PIN instruction text */
         .pin-instruction {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: #666;
-            margin-bottom: 16px;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 20px;
             text-align: center;
         }
         
         @media (min-width: 768px) {
             .pin-instruction {
-                font-size: 1.3rem;
-                margin-bottom: 20px;
+                font-size: 2.2rem;
+                margin-bottom: 24px;
             }
         }
         
@@ -5941,8 +6072,7 @@ LOGIN_TEMPLATE = """
 </head>
 <body>
     <div class="login-card">
-        <h1>RC</h1>
-        <div class="subtitle">RentasClaras</div>
+        <h1>RentasClaras</h1>
         <div class="welcome-message">¡Bienvenidos papis! 💚</div>
         
         {% if error %}
@@ -6261,10 +6391,32 @@ def index():
     expiring_warning = [c for c in expiring_contracts if c["urgency"] == "warning"]
     expiring_expired = [c for c in expiring_contracts if c["urgency"] == "expired"]
 
-    # Calculate total late fees and total owed (for top banner)
+# Calculate total late fees and total owed (for top banner)
     total_late_fees = sum(t.late_fee for t in all_tenants if not t.paid)
     total_owed = sum(t.total_owed for t in all_tenants if not t.paid)
     unpaid_count = sum(1 for t in all_tenants if not t.paid)
+
+    # Get last sync time for the indicator
+    last_sync = get_last_sync_time()
+    last_sync_relative = None
+    if last_sync:
+        try:
+            sync_dt = datetime.fromisoformat(last_sync.replace('Z', '+00:00'))
+            diff = datetime.now() - sync_dt.replace(tzinfo=None)
+            seconds = diff.total_seconds()
+            if seconds < 60:
+                last_sync_relative = "hace unos segundos"
+            elif seconds < 3600:
+                minutes = int(seconds / 60)
+                last_sync_relative = f"hace {minutes} minuto{'s' if minutes != 1 else ''}"
+            elif seconds < 86400:
+                hours = int(seconds / 3600)
+                last_sync_relative = f"hace {hours} hora{'s' if hours != 1 else ''}"
+            else:
+                days = int(seconds / 86400)
+                last_sync_relative = f"hace {days} día{'s' if days != 1 else ''}"
+        except:
+            last_sync_relative = last_sync[:16] if last_sync else None
 
     return render_template_string(
         HTML_TEMPLATE,
@@ -6289,10 +6441,12 @@ def index():
         test_phone=TEST_PHONE,
         is_current_month=is_current_month,
         can_go_prev=can_go_prev,
-        expiring_contracts=expiring_contracts,
+expiring_contracts=expiring_contracts,
         expiring_critical=expiring_critical,
         expiring_warning=expiring_warning,
         expiring_expired=expiring_expired,
+        last_sync=last_sync,
+        last_sync_relative=last_sync_relative,
         now=datetime.now(),
     )
 
@@ -6470,6 +6624,132 @@ def update_renewal():
     )
 
     return jsonify({"success": True})
+
+
+# =============================================================================
+# BACKUP API ENDPOINTS
+# =============================================================================
+
+
+@app.route("/api/backups", methods=["GET"])
+@login_required
+def api_list_backups():
+    """List all database backups."""
+    try:
+        from src.backup import list_backups, get_backup_stats
+        
+        backups = list_backups()
+        stats = get_backup_stats()
+        
+        return jsonify({
+            "success": True,
+            "backups": backups,
+            "stats": stats
+        })
+    except ImportError:
+        return jsonify({
+            "success": False,
+            "error": "Backup module not available"
+        }), 500
+
+
+@app.route("/api/backups", methods=["POST"])
+@login_required
+def api_create_backup():
+    """Create a new backup now."""
+    try:
+        from src.backup import create_backup
+        
+        result = create_backup(verify_first=True)
+        
+        return jsonify({
+            "success": result["success"],
+            "message": result["message"],
+            "backup_path": result.get("backup_path"),
+            "size_mb": result.get("size_mb")
+        })
+    except ImportError:
+        return jsonify({
+            "success": False,
+            "error": "Backup module not available"
+        }), 500
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+
+@app.route("/api/backups/restore/<filename>", methods=["POST"])
+@login_required
+def api_restore_backup(filename):
+    """
+    Restore database from a backup file.
+    
+    DANGEROUS OPERATION - requires explicit confirmation.
+    Request body must include: {"confirm": "YES_RESTORE"}
+    """
+    try:
+        from src.backup import restore_backup
+        
+        data = request.json or {}
+        confirm = data.get("confirm")
+        
+        if confirm != "YES_RESTORE":
+            return jsonify({
+                "success": False,
+                "error": "Must confirm with 'YES_RESTORE' in request body"
+            }), 400
+        
+        result = restore_backup(filename, create_safety_backup=True)
+        
+        if result["success"]:
+            return jsonify(result)
+        else:
+            return jsonify(result), 400
+    except ImportError:
+        return jsonify({
+            "success": False,
+            "error": "Backup module not available"
+        }), 500
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+
+@app.route("/api/sync-status", methods=["GET"])
+def api_sync_status():
+    """Get the last sync time and database health."""
+    last_sync = get_last_sync_time()
+    
+    # Calculate relative time
+    last_sync_relative = None
+    if last_sync:
+        try:
+            sync_dt = datetime.fromisoformat(last_sync.replace('Z', '+00:00'))
+            diff = datetime.now() - sync_dt.replace(tzinfo=None)
+            seconds = diff.total_seconds()
+            if seconds < 60:
+                last_sync_relative = "hace unos segundos"
+            elif seconds < 3600:
+                minutes = int(seconds / 60)
+                last_sync_relative = f"hace {minutes} minuto{'s' if minutes != 1 else ''}"
+            elif seconds < 86400:
+                hours = int(seconds / 3600)
+                last_sync_relative = f"hace {hours} hora{'s' if hours != 1 else ''}"
+            else:
+                days = int(seconds / 86400)
+                last_sync_relative = f"hace {days} día{'s' if days != 1 else ''}"
+        except:
+            last_sync_relative = last_sync[:16] if last_sync else None
+    
+    return jsonify({
+        "success": True,
+        "last_sync": last_sync,
+        "last_sync_relative": last_sync_relative
+    })
 
 
 @app.route("/api/whatsapp/status")
@@ -6678,9 +6958,33 @@ def send_one_whatsapp():
         return jsonify({"success": False, "error": response.error}), 500
 
 
-# =============================================================================
-# CONTRACTS PAGE - Separate focused view for contract management
-# =============================================================================
+@app.route("/api/database/health", methods=["GET"])
+@login_required
+def api_database_health():
+    """Check database health and integrity."""
+    from src.backup import verify_database_integrity, get_db_path, get_backup_stats
+    
+    db_path = get_db_path()
+    
+    if not db_path.exists():
+        return jsonify({
+            "healthy": False,
+            "message": "Database file not found",
+            "path": str(db_path)
+        }), 500
+    
+    is_ok, message = verify_database_integrity(db_path)
+    stats = get_backup_stats()
+    
+    return jsonify({
+        "healthy": is_ok,
+        "message": message,
+        "database_path": str(db_path),
+        "database_size_mb": stats.get("database_size_mb", 0),
+        "total_backups": stats.get("total_backups", 0),
+        "newest_backup": stats.get("newest_backup"),
+        "backup_dir_exists": stats.get("backup_dir_exists", False)
+    })
 
 CONTRACTS_TEMPLATE = """
 <!DOCTYPE html>
@@ -7824,16 +8128,62 @@ CONTRACTS_TEMPLATE = """
             <div id="contractSearchResults" class="prominent-search-results"></div>
         </div>
         
-        <!-- Property Filter Tabs for Contratos -->
-        <div class="property-filter-tabs" id="propertyFilterTabsContratos" style="display: flex; gap: 8px; margin-bottom: 24px; overflow-x: auto; padding-bottom: 8px; -webkit-overflow-scrolling: touch; position: relative; z-index: 10; background: #F5F5F5; border-radius: 12px; padding: 4px;">
-            <button type="button" class="property-filter-tab active" data-filter="all" onclick="filterContractsByProperty('all', this)" style="flex-shrink: 0; padding: 12px 20px; border-radius: 8px; border: none; background: #0A7A0A; color: white; font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: all 0.2s; min-height: 48px; white-space: nowrap; position: relative; z-index: 11;">
-                Todas <span class="tab-count" id="tabCountAllContratos" style="background: rgba(255,255,255,0.3); padding: 2px 10px; border-radius: 12px; margin-left: 6px;">{{ total_tenants }}</span>
-            </button>
-            {% for property_name, tenants in tenants_by_property.items() %}
-            <button type="button" class="property-filter-tab" data-filter="{{ property_name }}" onclick="filterContractsByProperty('{{ property_name }}', this)" style="flex-shrink: 0; padding: 12px 20px; border-radius: 8px; border: none; background: transparent; color: #333333; font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: all 0.2s; min-height: 48px; white-space: nowrap; position: relative; z-index: 11;">
-                {{ property_name }} <span class="tab-count" data-tab-count="{{ property_name }}" style="background: rgba(0,0,0,0.1); padding: 2px 10px; border-radius: 12px; margin-left: 6px;">{{ tenants|length }}</span>
-            </button>
-            {% endfor %}
+        <!-- Property Filter Tabs for Contratos with scroll indicator -->
+        <div style="position: relative; margin-bottom: 24px;">
+            <div class="property-filter-tabs" id="propertyFilterTabsContratos" style="display: flex; gap: 8px; overflow-x: auto; padding: 4px; -webkit-overflow-scrolling: touch; position: relative; z-index: 10; background: #F5F5F5; border-radius: 12px; scroll-behavior: smooth;">
+                <button type="button" class="property-filter-tab active" data-filter="all" onclick="filterContractsByProperty('all', this)" style="flex-shrink: 0; padding: 12px 20px; border-radius: 8px; border: none; background: #0A7A0A; color: white; font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: all 0.2s; min-height: 48px; white-space: nowrap; position: relative; z-index: 11;">
+                    Todas <span class="tab-count" id="tabCountAllContratos" style="background: rgba(255,255,255,0.3); padding: 2px 10px; border-radius: 12px; margin-left: 6px;">{{ total_tenants }}</span>
+                </button>
+                {% for property_name, tenants in tenants_by_property.items() %}
+                <button type="button" class="property-filter-tab" data-filter="{{ property_name }}" onclick="filterContractsByProperty('{{ property_name }}', this)" style="flex-shrink: 0; padding: 12px 20px; border-radius: 8px; border: none; background: transparent; color: #333333; font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: all 0.2s; min-height: 48px; white-space: nowrap; position: relative; z-index: 11;">
+                    {{ property_name }} <span class="tab-count" data-tab-count="{{ property_name }}" style="background: rgba(0,0,0,0.1); padding: 2px 10px; border-radius: 12px; margin-left: 6px;">{{ tenants|length }}</span>
+                </button>
+                {% endfor %}
+            </div>
+            <!-- Scroll indicator arrow (visible when content overflows) -->
+            <div id="scrollIndicatorRightContratos" class="scroll-indicator-arrow" style="position: absolute; right: 0; top: 0; bottom: 0; width: 48px; background: linear-gradient(90deg, transparent, rgba(245,245,245,0.95)); display: flex; align-items: center; justify-content: center; pointer-events: none; border-radius: 0 12px 12px 0;">
+                <span style="font-size: 1.5rem; color: #666; animation: pulseArrow 1.5s infinite;">›</span>
+            </div>
+            <!-- First-time "Desliza" tooltip -->
+            <div id="deslizaTooltipContratos" class="desliza-tooltip" style="display: none; position: absolute; right: 8px; top: -32px; background: #333; color: white; padding: 6px 12px; border-radius: 8px; font-size: 0.8rem; font-weight: 600; white-space: nowrap; box-shadow: 0 2px 8px rgba(0,0,0,0.2); z-index: 1000;">
+                Desliza para ver mas
+                <div style="position: absolute; bottom: -6px; right: 16px; width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 6px solid #333;"></div>
+            </div>
+            <script>
+                // Hide scroll indicator if tabs don't overflow + show desliza tooltip
+                (function() {
+                    var tabs = document.getElementById('propertyFilterTabsContratos');
+                    var indicator = document.getElementById('scrollIndicatorRightContratos');
+                    var tooltip = document.getElementById('deslizaTooltipContratos');
+                    var tooltipKey = 'rentasclaras_desliza_shown_contratos';
+                    
+                    if (tabs && indicator) {
+                        function checkScroll() {
+                            var isOverflowing = tabs.scrollWidth > tabs.clientWidth;
+                            var isScrolledToEnd = tabs.scrollLeft + tabs.clientWidth >= tabs.scrollWidth - 10;
+                            indicator.style.display = (isOverflowing && !isScrolledToEnd) ? 'flex' : 'none';
+                            
+                            // Show tooltip only once if overflowing and not seen before
+                            if (isOverflowing && tooltip && !localStorage.getItem(tooltipKey)) {
+                                tooltip.style.display = 'block';
+                                setTimeout(function() {
+                                    tooltip.style.display = 'none';
+                                    localStorage.setItem(tooltipKey, 'true');
+                                }, 4000);
+                            }
+                            
+                            // Hide tooltip once user scrolls
+                            if (tabs.scrollLeft > 20 && tooltip) {
+                                tooltip.style.display = 'none';
+                                localStorage.setItem(tooltipKey, 'true');
+                            }
+                        }
+                        checkScroll();
+                        tabs.addEventListener('scroll', checkScroll);
+                        window.addEventListener('resize', checkScroll);
+                    }
+                })();
+            </script>
         </div>
         
         <!-- APARTMENTS AVAILABLE - Need to show to new tenants -->
