@@ -69,6 +69,8 @@ def api_add_tenant():
             emergency_contact=data.get("emergency_contact"),
             emergency_phone=data.get("emergency_phone"),
             bank=data.get("bank"),
+            aval_name=data.get("aval_name", "").strip() if data.get("aval_name") else None,
+            aval_phone=data.get("aval_phone", "").strip() if data.get("aval_phone") else None,
             prorated_first_month=data.get("prorated_first_month", False),
             prorated_amount=data.get("prorated_amount"),
             prorated_month=data.get("prorated_month"),
@@ -99,6 +101,8 @@ def api_update_tenant(tenant_id):
             emergency_contact=data.get("emergency_contact"),
             emergency_phone=data.get("emergency_phone"),
             bank=data.get("bank"),
+            aval_name=data.get("aval_name"),
+            aval_phone=data.get("aval_phone"),
         )
         
         return jsonify({"success": True})

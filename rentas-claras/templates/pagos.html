@@ -528,6 +528,39 @@
         background: var(--green-light);
     }
 
+    /* Payment info row - compact display */
+    .tenant-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 6px;
+        align-items: center;
+    }
+
+    .tenant-meta-item {
+        font-size: 0.95rem;
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-weight: 600;
+    }
+
+    .tenant-meta-item.payment-method {
+        background: rgba(10, 122, 10, 0.15);
+        color: var(--green);
+    }
+
+    .tenant-meta-item.visits {
+        background: rgba(245, 158, 11, 0.2);
+        color: #92400E;
+    }
+
+    @media (min-width: 1024px) {
+        .tenant-meta-item {
+            font-size: 1.05rem;
+            padding: 6px 12px;
+        }
+    }
+
     .tenant-info {
         flex: 1;
         min-width: 0;
@@ -741,30 +774,92 @@
 
     .modal-payment-methods {
         display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        justify-content: center;
+        flex-direction: column;
+        gap: 10px;
         margin: 16px 0;
-        padding: 12px;
+        padding: 16px;
         background: var(--gray-light);
         border-radius: 10px;
     }
 
-    .modal-payment-btn {
-        padding: 10px 16px;
-        border-radius: 20px;
-        border: 2px solid #ddd;
-        background: white;
-        font-size: 0.95rem;
+    .modal-payment-methods-label {
+        font-size: 1rem;
         font-weight: 600;
+        color: var(--gray);
+        margin-bottom: 6px;
+        text-align: center;
+    }
+
+    .modal-payment-btn {
+        padding: 14px 20px;
+        border-radius: 12px;
+        border: 3px solid #ddd;
+        background: white;
+        font-size: 1.1rem;
+        font-weight: 700;
         cursor: pointer;
         transition: all 0.2s;
+        min-height: 52px;
+        text-align: center;
     }
 
     .modal-payment-btn.selected {
         background: var(--green);
         border-color: var(--green);
         color: white;
+    }
+
+    .modal-payment-btn:active {
+        transform: scale(0.98);
+    }
+
+    /* Optional extras section - collapsed by default */
+    .optional-extras {
+        margin-top: 16px;
+        border-top: 2px dashed #ddd;
+        padding-top: 16px;
+    }
+
+    .optional-extras-toggle {
+        width: 100%;
+        padding: 14px;
+        border: 2px solid #ddd;
+        border-radius: 12px;
+        background: white;
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--gray);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    .optional-extras-toggle:active {
+        background: var(--gray-light);
+    }
+
+    .optional-extras-content {
+        display: none;
+        margin-top: 12px;
+    }
+
+    .optional-extras-content.show {
+        display: block;
+    }
+
+    @media (min-width: 768px) {
+        .modal-payment-methods {
+            flex-direction: row;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .modal-payment-btn {
+            flex: 0 1 auto;
+            min-width: 140px;
+        }
     }
 
     .modal-buttons {
@@ -839,6 +934,9 @@
         display: flex;
         box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
         z-index: 100;
+        /* Improved safe area support for older iPhones */
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+        padding-bottom: constant(safe-area-inset-bottom, 0px); /* iOS 11.0-11.2 */
     }
 
     .nav-item {
@@ -1116,11 +1214,15 @@
                     <div class="tenant-info" onclick="showConfirmModal('{{ tenant.id }}', '{{ tenant.name }}', {{ tenant.rent }}, true)">
                         <div class="tenant-name">{{ tenant.name }}</div>
                         <div class="tenant-property">{{ tenant.unit }}</div>
-                        {% if tenant.payment_method %}
-                        <div style="font-size: 0.85rem; color: var(--green); margin-top: 4px;">💳 {{ tenant.payment_method }}</div>
-                        {% endif %}
-                        {% if tenant.visits and tenant.visits > 0 %}
-                        <div style="font-size: 0.85rem; color: #92400E; margin-top: 4px; font-weight: 600;">🏠 {{ tenant.visits }} visita{% if tenant.visits > 1 %}s{% endif %} (+${{ "{:,.0f}".format(tenant.visit_charge) }})</div>
+                        {% if tenant.payment_method or (tenant.visits and tenant.visits > 0) %}
+                        <div class="tenant-meta">
+                            {% if tenant.payment_method %}
+                            <span class="tenant-meta-item payment-method">💳 {{ tenant.payment_method }}</span>
+                            {% endif %}
+                            {% if tenant.visits and tenant.visits > 0 %}
+                            <span class="tenant-meta-item visits">🏠 {{ tenant.visits }} visita{% if tenant.visits > 1 %}s{% endif %} (+${{ "{:,.0f}".format(tenant.visit_charge) }})</span>
+                            {% endif %}
+                        </div>
                         {% endif %}
                     </div>
                     <div class="tenant-amount paid" onclick="showConfirmModal('{{ tenant.id }}', '{{ tenant.name }}', {{ tenant.rent }}, true)">${{ "{:,.0f}".format(tenant.rent) }}</div>
@@ -1161,42 +1263,51 @@
             <div class="modal-property" id="modalProperty">Propiedad · Unidad</div>
             <div class="modal-amount" id="modalAmount">$0</div>
             
-            <!-- Extra Charges Section -->
-            <div id="extraChargesSection" style="display: none; margin: 16px 0; padding: 12px; background: #FEF3C7; border-radius: 10px; border: 2px solid #F59E0B;">
-                <div style="font-size: 1rem; font-weight: 600; color: #92400E; margin-bottom: 10px;">🏠 ¿Hubo visitas este mes?</div>
-                <div style="display: flex; align-items: center; gap: 12px; justify-content: center;">
-                    <button type="button" class="visit-btn" onclick="changeVisits(-1)" style="width: 48px; height: 48px; border-radius: 50%; border: 2px solid #D97706; background: white; font-size: 1.5rem; cursor: pointer;">−</button>
-                    <div style="text-align: center;">
-                        <div id="visitCount" style="font-size: 2rem; font-weight: 800; color: #92400E;">0</div>
-                        <div style="font-size: 0.85rem; color: #92400E;">visitas</div>
-                    </div>
-                    <button type="button" class="visit-btn" onclick="changeVisits(1)" style="width: 48px; height: 48px; border-radius: 50%; border: 2px solid #D97706; background: white; font-size: 1.5rem; cursor: pointer;">+</button>
-                </div>
-                <div id="visitCharge" style="font-size: 1rem; font-weight: 700; color: #92400E; text-align: center; margin-top: 8px;">$0 extra</div>
-            </div>
-
-            <!-- Advance Payment Section -->
-            <div id="advancePaymentSection" style="display: none; margin: 16px 0; padding: 12px; background: #E0E7FF; border-radius: 10px; border: 2px solid #6366F1;">
-                <div style="font-size: 1rem; font-weight: 600; color: #4338CA; margin-bottom: 10px;">📅 ¿Pago adelantado?</div>
-                <div style="display: flex; align-items: center; gap: 12px; justify-content: center;">
-                    <button type="button" onclick="changeAdvanceMonths(-1)" style="width: 48px; height: 48px; border-radius: 50%; border: 2px solid #6366F1; background: white; font-size: 1.5rem; cursor: pointer;">−</button>
-                    <div style="text-align: center;">
-                        <div id="advanceMonths" style="font-size: 2rem; font-weight: 800; color: #4338CA;">1</div>
-                        <div style="font-size: 0.85rem; color: #4338CA;">mes(es)</div>
-                    </div>
-                    <button type="button" onclick="changeAdvanceMonths(1)" style="width: 48px; height: 48px; border-radius: 50%; border: 2px solid #6366F1; background: white; font-size: 1.5rem; cursor: pointer;">+</button>
-                </div>
-                <div id="advanceTotal" style="font-size: 1rem; font-weight: 700; color: #4338CA; text-align: center; margin-top: 8px;">1 mes</div>
-                <div id="advanceMonthsList" style="font-size: 0.9rem; color: #4338CA; text-align: center; margin-top: 4px;"></div>
-            </div>
-
-            <!-- Payment Method Selection (only shown when marking as paid) -->
+            <!-- Payment Method Selection (only shown when marking as paid) - FIRST, most common action -->
             <div class="modal-payment-methods" id="paymentMethods" style="display: none;">
-            <div style="width: 100%; text-align: center; font-size: 1rem; font-weight: 600; color: var(--gray); margin-bottom: 10px;">¿Cómo pagó?</div>
+                <div class="modal-payment-methods-label">¿Cómo pagó?</div>
                 <button type="button" class="modal-payment-btn" data-method="Efectivo" onclick="selectPaymentMethod('Efectivo')">💵 Efectivo</button>
                 <button type="button" class="modal-payment-btn" data-method="Transferencia" onclick="selectPaymentMethod('Transferencia')">🏦 Transferencia</button>
                 <button type="button" class="modal-payment-btn" data-method="Depósito" onclick="selectPaymentMethod('Depósito')">🏧 Depósito</button>
                 <button type="button" class="modal-payment-btn" data-method="Envío sin tarjeta" onclick="selectPaymentMethod('Envío sin tarjeta')">📲 Envío sin tarjeta</button>
+            </div>
+
+            <!-- Optional Extras (Visitas & Pago Adelantado) - Collapsible, at the bottom -->
+            <div class="optional-extras" id="optionalExtras" style="display: none;">
+                <button type="button" class="optional-extras-toggle" onclick="toggleOptionalExtras()">
+                    <span id="optionalExtrasIcon">➕</span>
+                    <span id="optionalExtrasLabel">¿Visitas o pago adelantado? (opcional)</span>
+                </button>
+                <div class="optional-extras-content" id="optionalExtrasContent">
+                    <!-- Extra Charges Section -->
+                    <div id="extraChargesSection" style="margin: 12px 0; padding: 16px; background: #FEF3C7; border-radius: 12px; border: 2px solid #F59E0B;">
+                        <div style="font-size: 1.1rem; font-weight: 700; color: #92400E; margin-bottom: 12px;">🏠 ¿Hubo visitas este mes?</div>
+                        <div style="display: flex; align-items: center; gap: 16px; justify-content: center;">
+                            <button type="button" class="visit-btn" onclick="changeVisits(-1)" style="width: 56px; height: 56px; border-radius: 50%; border: 3px solid #D97706; background: white; font-size: 1.8rem; cursor: pointer;">−</button>
+                            <div style="text-align: center;">
+                                <div id="visitCount" style="font-size: 2.5rem; font-weight: 800; color: #92400E;">0</div>
+                                <div style="font-size: 1rem; color: #92400E;">visitas</div>
+                            </div>
+                            <button type="button" class="visit-btn" onclick="changeVisits(1)" style="width: 56px; height: 56px; border-radius: 50%; border: 3px solid #D97706; background: white; font-size: 1.8rem; cursor: pointer;">+</button>
+                        </div>
+                        <div id="visitCharge" style="font-size: 1.1rem; font-weight: 700; color: #92400E; text-align: center; margin-top: 10px;">$0 extra</div>
+                    </div>
+
+                    <!-- Advance Payment Section -->
+                    <div id="advancePaymentSection" style="margin: 12px 0; padding: 16px; background: #E0E7FF; border-radius: 12px; border: 2px solid #6366F1;">
+                        <div style="font-size: 1.1rem; font-weight: 700; color: #4338CA; margin-bottom: 12px;">📅 ¿Pago adelantado?</div>
+                        <div style="display: flex; align-items: center; gap: 16px; justify-content: center;">
+                            <button type="button" onclick="changeAdvanceMonths(-1)" style="width: 56px; height: 56px; border-radius: 50%; border: 3px solid #6366F1; background: white; font-size: 1.8rem; cursor: pointer;">−</button>
+                            <div style="text-align: center;">
+                                <div id="advanceMonths" style="font-size: 2.5rem; font-weight: 800; color: #4338CA;">1</div>
+                                <div style="font-size: 1rem; color: #4338CA;">mes(es)</div>
+                            </div>
+                            <button type="button" onclick="changeAdvanceMonths(1)" style="width: 56px; height: 56px; border-radius: 50%; border: 3px solid #6366F1; background: white; font-size: 1.8rem; cursor: pointer;">+</button>
+                        </div>
+                        <div id="advanceTotal" style="font-size: 1.1rem; font-weight: 700; color: #4338CA; text-align: center; margin-top: 10px;">1 mes</div>
+                        <div id="advanceMonthsList" style="font-size: 1rem; color: #4338CA; text-align: center; margin-top: 4px;"></div>
+                    </div>
+                </div>
             </div>
             
             <div class="modal-buttons">
@@ -1273,7 +1384,23 @@
             updateModalTotal();
         }
 
-        function changeAdvanceMonths(delta) {
+        function toggleOptionalExtras() {
+                    const content = document.getElementById('optionalExtrasContent');
+                    const icon = document.getElementById('optionalExtrasIcon');
+                    const label = document.getElementById('optionalExtrasLabel');
+            
+                    if (content.classList.contains('show')) {
+                        content.classList.remove('show');
+                        icon.textContent = '➕';
+                        label.textContent = '¿Visitas o pago adelantado? (opcional)';
+                    } else {
+                        content.classList.add('show');
+                        icon.textContent = '➖';
+                        label.textContent = 'Ocultar opciones';
+                    }
+                }
+
+                function changeAdvanceMonths(delta) {
             currentAdvanceMonths = Math.max(1, Math.min(12, currentAdvanceMonths + delta));
             document.getElementById('advanceMonths').textContent = currentAdvanceMonths;
             
@@ -1317,8 +1444,8 @@
             const amount = document.getElementById('modalAmount');
             const btn = document.getElementById('modalConfirmBtn');
             const paymentMethods = document.getElementById('paymentMethods');
-            const extraChargesSection = document.getElementById('extraChargesSection');
-            const advancePaymentSection = document.getElementById('advancePaymentSection');
+            const optionalExtras = document.getElementById('optionalExtras');
+            const optionalExtrasContent = document.getElementById('optionalExtrasContent');
 
             // Get tenant item for property/unit info
             const tenantItem = document.querySelector(`[data-tenant-id="${tenantId}"]`);
@@ -1353,8 +1480,8 @@
                 btn.textContent = '✗ No ha pagado';
                 btn.className = 'modal-btn confirm-unpaid';
                 paymentMethods.style.display = 'none';
-                extraChargesSection.style.display = 'none';
-                advancePaymentSection.style.display = 'none';
+                optionalExtras.style.display = 'none';
+                optionalExtrasContent.classList.remove('show');
             } else {
                 // Currently unpaid, asking to mark as paid
                 icon.textContent = '💰';
@@ -1362,9 +1489,8 @@
                 amount.style.color = 'var(--green)';
                 btn.textContent = '✓ Ya pagó';
                 btn.className = 'modal-btn confirm-paid';
-                paymentMethods.style.display = 'block';
-                extraChargesSection.style.display = 'block';
-                advancePaymentSection.style.display = 'block';
+                paymentMethods.style.display = 'flex';
+                optionalExtras.style.display = 'block';
             }
 
             tenant.textContent = name;

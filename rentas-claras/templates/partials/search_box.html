@@ -89,7 +89,7 @@
             font-size: 1.2rem;
             padding: 18px 56px 18px 56px;
         }
-        
+
         .search-clear {
             width: 40px;
             height: 40px;
@@ -102,22 +102,22 @@
         .search-box {
             padding: 20px;
         }
-        
+
         .search-label {
             font-size: 1.2rem;
         }
-        
+
         .search-input {
             font-size: 1.3rem;
             padding: 20px 64px 20px 60px;
             border-width: 4px;
         }
-        
+
         .search-icon {
             font-size: 1.6rem;
             left: 20px;
         }
-        
+
         .search-clear {
             width: 44px;
             height: 44px;
@@ -132,7 +132,7 @@
         // Show/hide clear button
         const clearBtn = document.getElementById('searchClear');
         clearBtn.style.display = term.length > 0 ? 'flex' : 'none';
-        
+
         // Call page-specific filter function
         if (typeof filterTenants === 'function') {
             filterTenants(term);

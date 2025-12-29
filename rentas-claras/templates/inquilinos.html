@@ -36,91 +36,91 @@
             max-width: 700px;
             padding: 24px;
         }
-        
+
         .app-title {
             font-size: 2rem;
         }
-        
+
         .tenant-card {
             padding: 20px 24px;
         }
-        
+
         .tenant-name {
             font-size: 1.3rem;
         }
-        
+
         .btn {
             padding: 16px 24px;
             font-size: 1.1rem;
         }
     }
-    
+
     @media (min-width: 1024px) {
         body {
             padding-bottom: 0;
         }
-        
+
         .container {
             max-width: 900px;
             padding: 32px;
         }
-        
+
         .app-title {
             font-size: 2.5rem;
         }
-        
+
         .summary-card {
             padding: 32px;
         }
-        
+
         .tenant-card {
             padding: 24px 28px;
         }
-        
+
         .tenant-name {
             font-size: 1.4rem;
         }
-        
+
         .tenant-property {
             font-size: 1.3rem;
         }
-        
+
         .tenant-rent {
             font-size: 1.5rem;
         }
-        
+
         .btn {
             padding: 18px 28px;
             font-size: 1.2rem;
             min-height: 64px;
         }
-        
+
         .form-input {
             font-size: 1.2rem;
             padding: 16px;
         }
-        
+
         .form-label {
             font-size: 1.1rem;
         }
-        
+
         .bottom-nav {
             position: relative;
             margin-top: 32px;
             border-radius: 16px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.08);
         }
-        
+
         .nav-item {
             padding: 16px;
             font-size: 1.1rem;
         }
-        
+
         .nav-icon {
             font-size: 1.8rem;
         }
     }
-    
+
     @media (min-width: 1400px) {
         .container {
             max-width: 1100px;
@@ -462,6 +462,9 @@
         display: flex;
         box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
         z-index: 100;
+        /* Improved safe area support for older iPhones */
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+        padding-bottom: constant(safe-area-inset-bottom, 0px); /* iOS 11.0-11.2 */
     }
 
     .nav-item {
@@ -540,15 +543,17 @@
                 </div>
                 <div class="property-count">{{ tenants|length }}</div>
             </div>
-            
+
             {% for tenant in tenants %}
-            <div class="tenant-card" 
+            <div class="tenant-card"
                  data-tenant-id="{{ tenant.id }}"
                  data-name="{{ tenant.name }}"
                  data-property="{{ tenant.property_name }}"
                  data-unit="{{ tenant.unit }}"
                  data-rent="{{ tenant.rent }}"
                  data-phone="{{ tenant.phone or '' }}"
+                 data-aval-name="{{ tenant.aval_name or '' }}"
+                 data-aval-phone="{{ tenant.aval_phone or '' }}"
                  data-contract-start="{{ tenant.contract_start or '' }}"
                  data-contract-end="{{ tenant.contract_end or '' }}"
                  onclick="showEditModal('{{ tenant.id }}')">
@@ -590,10 +595,10 @@
                 <span id="modalIcon">➕</span>
                 <span id="modalTitle">Agregar Inquilino</span>
             </div>
-            
+
             <form id="tenantForm" onsubmit="saveTenant(event)">
                 <input type="hidden" id="tenantId" value="">
-                
+
                 <div class="form-group">
                     <label class="form-label required">Nombre</label>
                     <input type="text" class="form-input" id="tenantName" placeholder="Nombre del inquilino" required>
@@ -629,6 +634,21 @@
                 <div class="form-group">
                     <label class="form-label">Teléfono (WhatsApp)</label>
                     <input type="tel" class="form-input" id="tenantPhone" placeholder="+52 123 456 7890">
+                </div>
+
+                <!-- Aval (Guarantor) Section -->
+                <div style="background: #E0F2FE; padding: 16px; border-radius: 12px; border: 2px solid #0EA5E9; margin: 16px 0;">
+                    <div style="font-size: 1.1rem; font-weight: 700; color: #0369A1; margin-bottom: 12px;">🛡️ Aval (Fiador)</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Nombre del Aval</label>
+                            <input type="text" class="form-input" id="avalName" placeholder="Nombre completo">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Teléfono del Aval</label>
+                            <input type="tel" class="form-input" id="avalPhone" placeholder="+52 123 456 7890">
+                        </div>
+                    </div>
                 </div>
 
                 <div class="form-row">
@@ -720,10 +740,10 @@
             document.getElementById('newPropertyGroup').style.display = 'block';
         }
 
-        function showEditModal(tenantId) {
+function showEditModal(tenantId) {
             isEditMode = true;
             const card = document.querySelector(`[data-tenant-id="${tenantId}"]`);
-            
+
             document.getElementById('modalIcon').textContent = '✏️';
             document.getElementById('modalTitle').textContent = 'Editar Inquilino';
             document.getElementById('tenantId').value = tenantId;
@@ -732,6 +752,8 @@
             document.getElementById('tenantUnit').value = card.dataset.unit;
             document.getElementById('tenantRent').value = card.dataset.rent;
             document.getElementById('tenantPhone').value = card.dataset.phone;
+            document.getElementById('avalName').value = card.dataset.avalName || '';
+            document.getElementById('avalPhone').value = card.dataset.avalPhone || '';
             document.getElementById('contractStart').value = card.dataset.contractStart;
             document.getElementById('contractEnd').value = card.dataset.contractEnd;
             document.getElementById('deleteWarning').style.display = 'block';
@@ -758,7 +780,7 @@
 
             const tenantId = document.getElementById('tenantId').value;
             let propertyName = document.getElementById('tenantProperty').value;
-            
+
             // If adding new property
             if (propertyName === '__new__') {
                 propertyName = document.getElementById('newPropertyName').value.trim();
@@ -777,6 +799,8 @@
                 unit: document.getElementById('tenantUnit').value.trim(),
                 rent: parseFloat(document.getElementById('tenantRent').value),
                 phone: document.getElementById('tenantPhone').value.trim(),
+                aval_name: document.getElementById('avalName').value.trim() || null,
+                aval_phone: document.getElementById('avalPhone').value.trim() || null,
                 contract_start: document.getElementById('contractStart').value || null,
                 contract_end: document.getElementById('contractEnd').value || null,
                 prorated_first_month: proratedEnabled,
@@ -811,7 +835,7 @@
         function deleteTenant() {
             const tenantId = document.getElementById('tenantId').value;
             const tenantName = document.getElementById('tenantName').value;
-            
+
             if (!confirm(`¿Está seguro que desea eliminar a ${tenantName}?`)) {
                 return;
             }
@@ -836,7 +860,7 @@
 
         function filterTenants(term) {
             term = term.toLowerCase().trim();
-            
+
             document.querySelectorAll('.tenant-card').forEach(card => {
                 const name = card.dataset.name.toLowerCase();
                 const property = card.dataset.property.toLowerCase();

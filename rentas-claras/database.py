@@ -42,6 +42,9 @@ class Tenant:
     contract_start: Optional[str] = None
     contract_end: Optional[str] = None
     bank: Optional[str] = None  # Bank abbreviation from Excel
+    # Guarantor (Aval) information
+    aval_name: Optional[str] = None  # Tenant's guarantor name
+    aval_phone: Optional[str] = None  # Tenant's guarantor phone
     # Contract renewal tracking
     renewal_status: str = "pendiente"  # 'renovará', 'no_renovará', 'pendiente'
     contract_delivered: bool = False  # Has new contract been delivered?
@@ -267,6 +270,15 @@ def init_database():
         pass
     try:
         cursor.execute("ALTER TABLE tenants ADD COLUMN replacement_aval_phone TEXT")
+    except:
+        pass
+    # Tenant's own aval (guarantor) fields
+    try:
+        cursor.execute("ALTER TABLE tenants ADD COLUMN aval_name TEXT")
+    except:
+        pass
+    try:
+        cursor.execute("ALTER TABLE tenants ADD COLUMN aval_phone TEXT")
     except:
         pass
     # Prorated rent fields
@@ -822,6 +834,7 @@ def get_all_tenants() -> List[Tenant]:
         """
         SELECT id, name, phone, property_name, unit, rent,
                emergency_contact, emergency_phone, contract_start, contract_end, bank,
+               aval_name, aval_phone,
                renewal_status, contract_delivered, contract_picked_up,
                leaving_date, replacement_name, replacement_phone,
                replacement_contract_start, replacement_contract_end,
@@ -847,6 +860,8 @@ def get_all_tenants() -> List[Tenant]:
                 contract_start=row["contract_start"],
                 contract_end=row["contract_end"],
                 bank=row["bank"],
+                aval_name=row["aval_name"],
+                aval_phone=row["aval_phone"],
                 renewal_status=row["renewal_status"] or "pendiente",
                 contract_delivered=bool(row["contract_delivered"]),
                 contract_picked_up=bool(row["contract_picked_up"]),
@@ -884,6 +899,7 @@ def get_tenant_by_id(tenant_id: str) -> Optional[Tenant]:
         """
         SELECT id, name, phone, property_name, unit, rent,
                emergency_contact, emergency_phone, contract_start, contract_end, bank,
+               aval_name, aval_phone,
                renewal_status, contract_delivered, contract_picked_up,
                leaving_date, replacement_name, replacement_phone,
                replacement_contract_start, replacement_contract_end,
@@ -910,6 +926,8 @@ def get_tenant_by_id(tenant_id: str) -> Optional[Tenant]:
             contract_start=row["contract_start"],
             contract_end=row["contract_end"],
             bank=row["bank"],
+            aval_name=row["aval_name"],
+            aval_phone=row["aval_phone"],
             renewal_status=row["renewal_status"] or "pendiente",
             contract_delivered=bool(row["contract_delivered"]),
             contract_picked_up=bool(row["contract_picked_up"]),
@@ -1438,6 +1456,8 @@ def add_tenant(
     emergency_contact: Optional[str] = None,
     emergency_phone: Optional[str] = None,
     bank: Optional[str] = None,
+    aval_name: Optional[str] = None,
+    aval_phone: Optional[str] = None,
     prorated_first_month: bool = False,
     prorated_amount: Optional[float] = None,
     prorated_month: Optional[int] = None,
@@ -1467,8 +1487,9 @@ def add_tenant(
         """
         INSERT INTO tenants (id, name, phone, property_name, unit, rent,
                             emergency_contact, emergency_phone, contract_start, contract_end, bank,
+                            aval_name, aval_phone,
                             prorated_first_month, prorated_amount, prorated_month, prorated_year)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             tenant_id,
@@ -1482,6 +1503,8 @@ def add_tenant(
             contract_start,
             contract_end,
             bank,
+            aval_name,
+            aval_phone,
             1 if prorated_first_month else 0,
             prorated_amount,
             prorated_month,
@@ -1507,6 +1530,8 @@ def update_tenant(
     emergency_contact: Optional[str] = None,
     emergency_phone: Optional[str] = None,
     bank: Optional[str] = None,
+    aval_name: Optional[str] = None,
+    aval_phone: Optional[str] = None,
 ):
     """Update an existing tenant's information."""
     conn = get_db_connection()
@@ -1545,6 +1570,12 @@ def update_tenant(
     if bank is not None:
         updates.append("bank = ?")
         params.append(bank)
+    if aval_name is not None:
+        updates.append("aval_name = ?")
+        params.append(aval_name)
+    if aval_phone is not None:
+        updates.append("aval_phone = ?")
+        params.append(aval_phone)
     
     if updates:
         updates.append("updated_at = datetime('now')")
