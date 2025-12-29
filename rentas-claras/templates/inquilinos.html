@@ -533,11 +533,25 @@
         display: flex;
         gap: 12px;
         padding: 16px 0;
-        margin-top: 0;
+        margin-top: 16px;
         background: white;
         position: sticky;
         bottom: 0;
         border-top: 1px solid #eee;
+        z-index: 10;
+    }
+    
+    /* Add space before form buttons so content doesn't run behind */
+    .form-buttons::before {
+        content: '';
+        display: block;
+        position: absolute;
+        top: -20px;
+        left: 0;
+        right: 0;
+        height: 20px;
+        background: linear-gradient(to top, white, transparent);
+        pointer-events: none;
     }
 
     .form-buttons .btn {
