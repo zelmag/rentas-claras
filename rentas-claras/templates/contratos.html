@@ -440,14 +440,15 @@
         justify-content: space-between;
         align-items: center;
         margin-top: 8px;
+        background: linear-gradient(135deg, #333 0%, #555 100%);
     }
 
-    .property-section-header:nth-of-type(1) { background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%); }
-    .property-section-header:nth-of-type(2) { background: linear-gradient(135deg, #5c3d2e 0%, #7d5a4a 100%); }
-    .property-section-header:nth-of-type(3) { background: linear-gradient(135deg, #2e5c4a 0%, #4a7d6a 100%); }
-    .property-section-header:nth-of-type(4) { background: linear-gradient(135deg, #5c2e5c 0%, #7d4a7d 100%); }
-    .property-section-header:nth-of-type(5) { background: linear-gradient(135deg, #5c5c2e 0%, #7d7d4a 100%); }
-    .property-section-header:nth-of-type(n+6) { background: linear-gradient(135deg, #333 0%, #555 100%); }
+    /* Different colors for different properties - using data attribute */
+    .property-section-header[data-color="blue"] { background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%); }
+    .property-section-header[data-color="brown"] { background: linear-gradient(135deg, #5c3d2e 0%, #7d5a4a 100%); }
+    .property-section-header[data-color="green"] { background: linear-gradient(135deg, #2e5c4a 0%, #4a7d6a 100%); }
+    .property-section-header[data-color="purple"] { background: linear-gradient(135deg, #5c2e5c 0%, #7d4a7d 100%); }
+    .property-section-header[data-color="gold"] { background: linear-gradient(135deg, #5c5c2e 0%, #7d7d4a 100%); }
 
     .property-section-header:first-child {
         margin-top: 0;
@@ -960,10 +961,11 @@
             </div>
         </div>
         <div class="contract-list collapsed" id="confirmedList">
+            {% set colors = ['blue', 'brown', 'green', 'purple', 'gold'] %}
             {% for property_name, tenants in tenants_by_property.items() %}
                 {% set renewing_tenants = tenants|selectattr('renewal_status', 'equalto', 'renovará')|list %}
                 {% if renewing_tenants|length > 0 %}
-                <div class="property-section-header">
+                <div class="property-section-header" data-color="{{ colors[loop.index0 % 5] }}">
                     <div class="property-section-name">
                         <span>🏢</span>
                         <span>{{ property_name }}</span>

@@ -1438,6 +1438,10 @@ def add_tenant(
     emergency_contact: Optional[str] = None,
     emergency_phone: Optional[str] = None,
     bank: Optional[str] = None,
+    prorated_first_month: bool = False,
+    prorated_amount: Optional[float] = None,
+    prorated_month: Optional[int] = None,
+    prorated_year: Optional[int] = None,
 ) -> str:
     """Add a new tenant. Returns the new tenant ID."""
     conn = get_db_connection()
@@ -1462,8 +1466,9 @@ def add_tenant(
     cursor.execute(
         """
         INSERT INTO tenants (id, name, phone, property_name, unit, rent,
-                            emergency_contact, emergency_phone, contract_start, contract_end, bank)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                            emergency_contact, emergency_phone, contract_start, contract_end, bank,
+                            prorated_first_month, prorated_amount, prorated_month, prorated_year)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             tenant_id,
@@ -1477,6 +1482,10 @@ def add_tenant(
             contract_start,
             contract_end,
             bank,
+            1 if prorated_first_month else 0,
+            prorated_amount,
+            prorated_month,
+            prorated_year,
         ),
     )
     

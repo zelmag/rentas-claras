@@ -155,6 +155,7 @@ def index():
     total_late_fees = sum(t.late_fee for t in all_tenants if not t.paid)
     total_owed = sum(t.total_owed for t in all_tenants if not t.paid)
     unpaid_count = sum(1 for t in all_tenants if not t.paid)
+    paid_count = sum(1 for t in all_tenants if t.paid)
 
     # Get last sync time
     last_sync = get_last_sync_time()
@@ -168,6 +169,7 @@ def index():
         total_late_fees=total_late_fees,
         total_owed=total_owed,
         unpaid_count=unpaid_count,
+        paid_count=paid_count,
         current_date=today.strftime("%d de %B, %Y"),
         day_of_month=today.day,
         month_name=month_name,

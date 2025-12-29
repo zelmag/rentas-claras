@@ -768,6 +768,9 @@
                 }
             }
 
+            // Check if prorated rent is enabled
+            const proratedEnabled = document.getElementById('proratedCheckbox').checked;
+
             const data = {
                 name: document.getElementById('tenantName').value.trim(),
                 property_name: propertyName,
@@ -776,6 +779,10 @@
                 phone: document.getElementById('tenantPhone').value.trim(),
                 contract_start: document.getElementById('contractStart').value || null,
                 contract_end: document.getElementById('contractEnd').value || null,
+                prorated_first_month: proratedEnabled,
+                prorated_amount: proratedEnabled ? parseFloat(document.getElementById('proratedAmount').value) || null : null,
+                prorated_month: proratedEnabled ? parseInt(document.getElementById('proratedMonth').value) || null : null,
+                prorated_year: proratedEnabled ? parseInt(document.getElementById('proratedYear').value) || null : null,
             };
 
             const url = isEditMode ? `/api/tenant/${tenantId}` : '/api/tenant';
