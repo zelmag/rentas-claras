@@ -1708,23 +1708,35 @@
             }
         }
 
-        // SOT Key for this month
-        function getSOTKey() {
-            return `paymentSOT_${currentYear}_${currentMonth}`;
-        }
-
+        // SOT Key for this month - NOW DELEGATED TO RentasState
+        // RentasState handles all localStorage caching centrally
+        
+        // Compatibility functions that delegate to RentasState
         function getSOT() {
-            try {
-                return JSON.parse(localStorage.getItem(getSOTKey()) || '{}');
-            } catch (e) {
-                return {};
-            }
+            const state = RentasState.getState();
+            if (!state || !state.payments) return {};
+            
+            // Convert RentasState format to legacy format
+            const sot = {};
+            Object.entries(state.payments).forEach(([key, val]) => {
+                // Key format in RentasState: tenantId_year_month
+                // Extract tenantId (everything before the first _year_month)
+                const parts = key.split('_');
+                if (parts.length >= 3) {
+                    const tenantId = parts.slice(0, -2).join('_');
+                    const year = parseInt(parts[parts.length - 2]);
+                    const month = parseInt(parts[parts.length - 1]);
+                    if (year === currentYear && month === currentMonth) {
+                        sot[tenantId] = { isPaid: val.paid, updatedAt: val.updated_at || Date.now() };
+                    }
+                }
+            });
+            return sot;
         }
 
         function updateSOT(tenantId, isPaid) {
-            const sot = getSOT();
-            sot[tenantId] = { isPaid, updatedAt: Date.now() };
-            localStorage.setItem(getSOTKey(), JSON.stringify(sot));
+            // This is now a no-op - RentasState.updatePayment handles caching
+            // Called for backward compatibility but actual update happens in confirmAction
         }
 
         // Toggle sections

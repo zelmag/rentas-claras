@@ -580,6 +580,141 @@
             requestAnimationFrame(update);
         }
 
+        // ========== REACTIVE DASHBOARD - SOT INTEGRATION ==========
+        
+        // Initial values from server (will be updated by SOT)
+        let dashboardData = {
+            totalCollected: {{ total_collected }},
+            totalExpected: {{ total_expected }},
+            collectionPercent: {{ collection_percent }},
+            pendingPayments: {{ pending_payments }},
+            pendingAmount: {{ pending_amount }},
+            totalTenants: {{ total_tenants }},
+            totalProperties: {{ total_properties }},
+            expiringContracts: {{ expiring_contracts }}
+        };
+
+        // Update dashboard UI with new data
+        function updateDashboardUI(data) {
+            // Update main stat
+            const collectedEl = document.getElementById('collectedValue');
+            if (collectedEl) {
+                animateCount(collectedEl, data.totalCollected);
+            }
+
+            // Update progress bar
+            const progressBar = document.getElementById('progressBar');
+            if (progressBar) {
+                progressBar.style.width = data.collectionPercent + '%';
+            }
+
+            // Update collection percent
+            const percentEl = document.getElementById('percentValue');
+            if (percentEl) {
+                animateCount(percentEl, data.collectionPercent);
+            }
+
+            // Update tenant count
+            const tenantsEl = document.getElementById('tenantsValue');
+            if (tenantsEl) {
+                animateCount(tenantsEl, data.totalTenants);
+            }
+
+            // Update properties count
+            const propertiesEl = document.getElementById('propertiesValue');
+            if (propertiesEl) {
+                animateCount(propertiesEl, data.totalProperties);
+            }
+
+            // Update pending payments alert
+            updatePendingAlert(data);
+        }
+
+        // Update the pending payments alert card
+        function updatePendingAlert(data) {
+            const alertContainer = document.querySelector('.content-section#section-alerts');
+            if (!alertContainer) return;
+
+            // Find or create the pending alert
+            let pendingAlert = alertContainer.querySelector('.alert-card:first-child');
+            if (!pendingAlert) return;
+
+            if (data.pendingPayments > 0) {
+                // Update to pending state
+                pendingAlert.className = 'alert-card ' + (data.pendingPayments > 5 ? 'urgent' : 'warning');
+                pendingAlert.innerHTML = `
+                    <div class="alert-icon">💰</div>
+                    <div class="alert-content">
+                        <div class="alert-title">Pagos pendientes</div>
+                        <div class="alert-description">$${data.pendingAmount.toLocaleString()} por cobrar</div>
+                    </div>
+                    <div class="alert-value">${data.pendingPayments}</div>
+                `;
+                if (pendingAlert.tagName !== 'A') {
+                    // Convert to link if needed
+                    const link = document.createElement('a');
+                    link.href = '/';
+                    link.className = pendingAlert.className;
+                    link.style.textDecoration = 'none';
+                    link.innerHTML = pendingAlert.innerHTML;
+                    pendingAlert.replaceWith(link);
+                }
+            } else {
+                // Update to all paid state
+                const div = document.createElement('div');
+                div.className = 'alert-card success';
+                div.innerHTML = `
+                    <div class="alert-icon">🎉</div>
+                    <div class="alert-content">
+                        <div class="alert-title">¡Todos pagaron!</div>
+                        <div class="alert-description">Este mes está completo</div>
+                    </div>
+                    <div class="alert-value">✓</div>
+                `;
+                pendingAlert.replaceWith(div);
+            }
+        }
+
+        // Subscribe to state changes from RentasState
+        function initStateSubscription() {
+            if (typeof RentasState === 'undefined') {
+                console.warn('RentasState not loaded yet, retrying...');
+                setTimeout(initStateSubscription, 100);
+                return;
+            }
+
+            RentasState.subscribe((event) => {
+                console.log('📊 Dashboard received state update:', event.type);
+                
+                if (event.state) {
+                    // Map state data to dashboard format
+                    const newData = {
+                        totalCollected: event.state.total_collected || dashboardData.totalCollected,
+                        totalExpected: event.state.total_expected || dashboardData.totalExpected,
+                        collectionPercent: event.state.collection_percent || dashboardData.collectionPercent,
+                        pendingPayments: event.state.pending_payments || 0,
+                        pendingAmount: event.state.pending_amount || 0,
+                        totalTenants: event.state.total_tenants || dashboardData.totalTenants,
+                        totalProperties: event.state.total_properties || dashboardData.totalProperties,
+                        expiringContracts: event.state.expiring_contracts || 0
+                    };
+
+                    // Only update if data changed
+                    if (JSON.stringify(newData) !== JSON.stringify(dashboardData)) {
+                        dashboardData = newData;
+                        updateDashboardUI(dashboardData);
+                    }
+                }
+            });
+
+            // Also refresh state when page becomes visible
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'visible') {
+                    RentasState.refresh();
+                }
+            });
+        }
+
         // Start count animations when page loads
         document.addEventListener('DOMContentLoaded', () => {
             // Reduced delay for snappier feel
@@ -593,6 +728,9 @@
                 const progressBar = document.getElementById('progressBar');
                 progressBar.style.width = '{{ collection_percent }}%';
             }, 100);
+
+            // Initialize state subscription for reactive updates
+            initStateSubscription();
         });
 
         // Swipe section handling - REMOVED (no longer using swipe layout)

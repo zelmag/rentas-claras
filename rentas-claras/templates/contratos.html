@@ -988,7 +988,7 @@
             arrow.classList.toggle('collapsed');
         }
 
-        // Set renewal status
+        // Set renewal status - USE RentasState for centralized updates
         function setRenewalStatus(tenantId, status, btn) {
             // Update button states
             const container = btn.closest('.contract-item');
@@ -1015,15 +1015,13 @@
                 }
             }
 
-            // Save to server
-            fetch('/api/renewal', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ tenant_id: tenantId, renewal_status: status })
-            }).then(res => {
-                if (res.ok) {
+            // Use RentasState to save and sync
+            RentasState.updateRenewal(tenantId, { renewal_status: status }).then(result => {
+                if (result.success) {
                     showToast('Guardado', 'success');
                     updateSyncIndicator();
+                } else {
+                    showToast('Error al guardar', '');
                 }
             }).catch(err => {
                 console.error('Error:', err);

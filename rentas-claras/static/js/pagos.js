@@ -189,10 +189,13 @@
         }
 
         // BUGFIX: Reconcile SOT with server state on page load
-        // Server state is authoritative - only keep SOT entries that are MORE RECENT
+        // Server state is authoritative - SOT is only for optimistic updates during current session
+        // If there's a conflict and no pending sync, SERVER WINS
         function reconcileSOTWithServer() {
             const sot = getPaymentSOT();
             const serverStateMap = new Map();
+            const pendingPayments = JSON.parse(localStorage.getItem('pendingPayments') || '[]');
+            const pendingTenantIds = new Set(pendingPayments.map(p => p.tenantId));
 
             // Build map of server state from DOM (rendered by Jinja)
             document.querySelectorAll('.tenant-item').forEach(item => {
@@ -201,20 +204,30 @@
                 serverStateMap.set(tenantId, isPaidServer);
             });
 
-            // Check each SOT entry - if server disagrees and SOT is old (>5 min), trust server
-            const fiveMinutesAgo = Date.now() - (5 * 60 * 1000);
+            // Also check table view for server state
+            document.querySelectorAll('tr[data-tenant-id]').forEach(row => {
+                const tenantId = row.dataset.tenantId;
+                const isPaidServer = row.classList.contains('paid-row');
+                if (!serverStateMap.has(tenantId)) {
+                    serverStateMap.set(tenantId, isPaidServer);
+                }
+            });
+
+            // CRITICAL FIX: Server state is authoritative UNLESS there's a pending sync for this tenant
+            // If server disagrees and there's NO pending sync, trust server immediately
             let needsUpdate = false;
 
             Object.entries(sot.tenants).forEach(([tenantId, state]) => {
                 const serverState = serverStateMap.get(tenantId);
                 if (serverState !== undefined && serverState !== state.isPaid) {
-                    // Server disagrees - check if SOT is stale
-                    if (state.updatedAt < fiveMinutesAgo) {
-                        console.log(`SOT stale for ${tenantId}, trusting server (SOT: ${state.isPaid}, Server: ${serverState})`);
+                    // Server disagrees - check if this tenant has a pending sync
+                    if (pendingTenantIds.has(tenantId)) {
+                        console.log(`SOT has pending sync for ${tenantId}, keeping local state (SOT: ${state.isPaid}, Server: ${serverState})`);
+                    } else {
+                        // No pending sync - SERVER WINS
+                        console.log(`SERVER is authoritative for ${tenantId}, clearing SOT (SOT: ${state.isPaid}, Server: ${serverState})`);
                         delete sot.tenants[tenantId];
                         needsUpdate = true;
-                    } else {
-                        console.log(`SOT fresh for ${tenantId}, keeping local state (SOT: ${state.isPaid}, Server: ${serverState})`);
                     }
                 }
             });
@@ -2611,33 +2624,58 @@
         // Sync pending payments when back online
         // =============================================
 
-        function syncPendingPayments() {
+        async function syncPendingPayments() {
             const queue = JSON.parse(localStorage.getItem('pendingPayments') || '[]');
             if (queue.length === 0) return;
 
             console.log(`🔄 Syncing ${queue.length} pending payments...`);
 
-            queue.forEach((item, index) => {
-                fetch('/api/payment', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        tenant_id: item.tenantId,
-                        paid: item.paid,
-                        year: item.year || currentYear,
-                        month: item.month || currentMonth
-                    })
-                }).then(response => {
-                    if (response.ok) {
-                        console.log(`Synced payment for ${item.tenantId}`);
-                    }
-                });
-            });
+            const failedItems = [];
+            let successCount = 0;
 
-            // Clear the queue after syncing
-            localStorage.removeItem('pendingPayments');
-            showUndoToast(`${queue.length} cambios sincronizados`, null);
-            updateLastSaved();
+            // BUGFIX: Process each payment and track successes/failures
+            for (const item of queue) {
+                try {
+                    const response = await fetch('/api/payment', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            tenant_id: item.tenantId,
+                            paid: item.paid,
+                            year: item.year || currentYear,
+                            month: item.month || currentMonth
+                        })
+                    });
+
+                    if (response.ok) {
+                        console.log(`✅ Synced payment for ${item.tenantId}`);
+                        successCount++;
+                    } else {
+                        console.error(`❌ Failed to sync ${item.tenantId}: server returned ${response.status}`);
+                        failedItems.push(item);
+                    }
+                } catch (err) {
+                    console.error(`❌ Failed to sync ${item.tenantId}:`, err);
+                    failedItems.push(item);
+                }
+            }
+
+            // BUGFIX: Only remove successfully synced items, keep failed ones for retry
+            if (failedItems.length > 0) {
+                localStorage.setItem('pendingPayments', JSON.stringify(failedItems));
+                console.log(`⚠️ ${failedItems.length} payments still pending sync`);
+                showPersistentConfirmation(`${successCount} sincronizados, ${failedItems.length} pendientes`, 'warning');
+            } else {
+                // All succeeded - clear the queue
+                localStorage.removeItem('pendingPayments');
+                if (successCount > 0) {
+                    showPersistentConfirmation(`${successCount} cambios sincronizados`, 'paid');
+                }
+            }
+
+            if (successCount > 0) {
+                updateLastSaved();
+            }
         }
 
 // =============================================

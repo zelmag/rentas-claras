@@ -1055,27 +1055,26 @@ function showEditModal(tenantId) {
                 prorated_year: proratedEnabled ? parseInt(document.getElementById('proratedYear').value) || null : null,
             };
 
-            const url = isEditMode ? `/api/tenant/${tenantId}` : '/api/tenant';
-            const method = isEditMode ? 'PUT' : 'POST';
-
-            fetch(url, {
-                method: method,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            })
-            .then(res => res.json())
-            .then(result => {
-                if (result.success) {
-                    showToast(isEditMode ? 'Inquilino actualizado ✓' : 'Inquilino agregado ✓');
-                    setTimeout(() => window.location.reload(), 1000);
-                } else {
-                    alert('Error: ' + result.error);
-                }
-            })
-            .catch(err => {
-                console.error('Error:', err);
-                alert('Error al guardar');
-            });
+            // Use RentasState for centralized state management
+            if (isEditMode) {
+                RentasState.updateTenant(tenantId, data).then(result => {
+                    if (result.success) {
+                        showToast('Inquilino actualizado ✓');
+                        setTimeout(() => window.location.reload(), 1000);
+                    } else {
+                        alert('Error: ' + result.error);
+                    }
+                });
+            } else {
+                RentasState.addTenant(data).then(result => {
+                    if (result.success) {
+                        showToast('Inquilino agregado ✓');
+                        setTimeout(() => window.location.reload(), 1000);
+                    } else {
+                        alert('Error: ' + result.error);
+                    }
+                });
+            }
         }
 
         function deleteTenant() {
@@ -1086,21 +1085,14 @@ function showEditModal(tenantId) {
                 return;
             }
 
-            fetch(`/api/tenant/${tenantId}`, {
-                method: 'DELETE'
-            })
-            .then(res => res.json())
-            .then(result => {
+            // Use RentasState for centralized state management
+            RentasState.deleteTenant(tenantId).then(result => {
                 if (result.success) {
                     showToast('Inquilino eliminado');
                     setTimeout(() => window.location.reload(), 1000);
                 } else {
                     alert('Error: ' + result.error);
                 }
-            })
-            .catch(err => {
-                console.error('Error:', err);
-                alert('Error al eliminar');
             });
         }
 

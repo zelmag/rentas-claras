@@ -11,6 +11,7 @@ This package organizes routes into logical blueprints:
 - admin: Admin/scheduler test endpoints
 - backups: Backup management APIs
 - tenants: Tenant management (add/edit/remove)
+- state: Central state API (Single Source of Truth)
 """
 
 from flask import Flask
@@ -26,6 +27,7 @@ def register_blueprints(app: Flask) -> None:
     from routes.admin import admin_bp
     from routes.backups import backups_bp
     from routes.tenants import tenants_bp
+    from routes.state import state_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)
@@ -35,3 +37,4 @@ def register_blueprints(app: Flask) -> None:
     app.register_blueprint(admin_bp)
     app.register_blueprint(backups_bp)
     app.register_blueprint(tenants_bp)
+    app.register_blueprint(state_bp)
