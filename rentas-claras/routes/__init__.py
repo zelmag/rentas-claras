@@ -4,6 +4,7 @@ Routes Package - Flask Blueprints for RentasClaras
 
 This package organizes routes into logical blueprints:
 - auth: Login/logout (PIN protection)
+- dashboard: Home/summary screen
 - pagos: Main payment tracking page and APIs
 - contratos: Contract renewal management
 - whatsapp: WhatsApp API endpoints
@@ -18,6 +19,7 @@ from flask import Flask
 def register_blueprints(app: Flask) -> None:
     """Register all blueprints with the Flask app."""
     from routes.auth import auth_bp
+    from routes.dashboard import dashboard_bp
     from routes.pagos import pagos_bp
     from routes.contratos import contratos_bp
     from routes.whatsapp import whatsapp_bp
@@ -26,6 +28,7 @@ def register_blueprints(app: Flask) -> None:
     from routes.tenants import tenants_bp
 
     app.register_blueprint(auth_bp)
+    app.register_blueprint(dashboard_bp)
     app.register_blueprint(pagos_bp)
     app.register_blueprint(contratos_bp)
     app.register_blueprint(whatsapp_bp)
