@@ -263,14 +263,22 @@ def _handle_status_update(status: dict):
         if rows_affected == 0 and status_value in ["delivered", "read"] and recipient_id:
             logger.warning(f"⚠️ No rows updated for message_id={message_id}. Attempting fallback by recipient phone...")
             
-            # Try to find the most recent message to this phone number that hasn't been updated
+            # Determine which statuses to look for based on the status update we're applying
+            # For "delivered" status: look for "sent" records
+            # For "read" status: look for "sent" OR "delivered" records (it might have been updated already)
+            if status_value == "delivered":
+                status_filter = "ml.status = 'sent'"
+            else:  # read
+                status_filter = "ml.status IN ('sent', 'delivered')"
+            
+            # Try to find the most recent message to this phone number that can be updated
             cursor.execute(
-                """
+                f"""
                 SELECT ml.id, ml.message_id, ml.tenant_id, ml.status, t.phone
                 FROM message_logs ml
                 LEFT JOIN tenants t ON ml.tenant_id = t.id
                 WHERE (t.phone LIKE ? OR t.phone LIKE ?)
-                  AND ml.status = 'sent'
+                  AND {status_filter}
                   AND date(ml.sent_at) = date('now')
                 ORDER BY ml.sent_at DESC
                 LIMIT 1
@@ -280,7 +288,7 @@ def _handle_status_update(status: dict):
             fallback_row = cursor.fetchone()
             
             if fallback_row:
-                logger.info(f"   Found fallback match: log_id={fallback_row['id']}, tenant={fallback_row['tenant_id']}")
+                logger.info(f"   Found fallback match: log_id={fallback_row['id']}, tenant={fallback_row['tenant_id']}, current_status={fallback_row['status']}")
                 
                 # Update this record with the message_id and new status
                 if status_value == "delivered":
@@ -303,7 +311,7 @@ def _handle_status_update(status: dict):
                     )
                 
                 conn.commit()
-                logger.info(f"   ✓ Fallback update successful!")
+                logger.info(f"   ✓ Fallback update successful! Updated from {fallback_row['status']} to {status_value}")
             else:
                 logger.warning(f"   No fallback match found for recipient {recipient_id}")
                 # Log what's in the database for debugging
