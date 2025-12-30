@@ -39,116 +39,32 @@ def whatsapp_status():
 @login_required
 def send_all_whatsapp():
     """
-    Send WhatsApp reminders to all unpaid tenants via Meta Cloud API.
-
-    This is the main automation endpoint that:
-    1. Gets all tenants who haven't paid this month
-    2. Sends each a personalized rent reminder
-    3. Returns a summary of what was sent
+    ⚠️ DEPRECATED: Use /api/reminders/send instead.
+    
+    This endpoint is deprecated because:
+    - It does NOT log messages to message_logs table
+    - It uses outdated function signatures  
+    - It does not support template selection
+    
+    Keeping for backward compatibility but redirecting to new endpoint.
     """
-    try:
-        from src.whatsapp_client import check_credentials, send_rent_reminder
-    except ImportError:
-        return (
-            jsonify(
-                {
-                    "success": False,
-                    "error": "WhatsApp client not installed. Check src/whatsapp_client.py",
-                }
-            ),
-            500,
-        )
-
-    # Check if credentials are configured
-    creds = check_credentials()
-    if not creds["configured"]:
-        return (
-            jsonify(
-                {
-                    "success": False,
-                    "error": "WhatsApp API not configured. See docs/SETUP_WHATSAPP_API.md",
-                    "credentials": creds,
-                }
-            ),
-            400,
-        )
-
-    # Get current month info
-    today = datetime.now()
-    month_name = SPANISH_MONTHS[today.month - 1]
-
-    # Get payment status for this month
-    monthly_status = get_monthly_status(today.year, today.month)
-
-    # Get all tenants
-    all_tenants = get_all_tenants()
-
-    # Filter to unpaid tenants with phone numbers
-    results = {"sent": [], "failed": [], "skipped_paid": [], "skipped_no_phone": []}
-
-    for tenant in all_tenants:
-        # Check if paid
-        status = monthly_status.get(tenant.id, {})
-        is_paid = bool(status.get("paid", 0))
-
-        if is_paid:
-            results["skipped_paid"].append(
-                {"id": tenant.id, "name": tenant.name, "reason": "Already paid"}
-            )
-            continue
-
-        # Check if has phone
-        if not tenant.phone:
-            results["skipped_no_phone"].append(
-                {"id": tenant.id, "name": tenant.name, "reason": "No phone number"}
-            )
-            continue
-
-        # Extract display name
-        display_name = extract_display_name(tenant.name)
-
-        # Format amount with commas
-        amount_str = f"{tenant.rent:,.0f}"
-
-        # Send WhatsApp message
-        response = send_rent_reminder(
-            to_phone=tenant.phone,
-            tenant_name=display_name,
-            month=month_name,
-            amount=amount_str,
-        )
-
-        if response.success:
-            results["sent"].append(
-                {
-                    "id": tenant.id,
-                    "name": tenant.name,
-                    "phone": tenant.phone,
-                    "message_id": response.message_id,
-                }
-            )
-        else:
-            results["failed"].append(
-                {
-                    "id": tenant.id,
-                    "name": tenant.name,
-                    "phone": tenant.phone,
-                    "error": response.error,
-                }
-            )
-
-    return jsonify(
-        {
-            "success": True,
-            "summary": {
-                "total_tenants": len(all_tenants),
-                "sent": len(results["sent"]),
-                "failed": len(results["failed"]),
-                "skipped_paid": len(results["skipped_paid"]),
-                "skipped_no_phone": len(results["skipped_no_phone"]),
-            },
-            "details": results,
-        }
+    import warnings
+    warnings.warn(
+        "/api/whatsapp/send-all is deprecated. Use /api/reminders/send instead.",
+        DeprecationWarning
+    )
+    
+    # Return a deprecation notice
+    return (
+        jsonify(
+            {
+                "success": False,
+                "error": "Este endpoint está obsoleto. Usa /api/reminders/send en su lugar.",
+                "deprecated": True,
+                "redirect_to": "/api/reminders/send",
+            }
+        ),
+        410,  # HTTP 410 Gone
     )
 
 

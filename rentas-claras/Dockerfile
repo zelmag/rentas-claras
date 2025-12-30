@@ -1,5 +1,5 @@
 # RentasClaras Production Dockerfile
-# 
+#
 # Build: docker build -t rentas-claras .
 # Run:   docker run -p 8080:8080 rentas-claras
 

@@ -67,12 +67,6 @@ TEMPLATE_CONFIG = {
         "description": "Late fee notice - Day 2+",
         "params": ["tenant_name", "base_rent", "total_with_fees"],
     },
-    # Pre-approved test template (every WA Business account has this)
-    "hello_world": {
-        "param_count": 0,
-        "description": "Test template - pre-approved by Meta",
-        "params": [],
-    },
 }
 
 

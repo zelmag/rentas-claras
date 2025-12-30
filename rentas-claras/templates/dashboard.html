@@ -504,14 +504,14 @@
         box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         border: 1px solid var(--border);
     }
-    
+
     .message-status-header {
         display: flex;
         align-items: center;
         justify-content: space-between;
         margin-bottom: 16px;
     }
-    
+
     .message-status-title {
         font-size: var(--text-base);
         font-weight: 700;
@@ -520,72 +520,72 @@
         align-items: center;
         gap: 8px;
     }
-    
+
     .message-status-link {
         font-size: var(--text-sm);
         color: var(--green);
         text-decoration: none;
         font-weight: 600;
     }
-    
+
     .message-status-grid {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
         gap: 12px;
     }
-    
+
     @media (min-width: 480px) {
         .message-status-grid {
             grid-template-columns: repeat(5, 1fr);
         }
     }
-    
+
     .message-status-item {
         text-align: center;
         padding: 12px 8px;
         background: var(--gray-light);
         border-radius: var(--radius-md);
     }
-    
+
     .message-status-item.sent {
         background: #E0E7FF;
     }
-    
+
     .message-status-item.delivered {
         background: #D1FAE5;
     }
-    
+
     .message-status-item.read {
         background: #DBEAFE;
     }
-    
+
     .message-status-item.failed {
         background: #FEE2E2;
     }
-    
+
     .message-status-item.replies {
         background: #FEF3C7;
     }
-    
+
     .message-status-value {
         font-size: var(--text-xl);
         font-weight: 800;
         color: #1A202C;
     }
-    
+
     .message-status-label {
         font-size: var(--text-xs);
         color: var(--gray);
         margin-top: 4px;
     }
-    
+
     .message-status-empty {
         text-align: center;
         padding: 24px;
         color: var(--gray);
         font-size: var(--text-sm);
     }
-    
+
     .message-status-note {
         font-size: var(--text-xs);
         color: var(--gray);
@@ -713,7 +713,7 @@
                     </div>
                     <a href="/recordatorios" class="message-status-link">Ver detalles →</a>
                 </div>
-                
+
                 {% if message_stats.has_activity %}
                 <div class="message-status-grid">
                     <div class="message-status-item sent">

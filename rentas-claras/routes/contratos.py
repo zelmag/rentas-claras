@@ -169,14 +169,14 @@ def contracts():
         if tenant.renewal_status == "no_renovará" and not tenant.replacement_name:
             available_apartments.append(tenant)
 
-    # Sort by contract end date (soonest first)
+        # Sort by contract end date (soonest first)
         available_apartments.sort(
-        key=lambda t: (
-            parse_date(t.contract_end)
-            if t.contract_end and parse_date(t.contract_end)
-            else datetime.max
+            key=lambda t: (
+                parse_date(t.contract_end)
+                if t.contract_end and parse_date(t.contract_end)
+                else datetime.max
+            )
         )
-    )
 
     # Filter upcoming renewals to only show "action needed" items
     action_needed_renewals_by_month = []

@@ -84,7 +84,7 @@ COMPOUND_FIRST_NAMES: Set[str] = {
 def validate_phone_number(phone: str) -> tuple[bool, Optional[str]]:
     """
     Validate a phone number for WhatsApp messaging.
-    
+
     DEPRECATED: Use validate_phone() from services/validation.py instead.
     This function is kept for backward compatibility.
 
@@ -95,6 +95,7 @@ def validate_phone_number(phone: str) -> tuple[bool, Optional[str]]:
         Tuple of (is_valid, error_message)
     """
     from services.validation import validate_phone
+
     return validate_phone(phone, required=True)
 
 

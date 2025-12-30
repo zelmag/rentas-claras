@@ -1,5 +1,5 @@
 # fly.toml - Fly.io deployment configuration for RentasClaras
-# 
+#
 # Deploy with: fly launch (first time) or fly deploy (updates)
 # Set secrets with: fly secrets set KEY=value
 #
@@ -27,6 +27,19 @@ primary_region = "dfw"  # Dallas - good for Mexico
   auto_stop_machines = false  # Keep running for webhooks
   auto_start_machines = true
   min_machines_running = 1
+
+# ╔═══════════════════════════════════════════════════════════════════════════╗
+# ║  🚨🚨🚨 CRITICAL SECTION - DO NOT DELETE OR MODIFY WITHOUT CARE 🚨🚨🚨   ║
+# ║                                                                           ║
+# ║  This [mounts] section is REQUIRED for persistent data storage.           ║
+# ║  Without it, the SQLite database will be stored in ephemeral container    ║
+# ║  storage and ALL DATA WILL BE LOST on every deploy.                       ║
+# ║                                                                           ║
+# ║  See: docs/INCIDENT_2025_12_29_DATA_LOSS.md                               ║
+# ╚═══════════════════════════════════════════════════════════════════════════╝
+[mounts]
+  source = "clara_data"      # Fly.io volume name (created with: fly volumes create clara_data)
+  destination = "/data"       # MUST match DB_PATH in database.py ("/data/rentas_claras.db")
 
 [[vm]]
   cpu_kind = "shared"

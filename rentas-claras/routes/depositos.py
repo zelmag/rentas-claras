@@ -16,7 +16,7 @@ from database import get_all_tenants, get_db_connection, get_last_sync_time
 
 from flask import Blueprint, jsonify, render_template, request
 from routes.auth import login_required
-from services.dates import format_date_spanish, calculate_relative_time
+from services.dates import calculate_relative_time, format_date_spanish
 from services.validation import validate_deposit_update
 
 

@@ -1086,40 +1086,6 @@
         transform: translateY(0);
     }
 
-    /* Quick contact buttons on tenant */
-    .tenant-quick-actions {
-        display: flex;
-        gap: 8px;
-        margin-left: 8px;
-    }
-
-    .quick-action-btn {
-        width: 44px;
-        height: 44px;
-        border-radius: 50%;
-        border: 2px solid #ddd;
-        background: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.2rem;
-        cursor: pointer;
-        flex-shrink: 0;
-    }
-
-    .quick-action-btn.whatsapp {
-        border-color: #25D366;
-        color: #25D366;
-    }
-
-    .quick-action-btn.call {
-        border-color: #007AFF;
-        color: #007AFF;
-    }
-
-    .quick-action-btn:active {
-        transform: scale(0.9);
-    }
 
     /* Month context dots */
     .month-context {
@@ -1575,16 +1541,18 @@
                         <div class="tenant-property">{{ tenant.unit }}</div>
                         {% if tenant.phone %}
                         <div class="tenant-quick-actions">
-                            <a href="https://wa.me/{{ tenant.phone|replace(' ', '')|replace('-', '') }}?text={{ 'Hola ' ~ tenant.name ~ ', te recuerdo que tu renta de ' ~ month_name ~ ' ($' ~ '{:,.0f}'.format(tenant.rent) ~ ') está pendiente. ¡Gracias!'|urlencode }}"
+                            <a href="https://wa.me/{{ tenant.phone|replace(' ', '')|replace('-', '')|replace('+', '') }}?text={{ 'Hola ' ~ tenant.name ~ ', te recuerdo que tu renta de ' ~ month_name ~ ' ($' ~ '{:,.0f}'.format(tenant.rent) ~ ') está pendiente. ¡Gracias!'|urlencode }}"
                                target="_blank"
                                class="quick-action-btn whatsapp"
                                onclick="event.stopPropagation();">
-                                📱 WhatsApp
+                                <span style="font-size: 1.1rem;">📱</span>
+                                <span>WhatsApp</span>
                             </a>
                             <a href="tel:{{ tenant.phone }}"
                                class="quick-action-btn call"
                                onclick="event.stopPropagation();">
-                                📞 Llamar
+                                <span style="font-size: 1.1rem;">📞</span>
+                                <span>Llamar</span>
                             </a>
                         </div>
                         {% endif %}

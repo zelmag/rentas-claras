@@ -44,47 +44,47 @@
         .container {
             padding: 12px;
         }
-        
+
         .template-option {
             padding: 12px;
         }
-        
+
         .template-preview {
             font-size: 0.8rem;
             padding: 6px 8px;
         }
-        
+
         .template-title {
             font-size: 0.95rem;
             flex-wrap: wrap;
         }
-        
+
         .template-badge {
             font-size: 0.65rem;
         }
-        
+
         .summary-card {
             padding: 16px;
         }
-        
+
         .action-bar-content {
             gap: 8px;
         }
-        
+
         .action-summary-title {
             font-size: 0.9rem;
         }
-        
+
         .btn-send {
             padding: 12px 16px;
             font-size: 0.9rem;
         }
-        
+
         .bulk-btn {
             padding: 6px 10px;
             font-size: 0.8rem;
         }
-        
+
         .context-tip {
             padding: 10px !important;
             font-size: 0.85rem !important;
@@ -176,12 +176,12 @@
         align-items: flex-start;
         gap: 8px;
     }
-    
+
     .context-tip-icon {
         font-size: 1.2rem;
         flex-shrink: 0;
     }
-    
+
     .context-tip-text strong {
         color: #1E3A8A;
     }
@@ -445,7 +445,7 @@
         border-radius: var(--radius-md);
         margin-bottom: 16px;
     }
-    
+
     .modal-message-preview-label {
         font-size: var(--text-xs);
         font-weight: 700;
@@ -455,7 +455,7 @@
         align-items: center;
         gap: 4px;
     }
-    
+
     .modal-message-preview-text {
         font-size: var(--text-sm);
         color: #14532D;
@@ -657,7 +657,7 @@
         box-shadow: 0 2px 8px rgba(34, 197, 94, 0.2);
         position: relative;
     }
-    
+
     .template-option.selected::after {
         content: '✓';
         position: absolute;
@@ -674,7 +674,7 @@
         font-size: 14px;
         font-weight: bold;
     }
-    
+
     @keyframes selectPulse {
         0% { transform: scale(1); }
         50% { transform: scale(1.005); }
@@ -687,7 +687,7 @@
         margin-top: 4px;
         position: relative;
     }
-    
+
     .template-option.recargo-warning::before {
         content: "A partir del día 2";
         position: absolute;
@@ -760,7 +760,7 @@
         background: var(--green-light);
         color: var(--green-dark);
     }
-    
+
     .template-badge.auto-selected {
         background: #E0E7FF;
         color: #3730A3;
@@ -886,11 +886,11 @@
         cursor: pointer;
         transition: background 0.15s;
     }
-    
+
     .sent-today-item:hover {
         background: var(--gray-light);
     }
-    
+
     .sent-today-details {
         display: none;
         background: #F0FDF4;
@@ -900,38 +900,38 @@
         font-size: var(--text-sm);
         border-left: 3px solid var(--green);
     }
-    
+
     .sent-today-item.expanded .sent-today-details {
         display: block;
     }
-    
+
     .sent-detail-row {
         display: flex;
         justify-content: space-between;
         padding: 4px 0;
     }
-    
+
     .sent-detail-label {
         color: var(--gray);
     }
-    
+
     .sent-detail-value {
         font-weight: 600;
         color: #166534;
     }
-    
+
     .sent-detail-value.status-read {
         color: #1D4ED8;
     }
-    
+
     .sent-detail-value.status-delivered {
         color: #059669;
     }
-    
+
     .sent-detail-value.status-sent {
         color: #6B7280;
     }
-    
+
     .expand-hint {
         font-size: var(--text-xs);
         color: var(--gray);
@@ -942,29 +942,29 @@
     .status-failed {
         color: #DC2626 !important;
     }
-    
+
     .status-failed-badge {
         background: #FEE2E2;
         color: #DC2626;
     }
-    
+
     .status-read-badge {
         background: #DBEAFE;
         color: #1D4ED8;
     }
-    
+
     .status-delivered-badge {
         background: #D1FAE5;
         color: #059669;
     }
-    
+
     /* Retry button */
     .retry-row {
         margin-top: 8px;
         padding-top: 8px;
         border-top: 1px dashed #FCA5A5;
     }
-    
+
     .btn-retry {
         background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
         color: white;
@@ -981,12 +981,12 @@
         gap: 8px;
         transition: all 0.2s;
     }
-    
+
     .btn-retry:hover {
         background: linear-gradient(135deg, #D97706 0%, #B45309 100%);
         transform: scale(1.02);
     }
-    
+
     .btn-retry:disabled {
         background: #CBD5E0;
         cursor: not-allowed;
@@ -997,7 +997,7 @@
     .single-send-modal {
         max-width: 380px;
     }
-    
+
     .single-send-recipient {
         background: var(--gray-light);
         padding: 12px;
@@ -1005,14 +1005,14 @@
         margin-bottom: 12px;
         text-align: center;
     }
-    
+
     .single-send-name {
         font-weight: 700;
         font-size: var(--text-lg);
         color: #1A202C;
         margin-bottom: 4px;
     }
-    
+
     .single-send-phone {
         font-family: 'SF Mono', 'Monaco', monospace;
         font-size: var(--text-base);
@@ -1040,14 +1040,14 @@
         <div class="summary-stats">
             <div class="summary-stat">
                 <div class="summary-stat-value">{{ ready_to_send }}</div>
-                <div class="summary-stat-label">Listos</div>
+                <div class="summary-stat-label">Pendientes</div>
             </div>
             <div class="summary-stat">
                 <div class="summary-stat-value">{{ skipped_no_phone|length }}</div>
                 <div class="summary-stat-label">Sin Tel</div>
             </div>
             <div class="summary-stat">
-                <div class="summary-stat-value">{{ already_messaged_today|length }}</div>
+                <div class="summary-stat-value">{{ already_messaged_count }}</div>
                 <div class="summary-stat-label">Enviados Hoy</div>
             </div>
         </div>
@@ -1080,27 +1080,13 @@
         <div class="template-selector-header">
             <span class="template-icon">📝</span> Tipo de mensaje
         </div>
-        
-        <!-- TEST TEMPLATE - Pre-approved by Meta -->
-        <label class="template-option" data-template="hello_world" id="templateHelloWorld" style="background: #FEF3C7; border-bottom: 2px solid #F59E0B;">
-            <input type="radio" name="template" value="hello_world">
-            <div class="template-content">
-                <div class="template-title">
-                    <span class="template-icon">🧪</span> Prueba (Hello World)
-                    <span class="template-badge" style="background: #FEF3C7; color: #92400E;">✓ Aprobado</span>
-                </div>
-                <div class="template-preview" id="previewHelloWorld">
-                    "Hello World" - Mensaje de prueba pre-aprobado por Meta. Úsalo mientras tus templates personalizados se aprueban.
-                </div>
-            </div>
-        </label>
-        
+
         <label class="template-option" data-template="recordatorio_renta" id="templateRecordatorioRenta">
             <input type="radio" name="template" value="recordatorio_renta">
             <div class="template-content">
                 <div class="template-title">
                     <span class="template-icon">🌅</span> Recordatorio Amable
-                    <span class="template-badge pending">⏳ Pendiente</span>
+                    <span class="template-badge" id="badgeMorning" style="background: #D1FAE5; color: #065F46;">✓ Aprobado</span>
                 </div>
                 <div class="template-preview" id="previewMorning">
                     "Buenos días <strong>{{ unpaid_tenants[0].display_name if unpaid_tenants else 'Inquilino' }}</strong>. Espero esté bien. Le recordamos amablemente el pago de su renta. Monto pendiente: <strong>{{ unpaid_tenants[0].rent_formatted if unpaid_tenants else '$0' }}</strong>. Agradecemos su atención."
@@ -1113,7 +1099,7 @@
             <div class="template-content">
                 <div class="template-title">
                     <span class="template-icon">🌆</span> Recordatorio Tarde (5 PM)
-                    <span class="template-badge pending">⏳ Pendiente</span>
+                    <span class="template-badge" id="badgeAfternoon" style="display: none; background: #E0E7FF; color: #3730A3;">Auto-seleccionado</span>
                 </div>
                 <div class="template-preview" id="previewAfternoon">
                     "Buenas tardes <strong>{{ unpaid_tenants[0].display_name if unpaid_tenants else 'Inquilino' }}</strong>. Le recordamos que el pago de su renta por <strong>{{ unpaid_tenants[0].rent_formatted if unpaid_tenants else '$0' }}</strong> sigue pendiente. Le pedimos realizar el pago hoy de ser posible. Gracias."
@@ -1126,7 +1112,7 @@
             <div class="template-content">
                 <div class="template-title">
                     <span class="template-icon">⚠️</span> Aviso con Recargo
-                    <span class="template-badge pending">⏳ Pendiente</span>
+                    <span class="template-badge" id="badgeRecargo" style="display: none; background: #E0E7FF; color: #3730A3;">Auto-seleccionado</span>
                 </div>
                 <div class="template-preview" id="previewRecargo">
                     "Buen día <strong>{{ unpaid_tenants[0].display_name if unpaid_tenants else 'Inquilino' }}</strong>. Le informamos que su renta de <strong>{{ unpaid_tenants[0].rent_formatted if unpaid_tenants else '$0' }}</strong> continúa pendiente y a partir de hoy aplica un recargo. Total a pagar: <strong>{{ unpaid_tenants[0].rent_formatted if unpaid_tenants else '$0' }}</strong>. Gracias."
@@ -1147,43 +1133,77 @@
 
     <!-- Ready to Send Section -->
     <div class="section-title">
-        ✅ Listos para enviar ({{ unpaid_tenants|length }})
+        ✅ Pendientes de pago ({{ unpaid_tenants|length }})
     </div>
     <div class="tenant-list" id="tenantList">
         {% for tenant in unpaid_tenants %}
-        <div class="tenant-item" data-tenant-id="{{ tenant.id }}">
+        <div class="tenant-item {% if tenant.already_sent_today %}sent-today-item{% endif %}" data-tenant-id="{{ tenant.id }}">
             <div class="tenant-checkbox">
                 <input type="checkbox"
                        id="tenant-{{ tenant.id }}"
-                       checked
+                       {% if not tenant.already_sent_today %}checked{% endif %}
                        data-tenant-id="{{ tenant.id }}"
                        data-tenant-name="{{ tenant.name }}"
                        data-tenant-display-name="{{ tenant.display_name }}"
                        data-tenant-phone="{{ tenant.phone }}"
                        data-tenant-rent="{{ tenant.rent }}"
-                       data-tenant-rent-formatted="{{ tenant.rent_formatted }}">
+                       data-tenant-rent-formatted="{{ tenant.rent_formatted }}"
+                       data-already-sent="{{ 'true' if tenant.already_sent_today else 'false' }}">
             </div>
             <div class="tenant-info">
                 <div class="tenant-name">
                     {{ tenant.display_name }}
-                    {% if tenant.messages_sent_this_month > 0 %}
+                    {% if tenant.already_sent_today %}
+                    <span class="info-badge" style="background: #DBEAFE; color: #1D4ED8;">📤 Enviado hoy</span>
+                    {% elif tenant.messages_sent_this_month > 0 %}
                     <span class="info-badge">{{ tenant.messages_sent_this_month }} msg este mes</span>
                     {% endif %}
                 </div>
                 <div class="tenant-location">{{ tenant.property_name }} {{ tenant.unit }}</div>
                 <!-- ISSUE #7: Full phone number display -->
                 <div class="tenant-phone">📱 {{ tenant.phone }}</div>
+                
+                {% if tenant.already_sent_today %}
+                <!-- Show status details for already-sent tenants -->
+                <div class="sent-today-details" style="display: block;">
+                    <div class="sent-detail-row">
+                        <span class="sent-detail-label">Hora:</span>
+                        <span class="sent-detail-value">{{ tenant.last_message_time }}</span>
+                    </div>
+                    <div class="sent-detail-row">
+                        <span class="sent-detail-label">Estado:</span>
+                        <span class="sent-detail-value {% if tenant.status == 'read' %}status-read{% elif tenant.status == 'delivered' %}status-delivered{% elif tenant.status == 'failed' %}status-failed{% else %}status-sent{% endif %}">
+                            {% if tenant.status == 'read' %}✓✓ Leído{% elif tenant.status == 'delivered' %}✓✓ Entregado{% elif tenant.status == 'failed' %}❌ Fallido{% else %}✓ Enviado{% endif %}
+                        </span>
+                    </div>
+                    {% if tenant.has_reply %}
+                    <div class="sent-detail-row">
+                        <span class="sent-detail-label">Respuesta:</span>
+                        <span class="sent-detail-value" style="color: var(--green);">💬 {{ tenant.reply_preview }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+                {% else %}
                 <div class="tenant-message-preview" id="preview-{{ tenant.id }}">
                     → "Buenos días {{ tenant.display_name }}. Le recordamos el pago de su renta. Monto: {{ tenant.rent_formatted }}"
                 </div>
+                {% endif %}
             </div>
             <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
                 <div class="tenant-amount">{{ tenant.rent_formatted }}</div>
-                <button class="quick-send-btn" 
-                        onclick="showSingleSendModal('{{ tenant.id }}', '{{ tenant.display_name }}', '{{ tenant.phone }}', '{{ tenant.rent_formatted }}')" 
+                {% if tenant.already_sent_today %}
+                <button class="quick-send-btn" style="background: #DBEAFE; border-color: #3B82F6; color: #1D4ED8;"
+                        onclick="showSingleSendModal({{ tenant.id|tojson }}, {{ tenant.display_name|tojson }}, {{ tenant.phone|tojson }}, {{ tenant.rent_formatted|tojson }}, true)"
+                        title="Enviar otro mensaje">
+                    🔄 Reenviar
+                </button>
+                {% else %}
+                <button class="quick-send-btn"
+                        onclick="showSingleSendModal({{ tenant.id|tojson }}, {{ tenant.display_name|tojson }}, {{ tenant.phone|tojson }}, {{ tenant.rent_formatted|tojson }}, false)"
                         title="Enviar solo a este inquilino">
                     📤 Enviar
                 </button>
+                {% endif %}
             </div>
         </div>
         {% endfor %}
@@ -1215,69 +1235,7 @@
     </div>
     {% endif %}
 
-    {% if already_messaged_today %}
-    <!-- ISSUE #10: Expandable Already Sent Today -->
-    <div class="section-title">
-        📨 Ya enviados hoy ({{ already_messaged_today|length }})
-        <span class="expand-hint">Toca para ver detalles</span>
-    </div>
-    <div class="tenant-list">
-        {% for tenant in already_messaged_today %}
-        <div class="tenant-item sent-today-item" onclick="toggleSentDetails(this)" data-tenant-id="{{ tenant.id }}" data-tenant-phone="{{ tenant.phone }}">
-            <div class="tenant-info">
-                <div class="tenant-name">{{ tenant.display_name }}</div>
-                <div class="tenant-location">{{ tenant.property_name }} {{ tenant.unit }}</div>
-                <!-- Expandable details -->
-                <div class="sent-today-details">
-                    <div class="sent-detail-row">
-                        <span class="sent-detail-label">Hora:</span>
-                        <span class="sent-detail-value">{{ tenant.last_message_time }}</span>
-                    </div>
-                    <div class="sent-detail-row">
-                        <span class="sent-detail-label">Estado:</span>
-                        <span class="sent-detail-value {% if tenant.status == 'read' %}status-read{% elif tenant.status == 'delivered' %}status-delivered{% elif tenant.status == 'failed' %}status-failed{% else %}status-sent{% endif %}">
-                            {% if tenant.status == 'read' %}✓✓ Leído{% elif tenant.status == 'delivered' %}✓✓ Entregado{% elif tenant.status == 'failed' %}❌ Fallido{% else %}✓ Enviado{% endif %}
-                        </span>
-                    </div>
-                    {% if tenant.has_reply %}
-                    <div class="sent-detail-row">
-                        <span class="sent-detail-label">Respuesta:</span>
-                        <span class="sent-detail-value" style="color: var(--green);">💬 {{ tenant.reply_preview }}</span>
-                    </div>
-                    {% endif %}
-                    <div class="sent-detail-row">
-                        <span class="sent-detail-label">Plantilla:</span>
-                        <span class="sent-detail-value">{{ tenant.last_template|default('Recordatorio') }}</span>
-                    </div>
-                    <div class="sent-detail-row">
-                        <span class="sent-detail-label">Teléfono:</span>
-                        <span class="sent-detail-value">{{ tenant.phone }}</span>
-                    </div>
-                    {% if tenant.status == 'failed' %}
-                    <div class="sent-detail-row retry-row">
-                        <button class="btn-retry" onclick="retryFailedMessage(event, '{{ tenant.id }}', '{{ tenant.display_name }}')">
-                            🔄 Reintentar envío
-                        </button>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-            {% if tenant.status == 'failed' %}
-            <div class="tenant-status status-failed-badge">❌ Fallido</div>
-            {% elif tenant.status == 'read' %}
-            <div class="tenant-status status-read-badge">👁️ Leído</div>
-            {% elif tenant.status == 'delivered' %}
-            <div class="tenant-status status-delivered-badge">✓✓ Entregado</div>
-            {% else %}
-            <div class="tenant-status status-sent">✓ Enviado</div>
-            {% endif %}
-            <div class="tenant-amount">{{ tenant.rent_formatted }}</div>
-        </div>
-        {% endfor %}
-    </div>
-    {% endif %}
-
-    {% if not unpaid_tenants and not skipped_no_phone and not already_messaged_today %}
+    {% if not unpaid_tenants and not skipped_no_phone %}
     <!-- All Paid - Empty State -->
     <div class="empty-state">
         <div class="empty-state-icon">🎉</div>
@@ -1316,7 +1274,7 @@
         <div class="modal-text">
             Vas a enviar <strong id="confirmCount">0</strong> mensajes de WhatsApp
         </div>
-        
+
         <!-- ISSUE #1: Message preview -->
         <div class="modal-message-preview">
             <div class="modal-message-preview-label">📝 Mensaje a enviar:</div>
@@ -1324,7 +1282,7 @@
                 <!-- Populated by JavaScript -->
             </div>
         </div>
-        
+
         <div class="modal-recipients" id="recipientList">
             <!-- Populated by JavaScript -->
         </div>
@@ -1342,12 +1300,12 @@
     <div class="modal single-send-modal">
         <div class="modal-icon">📤</div>
         <div class="modal-title">Enviar a un inquilino</div>
-        
+
         <div class="single-send-recipient">
             <div class="single-send-name" id="singleSendName">Nombre</div>
             <div class="single-send-phone" id="singleSendPhone">📱 +52 xxx</div>
         </div>
-        
+
         <!-- Message preview -->
         <div class="modal-message-preview">
             <div class="modal-message-preview-label">📝 Mensaje:</div>
@@ -1355,7 +1313,7 @@
                 <!-- Populated by JavaScript -->
             </div>
         </div>
-        
+
         <div class="modal-buttons">
             <button class="btn-cancel" onclick="closeSingleSendModal()">Cancelar</button>
             <button class="btn-confirm" id="btnSingleConfirm">
@@ -1386,7 +1344,7 @@ function toggleTestBanner() {
     const content = document.getElementById('testBannerContent');
     const collapsed = document.getElementById('testBannerCollapsed');
     const banner = document.getElementById('testBanner');
-    
+
     if (content.style.display === 'none') {
         // Expand
         content.style.display = 'block';
@@ -1398,7 +1356,7 @@ function toggleTestBanner() {
         collapsed.style.display = 'block';
         banner.style.padding = '12px 16px';
     }
-    
+
     // Haptic feedback
     if (navigator.vibrate) navigator.vibrate(15);
 }
@@ -1411,15 +1369,15 @@ function autoSelectTemplate() {
     const now = new Date();
     const dayOfMonth = now.getDate();
     const hour = now.getHours();
-    
+
     let selectedTemplate = 'recordatorio_renta';
     let contextTipText = '';
-    
+
     // Recargo applies from day 2 onwards
     if (dayOfMonth >= 2) {
         selectedTemplate = 'aviso_recargo';
         contextTipText = `<strong>Día ${dayOfMonth} del mes.</strong> A partir del día 2 aplica recargo. Se seleccionó automáticamente el mensaje de aviso con recargo.`;
-        
+
         // Show the auto-selected badge
         document.getElementById('badgeRecargo').style.display = 'inline';
         document.getElementById('badgeMorning').textContent = '';
@@ -1427,7 +1385,7 @@ function autoSelectTemplate() {
         // After 5 PM on day 1, use afternoon template
         selectedTemplate = 'recordatorio_tarde';
         contextTipText = `<strong>Son las ${hour}:${now.getMinutes().toString().padStart(2, '0')}.</strong> Es tarde, se seleccionó el mensaje de "Buenas tardes" automáticamente.`;
-        
+
         document.getElementById('badgeAfternoon').style.display = 'inline';
         document.getElementById('badgeMorning').textContent = '';
     } else if (hour < 12) {
@@ -1439,10 +1397,10 @@ function autoSelectTemplate() {
         selectedTemplate = 'recordatorio_renta';
         contextTipText = `<strong>Día 1 del mes.</strong> Aún no aplica recargo. Puedes enviar el recordatorio amable.`;
     }
-    
+
     // Update context tip
     document.getElementById('contextTipText').innerHTML = contextTipText;
-    
+
     // Select the template
     const templateOption = document.querySelector(`[data-template="${selectedTemplate}"]`);
     if (templateOption) {
@@ -1450,7 +1408,7 @@ function autoSelectTemplate() {
         templateOption.classList.add('selected');
         templateOption.querySelector('input[type="radio"]').checked = true;
     }
-    
+
     // Update message previews
     updateMessagePreviews();
 }
@@ -1459,25 +1417,24 @@ function autoSelectTemplate() {
 async function sendTestMessage() {
     const btn = document.getElementById('btnTestWA');
     const resultDiv = document.getElementById('testResult');
-    
+
     // Disable button and show loading
     btn.disabled = true;
     btn.innerHTML = '<span style="font-size: 1.2rem;">⏳</span> Enviando mensaje...';
     resultDiv.style.display = 'none';
-    
+
     try {
+        // Bug #9 fix: Don't send hardcoded phone - let the server use WHATSAPP_TEST_PHONE from .env
         const response = await fetch('/api/reminders/test', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                phone: '+447811782597'  // Your UK test phone from .env
-            })
+            body: JSON.stringify({})  // Empty body - server will use WHATSAPP_TEST_PHONE env var
         });
-        
+
         const data = await response.json();
-        
+
         resultDiv.style.display = 'block';
-        
+
         if (data.success) {
             resultDiv.innerHTML = `
                 <div style="color: #065F46; background: #D1FAE5; padding: 12px; border-radius: 8px;">
@@ -1488,7 +1445,7 @@ async function sendTestMessage() {
             `;
             btn.innerHTML = '<span style="font-size: 1.2rem;">✅</span> ¡Enviado!';
             btn.style.background = '#059669';
-            
+
             // Haptic feedback
             if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
         } else {
@@ -1517,7 +1474,7 @@ async function sendTestMessage() {
 // ========== TEMPLATE SELECTOR ==========
 function initTemplateSelector() {
     const templateOptions = document.querySelectorAll('.template-option');
-    
+
     templateOptions.forEach(option => {
         option.addEventListener('click', function() {
             // Remove selected class from all
@@ -1528,7 +1485,7 @@ function initTemplateSelector() {
             this.querySelector('input[type="radio"]').checked = true;
             // Update previews
             updateMessagePreviews();
-            
+
             // Haptic feedback
             if (navigator.vibrate) navigator.vibrate(20);
         });
@@ -1568,17 +1525,17 @@ function getMessagePreview(template, name, amount) {
 // Update message previews based on selected template
 function updateMessagePreviews() {
     const template = getSelectedTemplate();
-    
+
     document.querySelectorAll('.tenant-item[data-tenant-id]').forEach(item => {
         const previewEl = item.querySelector('.tenant-message-preview');
         if (!previewEl) return;
-        
+
         const checkbox = item.querySelector('input[type="checkbox"]');
         if (!checkbox) return;
-        
+
         const name = checkbox.dataset.tenantDisplayName || checkbox.dataset.tenantName;
         const amount = checkbox.dataset.tenantRentFormatted || checkbox.dataset.tenantRent;
-        
+
         const message = getMessagePreview(template, name, amount);
         previewEl.textContent = `→ "${message}"`;
     });
@@ -1595,7 +1552,7 @@ function selectAllTenants() {
     }
     // Also dispatch event for the IIFE listener
     document.getElementById('tenantList')?.dispatchEvent(new Event('change'));
-    
+
     // Haptic feedback
     if (navigator.vibrate) navigator.vibrate(30);
 }
@@ -1606,7 +1563,7 @@ function deselectAllTenants() {
     });
     // Trigger update
     document.getElementById('tenantList')?.dispatchEvent(new Event('change'));
-    
+
     // Haptic feedback
     if (navigator.vibrate) navigator.vibrate(30);
 }
@@ -1614,7 +1571,7 @@ function deselectAllTenants() {
 // ========== ISSUE #10: Toggle sent details ==========
 function toggleSentDetails(element) {
     element.classList.toggle('expanded');
-    
+
     // Haptic feedback
     if (navigator.vibrate) navigator.vibrate(15);
 }
@@ -1622,18 +1579,26 @@ function toggleSentDetails(element) {
 // ========== ISSUE #6: Single Send Modal ==========
 let pendingSingleSend = null;
 
-function showSingleSendModal(tenantId, name, phone, amount) {
-    pendingSingleSend = { tenantId, name, phone, amount };
-    
+function showSingleSendModal(tenantId, name, phone, amount, alreadySent = false) {
+    pendingSingleSend = { tenantId, name, phone, amount, alreadySent };
+
     document.getElementById('singleSendName').textContent = name;
     document.getElementById('singleSendPhone').textContent = `📱 ${phone}`;
-    
+
     const template = getSelectedTemplate();
     const message = getMessagePreview(template, name, amount);
     document.getElementById('singleSendMessage').textContent = message;
-    
+
+    // Update button text based on whether it's a resend
+    const btnSingleConfirm = document.getElementById('btnSingleConfirm');
+    if (alreadySent) {
+        btnSingleConfirm.innerHTML = '🔄 Reenviar';
+    } else {
+        btnSingleConfirm.innerHTML = '✅ Enviar';
+    }
+
     document.getElementById('singleSendModal').classList.add('show');
-    
+
     // Haptic feedback
     if (navigator.vibrate) navigator.vibrate(30);
 }
@@ -1645,31 +1610,62 @@ function closeSingleSendModal() {
 
 async function confirmSingleSend() {
     if (!pendingSingleSend) return;
-    
+
+    // Bug #3 fix: Save all values BEFORE any async operations or modal close
+    const tenantId = pendingSingleSend.tenantId;
+    const tenantName = pendingSingleSend.name;
+    const tenantPhone = pendingSingleSend.phone;
+    const tenantAmount = pendingSingleSend.amount;
+    const alreadySent = pendingSingleSend.alreadySent;
+    const template = getSelectedTemplate();
+
     const btn = document.getElementById('btnSingleConfirm');
     const originalText = btn.innerHTML;
-    
+
     // ISSUE #8: Better loading state
     btn.disabled = true;
     btn.innerHTML = '<span class="loading-spinner"></span> Enviando...';
+
+    console.log('[DEBUG] confirmSingleSend called for:', tenantId);
     
     try {
+        const requestBody = {
+            tenant_ids: [tenantId],
+            template: template,
+            force_resend: alreadySent
+        };
+        console.log('[DEBUG] Request body:', JSON.stringify(requestBody));
+        
         const response = await fetch('/api/reminders/send', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                tenant_ids: [pendingSingleSend.tenantId],
-                template: getSelectedTemplate()
-            })
+            body: JSON.stringify(requestBody)
         });
+
+        console.log('[DEBUG] Response status:', response.status);
+        console.log('[DEBUG] Response ok:', response.ok);
         
-        const data = await response.json();
+        const responseText = await response.text();
+        console.log('[DEBUG] Response text:', responseText);
         
+        let data;
+        try {
+            data = JSON.parse(responseText);
+        } catch (parseError) {
+            console.error('[DEBUG] Failed to parse response as JSON:', parseError);
+            throw new Error(`Invalid JSON response: ${responseText.substring(0, 200)}`);
+        }
+        
+        console.log('[DEBUG] Parsed response data:', data);
+
         if (data.success && data.summary.sent > 0) {
-            closeSingleSendModal();
+            console.log('[DEBUG] Message sent successfully!');
             
-            // Update the UI
-            const item = document.querySelector(`.tenant-item[data-tenant-id="${pendingSingleSend.tenantId}"]`);
+            // Close modal AFTER extracting values (Bug #3 fix)
+            closeSingleSendModal();
+
+            // Update the UI using saved values (not pendingSingleSend which is now null)
+            const item = document.querySelector(`.tenant-item[data-tenant-id="${tenantId}"]`);
             if (item) {
                 item.style.opacity = '0.5';
                 const cb = item.querySelector('input[type="checkbox"]');
@@ -1685,29 +1681,40 @@ async function confirmSingleSend() {
                     quickBtn.style.color = 'white';
                 }
             }
-            
-            // Store for copy functionality
+
+            // Store for copy functionality using saved values
             lastSendSummary = {
-                sent: [{ name: pendingSingleSend.name }],
+                sent: [{ name: tenantName }],
                 failed: [],
-                template: getTemplateDisplayName(getSelectedTemplate()),
+                template: getTemplateDisplayName(template),
                 timestamp: new Date().toLocaleString('es-MX')
             };
-            
+
             // Haptic feedback
             if (navigator.vibrate) navigator.vibrate([50, 30, 50]);
-            
+
             // Update summary
             document.getElementById('tenantList')?.dispatchEvent(new Event('change'));
+        } else if (data.success && data.summary.skipped > 0) {
+            const skippedReason = data.details?.skipped?.[0]?.reason || 'Ya se envió mensaje hoy';
+            console.log('[DEBUG] Message skipped:', skippedReason);
+            alert(`Mensaje omitido: ${skippedReason}\n\nSi estás intentando reenviar, reinicia el servidor Flask para aplicar los cambios de código.`);
+            btn.innerHTML = originalText;
+            btn.disabled = false;
         } else {
             const error = data.details?.failed?.[0]?.error || data.error || 'Error desconocido';
+            console.error('[DEBUG] Send failed:', error);
             alert(`Error: ${error}`);
             btn.innerHTML = originalText;
             btn.disabled = false;
         }
     } catch (error) {
-        console.error('Single send error:', error);
-        alert('Error de conexión. Intenta de nuevo.');
+        console.error('[DEBUG] Exception in confirmSingleSend:', error);
+        console.error('[DEBUG] Error name:', error.name);
+        console.error('[DEBUG] Error message:', error.message);
+        console.error('[DEBUG] Error stack:', error.stack);
+        
+        alert(`Error de conexión: ${error.message}\n\nRevisa la consola del navegador para más detalles.`);
         btn.innerHTML = originalText;
         btn.disabled = false;
     }
@@ -1719,7 +1726,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (btnSingleConfirm) {
         btnSingleConfirm.addEventListener('click', confirmSingleSend);
     }
-    
+
     // Close on backdrop click
     const singleSendModal = document.getElementById('singleSendModal');
     if (singleSendModal) {
@@ -1735,20 +1742,20 @@ document.addEventListener('DOMContentLoaded', function() {
 async function retryFailedMessage(event, tenantId, tenantName) {
     // Prevent the parent onclick from firing
     event.stopPropagation();
-    
+
     const btn = event.target;
     const originalText = btn.innerHTML;
-    
+
     // Show loading state
     btn.disabled = true;
     btn.innerHTML = '<span class="loading-spinner"></span> Reenviando...';
-    
+
     // Haptic feedback
     if (navigator.vibrate) navigator.vibrate(30);
-    
+
     // Use the currently selected template from the UI
     const templateToUse = getSelectedTemplate();
-    
+
     try {
         const response = await fetch('/api/reminders/retry', {
             method: 'POST',
@@ -1758,9 +1765,9 @@ async function retryFailedMessage(event, tenantId, tenantName) {
                 template: templateToUse
             })
         });
-        
+
         const data = await response.json();
-        
+
         if (data.success) {
             // Update the UI to show success
             const tenantItem = btn.closest('.tenant-item');
@@ -1771,28 +1778,28 @@ async function retryFailedMessage(event, tenantId, tenantName) {
                     badge.className = 'tenant-status status-sent';
                     badge.textContent = 'Enviado ✓';
                 }
-                
+
                 // Update the status in the details
                 const statusValue = tenantItem.querySelector('.sent-detail-value.status-failed');
                 if (statusValue) {
                     statusValue.className = 'sent-detail-value status-sent';
                     statusValue.innerHTML = '✓ Enviado';
                 }
-                
+
                 // Remove the retry row
                 const retryRow = btn.closest('.retry-row');
                 if (retryRow) {
                     retryRow.style.display = 'none';
                 }
             }
-            
+
             // Haptic feedback for success
             if (navigator.vibrate) navigator.vibrate([50, 30, 50]);
-            
+
             // Show a brief success message
             btn.innerHTML = '✅ ¡Reenviado!';
             btn.style.background = '#059669';
-            
+
         } else {
             const error = data.error || 'Error desconocido';
             alert(`Error al reenviar: ${error}`);
@@ -1947,21 +1954,41 @@ function filterTenants(term) {
         btnConfirm.disabled = true;
         btnConfirm.innerHTML = '<span class="loading-spinner"></span> Enviando mensajes...';
 
+        console.log('[DEBUG] sendReminders called for:', selectedTenants.map(t => t.id));
+
         try {
+            const requestBody = {
+                tenant_ids: selectedTenants.map(t => t.id),
+                template: getSelectedTemplate()
+            };
+            console.log('[DEBUG] Request body:', JSON.stringify(requestBody));
+            
             const response = await fetch('/api/reminders/send', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({
-                    tenant_ids: selectedTenants.map(t => t.id),
-                    template: getSelectedTemplate()
-                })
+                body: JSON.stringify(requestBody)
             });
 
-            const data = await response.json();
+            console.log('[DEBUG] Response status:', response.status);
+            console.log('[DEBUG] Response ok:', response.ok);
+
+            const responseText = await response.text();
+            console.log('[DEBUG] Response text:', responseText);
+            
+            let data;
+            try {
+                data = JSON.parse(responseText);
+            } catch (parseError) {
+                console.error('[DEBUG] Failed to parse response as JSON:', parseError);
+                throw new Error(`Invalid JSON response: ${responseText.substring(0, 200)}`);
+            }
+
+            console.log('[DEBUG] Parsed response data:', data);
 
             if (data.success) {
+                console.log('[DEBUG] Messages sent successfully!');
                 // Show success screen
                 hideConfirmModal();
                 showSuccessScreen(data);
@@ -1969,13 +1996,18 @@ function filterTenants(term) {
                 // Haptic feedback
                 if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
             } else {
+                console.error('[DEBUG] Send failed:', data.error);
                 alert('Error: ' + (data.error || 'No se pudieron enviar los mensajes'));
                 btnConfirm.disabled = false;
                 btnConfirm.innerHTML = '✅ Sí, Enviar';
             }
         } catch (error) {
-            console.error('Send error:', error);
-            alert('Error de conexión. Intenta de nuevo.');
+            console.error('[DEBUG] Exception in sendReminders:', error);
+            console.error('[DEBUG] Error name:', error.name);
+            console.error('[DEBUG] Error message:', error.message);
+            console.error('[DEBUG] Error stack:', error.stack);
+            
+            alert(`Error de conexión: ${error.message}\n\nRevisa la consola del navegador para más detalles.`);
             btnConfirm.disabled = false;
             btnConfirm.innerHTML = '✅ Sí, Enviar';
         }
@@ -2037,7 +2069,7 @@ function filterTenants(term) {
         }
 
         successDetailsEl.innerHTML = detailsHtml;
-        
+
         // ISSUE #3 & #12: Store for copy functionality
         lastSendSummary = {
             sent: details.sent || [],
@@ -2045,7 +2077,7 @@ function filterTenants(term) {
             template: getTemplateDisplayName(getSelectedTemplate()),
             timestamp: new Date().toLocaleString('es-MX')
         };
-        
+
         successScreen.classList.add('show');
     }
 

@@ -162,7 +162,7 @@ class DatabaseConnection:
         with DatabaseConnection() as (conn, cursor):
             cursor.execute(...)
             # Auto-commits on success, rollbacks on exception
-            
+
         # For read-only operations (no commit):
         with DatabaseConnection(readonly=True) as (conn, cursor):
             cursor.execute("SELECT ...")
@@ -197,15 +197,15 @@ class DatabaseConnection:
 def _add_column_if_not_exists(cursor, table: str, column: str, column_def: str) -> bool:
     """
     Add a column to a table if it doesn't already exist.
-    
+
     This reduces repetitive try/except blocks for schema migrations.
-    
+
     Args:
         cursor: Database cursor
         table: Table name
         column: Column name
         column_def: Column definition (e.g., "TEXT", "INTEGER DEFAULT 0")
-        
+
     Returns:
         True if column was added, False if it already exists
     """
@@ -432,7 +432,8 @@ def init_database():
     except sqlite3.OperationalError:
         pass  # Column already exists
 
-    # Message logs table - prevents double-sending (idempotency)
+    # Message logs table - tracks ALL message history (no unique constraint!)
+    # We want to keep full history: 8 AM reminder, 5 PM reminder, retries, etc.
     cursor.execute(
         """
         CREATE TABLE IF NOT EXISTS message_logs (
@@ -448,16 +449,63 @@ def init_database():
             delivered_at TEXT,  -- Timestamp when delivered
             read_at TEXT,  -- Timestamp when read
             error_message TEXT,
-            FOREIGN KEY (tenant_id) REFERENCES tenants(id),
-            UNIQUE(tenant_id, message_type, year, month, day)  -- Prevent double-send same day
+            FOREIGN KEY (tenant_id) REFERENCES tenants(id)
         )
     """
     )
-    
+
+    # Migration: Remove unique constraint from old databases
+    # SQLite doesn't support dropping constraints, so we need to recreate the table
+    # Check if the unique constraint exists by trying to insert duplicates
+    try:
+        cursor.execute(
+            """
+            SELECT sql FROM sqlite_master 
+            WHERE type='table' AND name='message_logs'
+            """
+        )
+        row = cursor.fetchone()
+        if row and "UNIQUE" in row[0]:
+            logger.info("Migrating message_logs table to remove unique constraint...")
+            # Rename old table
+            cursor.execute("ALTER TABLE message_logs RENAME TO message_logs_old")
+            # Create new table without unique constraint
+            cursor.execute(
+                """
+                CREATE TABLE message_logs (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    tenant_id TEXT NOT NULL,
+                    message_type TEXT NOT NULL,
+                    year INTEGER NOT NULL,
+                    month INTEGER NOT NULL,
+                    day INTEGER NOT NULL,
+                    sent_at TEXT NOT NULL,
+                    message_id TEXT,
+                    status TEXT DEFAULT 'sent',
+                    delivered_at TEXT,
+                    read_at TEXT,
+                    error_message TEXT,
+                    FOREIGN KEY (tenant_id) REFERENCES tenants(id)
+                )
+                """
+            )
+            # Copy data
+            cursor.execute(
+                """
+                INSERT INTO message_logs 
+                SELECT * FROM message_logs_old
+                """
+            )
+            # Drop old table
+            cursor.execute("DROP TABLE message_logs_old")
+            logger.info("Migration complete: message_logs unique constraint removed")
+    except Exception as e:
+        logger.warning(f"Could not check/migrate message_logs: {e}")
+
     # Add new columns for delivery tracking (for existing databases)
     _add_column_if_not_exists(cursor, "message_logs", "delivered_at", "TEXT")
     _add_column_if_not_exists(cursor, "message_logs", "read_at", "TEXT")
-    
+
     # Incoming messages table - stores replies from tenants
     cursor.execute(
         """
@@ -1017,27 +1065,30 @@ def get_expiring_contracts(days_ahead: int = 60) -> List[Dict[str, Any]]:
 
 def was_message_sent_today(tenant_id: str, message_type: str) -> bool:
     """
-    Check if a message of this type was already sent to this tenant today.
+    Check if a SUCCESSFUL message of this type was already sent to this tenant today.
 
     This prevents double-sending if the scheduler restarts or runs twice.
+    Failed messages do NOT count - we allow retries after failures.
 
     Args:
         tenant_id: The tenant's ID
         message_type: Type of message ('rent_reminder', 'late_day_2', etc.)
 
     Returns:
-        True if message was already sent today, False otherwise
+        True if a successful message was already sent today, False otherwise
     """
     conn = get_db_connection()
     cursor = conn.cursor()
 
     now = datetime.now()
 
+    # Only count successful sends (sent, delivered, read) - NOT failed
     cursor.execute(
         """
         SELECT id FROM message_logs
         WHERE tenant_id = ? AND message_type = ? 
         AND year = ? AND month = ? AND day = ?
+        AND status IN ('sent', 'delivered', 'read')
         """,
         (tenant_id, message_type, now.year, now.month, now.day),
     )
@@ -1058,15 +1109,18 @@ def log_message_sent(
     """
     Log that a message was sent (or attempted) to a tenant.
 
+    Always creates a NEW record - we want full history of all messages
+    (8 AM reminder, 5 PM reminder, retries, failures, etc.)
+
     Args:
         tenant_id: The tenant's ID
-        message_type: Type of message ('rent_reminder', 'late_day_2', etc.)
+        message_type: Type of message ('morning_reminder', 'afternoon_reminder', etc.)
         message_id: WhatsApp message ID from Meta API (optional)
         status: 'sent', 'failed', 'delivered', 'read'
         error_message: Error message if failed
 
     Returns:
-        True if logged successfully, False if duplicate (already sent today)
+        True if logged successfully
     """
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -1074,6 +1128,7 @@ def log_message_sent(
     now = datetime.now()
 
     try:
+        # Always INSERT a new record - keep full message history
         cursor.execute(
             """
             INSERT INTO message_logs 
@@ -1093,12 +1148,43 @@ def log_message_sent(
             ),
         )
         conn.commit()
-        conn.close()
+        logger.info(f"Message logged: tenant={tenant_id}, status={status}, message_id={message_id}")
         return True
-    except sqlite3.IntegrityError:
-        # Duplicate - message already sent today
-        conn.close()
+    except sqlite3.IntegrityError as e:
+        # Handle unique constraint if it still exists in old databases
+        # Try to update existing record as fallback
+        logger.warning(f"IntegrityError (old schema?), trying update: {e}")
+        try:
+            cursor.execute(
+                """
+                UPDATE message_logs 
+                SET sent_at = ?, message_id = ?, status = ?, error_message = ?,
+                    delivered_at = NULL, read_at = NULL
+                WHERE tenant_id = ? AND message_type = ? 
+                AND year = ? AND month = ? AND day = ?
+                """,
+                (
+                    now.isoformat(),
+                    message_id,
+                    status,
+                    error_message,
+                    tenant_id,
+                    message_type,
+                    now.year,
+                    now.month,
+                    now.day,
+                ),
+            )
+            conn.commit()
+            return True
+        except Exception as e2:
+            logger.error(f"Error updating message log: {e2}")
+            return False
+    except Exception as e:
+        logger.error(f"Error logging message: {e}")
         return False
+    finally:
+        conn.close()
 
 
 def get_unpaid_tenants_for_reminder(
