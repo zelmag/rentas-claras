@@ -1548,12 +1548,6 @@
                                 <span style="font-size: 1.1rem;">📱</span>
                                 <span>WhatsApp</span>
                             </a>
-                            <a href="tel:{{ tenant.phone }}"
-                               class="quick-action-btn call"
-                               onclick="event.stopPropagation();">
-                                <span style="font-size: 1.1rem;">📞</span>
-                                <span>Llamar</span>
-                            </a>
                         </div>
                         {% endif %}
                     </div>
@@ -1789,6 +1783,11 @@
         function toggleSection(section) {
             const list = document.getElementById(section + 'List');
             const arrow = document.getElementById(section + 'Arrow');
+
+            // Clear inline styles so CSS classes can take effect
+            // (filterTenants sets inline styles which override CSS classes)
+            list.style.display = '';
+
             list.classList.toggle('collapsed');
             arrow.classList.toggle('collapsed');
         }
@@ -2455,13 +2454,38 @@
 
         function filterTenants(term) {
             term = term.toLowerCase().trim();
+
+            // Split search into words for multi-word matching (e.g., "ensenada 3")
+            const searchWords = term.split(/\s+/).filter(w => w.length > 0);
+
             const allItems = document.querySelectorAll('.tenant-item');
 
+            // If searching, expand both sections so results are visible
+            const pendingList = document.getElementById('pendingList');
+            const paidList = document.getElementById('paidList');
+            const pendingArrow = document.getElementById('pendingArrow');
+            const paidArrow = document.getElementById('paidArrow');
+
+            if (searchWords.length > 0) {
+                // Expand both sections when searching
+                pendingList.classList.remove('collapsed');
+                paidList.classList.remove('collapsed');
+                pendingArrow.classList.remove('collapsed');
+                paidArrow.classList.remove('collapsed');
+            }
+
             allItems.forEach(item => {
-                const name = item.dataset.name.toLowerCase();
-                const property = item.dataset.property.toLowerCase();
-                const unit = item.dataset.unit.toLowerCase();
-                const matches = name.includes(term) || property.includes(term) || unit.includes(term);
+                const name = (item.dataset.name || '').toLowerCase();
+                const property = (item.dataset.property || '').toLowerCase();
+                const unit = (item.dataset.unit || '').toLowerCase();
+
+                // Create combined searchable string
+                const combined = `${name} ${property} ${unit}`;
+
+                // Check if ALL search words are present in the combined string
+                const matches = searchWords.length === 0 ||
+                                searchWords.every(word => combined.includes(word));
+
                 item.style.display = matches ? 'flex' : 'none';
             });
 
@@ -2478,6 +2502,33 @@
                 }
                 header.style.display = hasVisibleTenant ? 'flex' : 'none';
             });
+
+            // Show/hide the section headers based on whether they have visible items
+            const hasPendingVisible = Array.from(pendingList.querySelectorAll('.tenant-item')).some(
+                item => item.style.display !== 'none'
+            );
+            const hasPaidVisible = Array.from(paidList.querySelectorAll('.tenant-item')).some(
+                item => item.style.display !== 'none'
+            );
+
+            // Hide entire sections if no matches (but keep them visible if empty search)
+            if (searchWords.length > 0) {
+                document.querySelector('.section-header.pending').style.display = hasPendingVisible ? 'flex' : 'none';
+                pendingList.style.display = hasPendingVisible ? 'block' : 'none';
+
+                document.querySelector('.section-header.paid').style.display = hasPaidVisible ? 'flex' : 'none';
+                paidList.style.display = hasPaidVisible ? 'block' : 'none';
+            } else {
+                // Reset to normal state when search is cleared
+                document.querySelector('.section-header.pending').style.display = 'flex';
+                document.querySelector('.section-header.paid').style.display = 'flex';
+                pendingList.style.display = '';  // Clear inline style so CSS works
+                pendingList.classList.remove('collapsed');
+                // Keep paid section collapsed when clearing search
+                paidList.style.display = '';  // Clear inline style so .collapsed CSS class works
+                paidList.classList.add('collapsed');
+                paidArrow.classList.add('collapsed');
+            }
         }
 
         // Print summary - CLEAN version with table per property

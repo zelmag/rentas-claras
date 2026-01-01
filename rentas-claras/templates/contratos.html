@@ -424,6 +424,14 @@
         font-size: 1.4rem;
     }
 
+    .property-count {
+        background: rgba(255,255,255,0.25);
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 1rem;
+        font-weight: 700;
+    }
+
     /* Contract Item */
     .contract-item {
         padding: 16px 20px;
@@ -780,7 +788,7 @@
             {% set attention_tenants = [] %}
             {% for property_name, tenants in tenants_by_property.items() %}
                 {% for tenant in tenants %}
-                    {% if tenant.days_until_expiry is defined and tenant.days_until_expiry <= 30 %}
+                    {% if tenant.days_until_expiry is defined and tenant.days_until_expiry <= 31 %}
                         {% if tenant.renewal_status == 'pendiente' or (tenant.renewal_status == 'no_renovará' and not tenant.replacement_name) %}
                             {% set _ = attention_tenants.append({'tenant': tenant, 'property': property_name}) %}
                         {% endif %}
@@ -790,14 +798,17 @@
 
             {% if attention_tenants|length > 0 %}
                 {% set current_property = namespace(value='') %}
+                {% set property_count = namespace(value=0) %}
                 {% for item in attention_tenants %}
                     {% if item.property != current_property.value %}
                         {% set current_property.value = item.property %}
+                        {% set property_count.value = attention_tenants|selectattr('property', 'equalto', item.property)|list|length %}
                         <div class="property-section-header">
                             <div class="property-section-name">
-                                <span></span>
+                                <span>🏠</span>
                                 <span>{{ item.property }}</span>
                             </div>
+                            <span class="property-count">{{ property_count.value }}</span>
                         </div>
                     {% endif %}
                     {% set tenant = item.tenant %}
@@ -904,9 +915,10 @@
                 {% if renewing_tenants|length > 0 %}
                 <div class="property-section-header" data-color="{{ colors[loop.index0 % 5] }}">
                     <div class="property-section-name">
-                        <span></span>
+                        <span>🏠</span>
                         <span>{{ property_name }}</span>
                     </div>
+                    <span class="property-count">{{ renewing_tenants|length }}</span>
                 </div>
                 {% for tenant in renewing_tenants %}
                 <div class="contract-item renewing"
@@ -1019,7 +1031,35 @@
             // Use RentasState to save and sync
             RentasState.updateRenewal(tenantId, { renewal_status: status }).then(result => {
                 if (result.success) {
-                    showToast('Guardado', 'success');
+                    // Check if contract was auto-renewed
+                    if (result.new_contract_end) {
+                        // Format the new date for display
+                        const newDate = new Date(result.new_contract_end);
+                        const formattedDate = newDate.toLocaleDateString('es-MX', {
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric'
+                        });
+                        showToast(`✓ Renovado hasta ${formattedDate}`, 'success');
+
+                        // Update the contract dates display in the UI
+                        const datesEl = container.querySelector('.contract-dates');
+                        if (datesEl) {
+                            datesEl.textContent = formattedDate;
+                        }
+
+                        // Hide the expiry badge since contract is now extended
+                        const expiryEl = container.querySelector('.contract-expiry');
+                        if (expiryEl) {
+                            expiryEl.style.display = 'none';
+                        }
+
+                        // Reset the tracking checkboxes (new contract cycle)
+                        const checkboxes = container.querySelectorAll('.tracking-checkbox input');
+                        checkboxes.forEach(cb => cb.checked = false);
+                    } else {
+                        showToast('Guardado', 'success');
+                    }
                     updateSyncIndicator();
                 } else {
                     showToast('Error al guardar', '');
@@ -1073,11 +1113,22 @@
         // Filter contracts - search by name, property, or unit
         function filterContracts(term) {
             term = term.toLowerCase().trim();
+
+            // Split search into words for multi-word matching (e.g., "ensenada 3")
+            const searchWords = term.split(/\s+/).filter(w => w.length > 0);
+
             document.querySelectorAll('.contract-item').forEach(item => {
-                const name = item.dataset.name.toLowerCase();
-                const property = item.dataset.property.toLowerCase();
-                const unit = item.dataset.unit.toLowerCase();
-                const matches = name.includes(term) || property.includes(term) || unit.includes(term);
+                const name = (item.dataset.name || '').toLowerCase();
+                const property = (item.dataset.property || '').toLowerCase();
+                const unit = (item.dataset.unit || '').toLowerCase();
+
+                // Create combined searchable string
+                const combined = `${name} ${property} ${unit}`;
+
+                // Check if ALL search words are present in the combined string
+                const matches = searchWords.length === 0 ||
+                                searchWords.every(word => combined.includes(word));
+
                 item.style.display = matches ? 'block' : 'none';
             });
 

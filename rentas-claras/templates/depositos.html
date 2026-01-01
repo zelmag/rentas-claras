@@ -1020,11 +1020,21 @@
         function filterContracts(term) {
             term = term.toLowerCase().trim();
 
+            // Split search into words for multi-word matching (e.g., "ensenada 3")
+            const searchWords = term.split(/\s+/).filter(w => w.length > 0);
+
             document.querySelectorAll('.deposit-item').forEach(item => {
-                const name = item.dataset.name.toLowerCase();
-                const property = item.dataset.property.toLowerCase();
-                const unit = item.dataset.unit.toLowerCase();
-                const matches = name.includes(term) || property.includes(term) || unit.includes(term);
+                const name = (item.dataset.name || '').toLowerCase();
+                const property = (item.dataset.property || '').toLowerCase();
+                const unit = (item.dataset.unit || '').toLowerCase();
+
+                // Create combined searchable string
+                const combined = `${name} ${property} ${unit}`;
+
+                // Check if ALL search words are present in the combined string
+                const matches = searchWords.length === 0 ||
+                                searchWords.every(word => combined.includes(word));
+
                 item.style.display = matches ? 'block' : 'none';
             });
 

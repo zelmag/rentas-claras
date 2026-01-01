@@ -9,7 +9,7 @@ import logging
 from collections import defaultdict
 from datetime import datetime, timedelta
 
-from database import get_all_tenants, get_last_sync_time, update_renewal_status
+from database import auto_renew_contract, get_all_tenants, get_last_sync_time, update_renewal_status
 
 from flask import Blueprint, jsonify, render_template, request
 from routes.auth import login_required
@@ -47,8 +47,8 @@ def contracts():
     not_renewing_count = 0
     pending_count = 0
 
-    # Calculate the date range for "next month" (contracts expiring in next 30 days)
-    next_month_cutoff = today + timedelta(days=30)
+    # Calculate the date range for "next month" (contracts expiring in next 31 days)
+    next_month_cutoff = today + timedelta(days=31)
 
     # Add days_until_expiry for urgency highlighting
     for tenant in all_tenants:
@@ -83,7 +83,7 @@ def contracts():
         contract_expires_soon = False
         if tenant.contract_end:
             parsed_end = parse_date(tenant.contract_end)
-            if parsed_end and parsed_end <= next_month_cutoff:
+            if parsed_end and parsed_end.date() <= next_month_cutoff.date():
                 contract_expires_soon = True
 
         # Only count contracts expiring within next 30 days for ALL statuses
@@ -186,7 +186,7 @@ def contracts():
         for tenant in month_group["tenants"]:
             if (
                 not hasattr(tenant, "days_until_expiry")
-                or tenant.days_until_expiry > 30
+                or tenant.days_until_expiry > 31
             ):
                 continue
 
@@ -256,7 +256,17 @@ def update_renewal():
             replacement_aval_phone=validated.get("replacement_aval_phone"),
         )
 
-        return jsonify({"success": True})
+        # Auto-renew contract when status is set to "renovará"
+        new_contract_end = None
+        if validated.get("renewal_status") == "renovará":
+            new_contract_end = auto_renew_contract(validated["tenant_id"])
+            if new_contract_end:
+                logger.info(f"Auto-renewed contract for tenant {validated['tenant_id']} to {new_contract_end}")
+
+        return jsonify({
+            "success": True,
+            "new_contract_end": new_contract_end
+        })
     except Exception as e:
         logger.exception(f"Error updating renewal: {e}")
         return jsonify({"success": False, "error": str(e)}), 400

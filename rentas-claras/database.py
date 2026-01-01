@@ -894,6 +894,82 @@ def update_tenant_phone(tenant_id: str, phone: str):
     conn.close()
 
 
+def auto_renew_contract(tenant_id: str, months: int = 6) -> Optional[str]:
+    """
+    Automatically extend a tenant's contract by the specified number of months.
+    
+    This is called when a tenant confirms they will renew (status = 'renovará').
+    It extends the contract_end date by the specified number of months.
+    
+    Args:
+        tenant_id: The tenant's ID
+        months: Number of months to extend the contract (default 6)
+        
+    Returns:
+        The new contract_end date as a string (YYYY-MM-DD), or None if failed
+    """
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    try:
+        # Get current contract end date
+        cursor.execute(
+            "SELECT contract_end FROM tenants WHERE id = ? AND active = 1",
+            (tenant_id,)
+        )
+        row = cursor.fetchone()
+        
+        if not row or not row["contract_end"]:
+            logger.warning(f"Cannot auto-renew: tenant {tenant_id} has no contract_end date")
+            conn.close()
+            return None
+        
+        # Parse the current end date
+        try:
+            current_end = datetime.strptime(row["contract_end"], "%Y-%m-%d")
+        except ValueError:
+            logger.error(f"Invalid contract_end date format for tenant {tenant_id}: {row['contract_end']}")
+            conn.close()
+            return None
+        
+        # Calculate new end date (add months)
+        new_month = current_end.month + months
+        new_year = current_end.year + (new_month - 1) // 12
+        new_month = ((new_month - 1) % 12) + 1
+        
+        # Handle day overflow (e.g., Jan 31 + 1 month -> Feb 28)
+        import calendar
+        max_day = calendar.monthrange(new_year, new_month)[1]
+        new_day = min(current_end.day, max_day)
+        
+        new_end = current_end.replace(year=new_year, month=new_month, day=new_day)
+        new_end_str = new_end.strftime("%Y-%m-%d")
+        
+        # Update the contract_end date and reset tracking flags for new contract cycle
+        cursor.execute(
+            """
+            UPDATE tenants 
+            SET contract_end = ?,
+                contract_delivered = 0,
+                contract_picked_up = 0,
+                updated_at = datetime('now')
+            WHERE id = ?
+            """,
+            (new_end_str, tenant_id)
+        )
+        
+        conn.commit()
+        logger.info(f"Auto-renewed contract for tenant {tenant_id}: {row['contract_end']} -> {new_end_str}")
+        return new_end_str
+        
+    except Exception as e:
+        logger.error(f"Error auto-renewing contract for tenant {tenant_id}: {e}")
+        conn.rollback()
+        return None
+    finally:
+        conn.close()
+
+
 def update_renewal_status(
     tenant_id: str,
     renewal_status: Optional[str] = None,

@@ -1101,11 +1101,21 @@ function showEditModal(tenantId) {
         function filterTenants(term) {
             term = term.toLowerCase().trim();
 
+            // Split search into words for multi-word matching (e.g., "ensenada 3")
+            const searchWords = term.split(/\s+/).filter(w => w.length > 0);
+
             document.querySelectorAll('.tenant-card').forEach(card => {
-                const name = card.dataset.name.toLowerCase();
-                const property = card.dataset.property.toLowerCase();
-                const unit = card.dataset.unit.toLowerCase();
-                const matches = name.includes(term) || property.includes(term) || unit.includes(term);
+                const name = (card.dataset.name || '').toLowerCase();
+                const property = (card.dataset.property || '').toLowerCase();
+                const unit = (card.dataset.unit || '').toLowerCase();
+
+                // Create combined searchable string
+                const combined = `${name} ${property} ${unit}`;
+
+                // Check if ALL search words are present in the combined string
+                const matches = searchWords.length === 0 ||
+                                searchWords.every(word => combined.includes(word));
+
                 card.style.display = matches ? 'block' : 'none';
             });
 

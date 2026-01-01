@@ -1,7 +1,7 @@
 # RentasClaras Messaging System Design
 
-> **Status:** Design Document  
-> **Created:** 2025-12-30  
+> **Status:** Design Document
+> **Created:** 2025-12-30
 > **Author:** AI Assistant (Audit & Fix Session)
 
 ---
@@ -68,12 +68,12 @@ def get_recommended_template(day_of_month: int, hour: int) -> str:
 def calculate_late_fee(base_rent: float, day_of_month: int) -> tuple[float, float]:
     """
     Calculate late fee based on day of month.
-    
+
     Returns:
         (base_rent, total_with_fees) tuple
     """
     LATE_FEE_RATE = 0.10  # 10%
-    
+
     if day_of_month >= 2:
         late_fee = base_rent * LATE_FEE_RATE
         total = base_rent + late_fee
@@ -141,16 +141,16 @@ sent ──▶ delivered ──▶ read
 def handle_status_update(status: dict):
     message_id = status["id"]      # wamid.xxx format
     status_value = status["status"] # sent/delivered/read/failed
-    
+
     # Update message_logs table
     if status_value == "delivered":
-        UPDATE message_logs SET status='delivered', delivered_at=? 
+        UPDATE message_logs SET status='delivered', delivered_at=?
         WHERE message_id=? AND status='sent'
     elif status_value == "read":
-        UPDATE message_logs SET status='read', read_at=? 
+        UPDATE message_logs SET status='read', read_at=?
         WHERE message_id=? AND status IN ('sent', 'delivered')
     elif status_value == "failed":
-        UPDATE message_logs SET status='failed', error_message=? 
+        UPDATE message_logs SET status='failed', error_message=?
         WHERE message_id=?
 ```
 
@@ -192,7 +192,7 @@ return hmac.compare_digest(signature, expected)
 ### 6.2 Deprecated: `/api/whatsapp/send-all`
 
 > ⚠️ **DEPRECATED** - Use `/api/reminders/send` instead.
-> 
+>
 > This endpoint does not log messages and uses outdated function signatures.
 
 ---
@@ -269,4 +269,3 @@ WHATSAPP_TEST_PHONE=+52xxxxxxxxxx  # Your test phone
 | 8 | XSS vulnerability | Use `|tojson` filter |
 | 9 | Hardcoded test phone | Use env variable |
 | 10 | Missing table validation | Add schema check |
-

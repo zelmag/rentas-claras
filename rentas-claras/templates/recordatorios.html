@@ -247,7 +247,7 @@
     }
 
     .tenant-location {
-        font-size: var(--text-sm);
+        font-size: var(--text-base);  /* 16px minimum for accessibility */
         color: var(--gray);
     }
 
@@ -1162,7 +1162,7 @@
                 <div class="tenant-location">{{ tenant.property_name }} {{ tenant.unit }}</div>
                 <!-- ISSUE #7: Full phone number display -->
                 <div class="tenant-phone">📱 {{ tenant.phone }}</div>
-                
+
                 {% if tenant.already_sent_today %}
                 <!-- Show status details for already-sent tenants -->
                 <div class="sent-today-details" style="display: block;">
@@ -1627,7 +1627,7 @@ async function confirmSingleSend() {
     btn.innerHTML = '<span class="loading-spinner"></span> Enviando...';
 
     console.log('[DEBUG] confirmSingleSend called for:', tenantId);
-    
+
     try {
         const requestBody = {
             tenant_ids: [tenantId],
@@ -1635,7 +1635,7 @@ async function confirmSingleSend() {
             force_resend: alreadySent
         };
         console.log('[DEBUG] Request body:', JSON.stringify(requestBody));
-        
+
         const response = await fetch('/api/reminders/send', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -1644,10 +1644,10 @@ async function confirmSingleSend() {
 
         console.log('[DEBUG] Response status:', response.status);
         console.log('[DEBUG] Response ok:', response.ok);
-        
+
         const responseText = await response.text();
         console.log('[DEBUG] Response text:', responseText);
-        
+
         let data;
         try {
             data = JSON.parse(responseText);
@@ -1655,12 +1655,12 @@ async function confirmSingleSend() {
             console.error('[DEBUG] Failed to parse response as JSON:', parseError);
             throw new Error(`Invalid JSON response: ${responseText.substring(0, 200)}`);
         }
-        
+
         console.log('[DEBUG] Parsed response data:', data);
 
         if (data.success && data.summary.sent > 0) {
             console.log('[DEBUG] Message sent successfully!');
-            
+
             // Close modal AFTER extracting values (Bug #3 fix)
             closeSingleSendModal();
 
@@ -1713,7 +1713,7 @@ async function confirmSingleSend() {
         console.error('[DEBUG] Error name:', error.name);
         console.error('[DEBUG] Error message:', error.message);
         console.error('[DEBUG] Error stack:', error.stack);
-        
+
         alert(`Error de conexión: ${error.message}\n\nRevisa la consola del navegador para más detalles.`);
         btn.innerHTML = originalText;
         btn.disabled = false;
@@ -1825,6 +1825,9 @@ document.addEventListener('DOMContentLoaded', function() {
 function filterTenants(term) {
     term = term.toLowerCase().trim();
 
+    // Split search into words for multi-word matching (e.g., "ensenada 3")
+    const searchWords = term.split(/\s+/).filter(w => w.length > 0);
+
     // Filter items in all tenant lists
     document.querySelectorAll('.tenant-item').forEach(item => {
         const nameEl = item.querySelector('.tenant-name');
@@ -1833,7 +1836,13 @@ function filterTenants(term) {
         const name = nameEl ? nameEl.textContent.toLowerCase() : '';
         const location = locationEl ? locationEl.textContent.toLowerCase() : '';
 
-        const matches = name.includes(term) || location.includes(term);
+        // Create combined searchable string
+        const combined = `${name} ${location}`;
+
+        // Check if ALL search words are present in the combined string
+        const matches = searchWords.length === 0 ||
+                        searchWords.every(word => combined.includes(word));
+
         item.style.display = matches ? 'flex' : 'none';
     });
 
@@ -1962,7 +1971,7 @@ function filterTenants(term) {
                 template: getSelectedTemplate()
             };
             console.log('[DEBUG] Request body:', JSON.stringify(requestBody));
-            
+
             const response = await fetch('/api/reminders/send', {
                 method: 'POST',
                 headers: {
@@ -1976,7 +1985,7 @@ function filterTenants(term) {
 
             const responseText = await response.text();
             console.log('[DEBUG] Response text:', responseText);
-            
+
             let data;
             try {
                 data = JSON.parse(responseText);
@@ -2006,7 +2015,7 @@ function filterTenants(term) {
             console.error('[DEBUG] Error name:', error.name);
             console.error('[DEBUG] Error message:', error.message);
             console.error('[DEBUG] Error stack:', error.stack);
-            
+
             alert(`Error de conexión: ${error.message}\n\nRevisa la consola del navegador para más detalles.`);
             btnConfirm.disabled = false;
             btnConfirm.innerHTML = '✅ Sí, Enviar';
