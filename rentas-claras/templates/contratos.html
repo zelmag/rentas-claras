@@ -512,6 +512,11 @@
     }
 
     .contract-expiry.ok {
+        background: #DBEAFE;
+        color: #1E40AF;
+    }
+
+    .contract-expiry.later {
         background: var(--gray-light);
         color: var(--gray);
     }
@@ -825,7 +830,7 @@
                                     {{ tenant.contract_end_formatted }}
                                 </div>
                             </div>
-                            <div class="contract-expiry {{ 'urgent' if tenant.days_until_expiry <= 7 else 'soon' if tenant.days_until_expiry <= 14 else 'ok' }}">
+                            <div class="contract-expiry {{ 'urgent' if tenant.days_until_expiry <= 7 else 'soon' if tenant.days_until_expiry <= 14 else 'ok' if tenant.days_until_expiry <= 21 else 'later' }}">
                                 {% if tenant.days_until_expiry < 0 %}
                                     ¡Venció!
                                 {% elif tenant.days_until_expiry == 0 %}

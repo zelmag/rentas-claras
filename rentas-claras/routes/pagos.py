@@ -30,6 +30,7 @@ from services.dates import (
     get_billing_month,
     MIN_BILLING_MONTH,
     MIN_BILLING_YEAR,
+    parse_date,
     SPANISH_MONTHS,
     SPANISH_MONTHS_CAPITALIZED,
 )
@@ -103,6 +104,18 @@ def index():
     # Get tenants grouped by property
     all_tenants = get_all_tenants()
     tenants_by_property = {}
+
+    # Filter out tenants whose contract starts in the current billing month
+    # (they don't owe rent for their first month if they start on the 1st)
+    filtered_tenants = []
+    for tenant in all_tenants:
+        if tenant.contract_start:
+            start_date = parse_date(tenant.contract_start)
+            if start_date and start_date.year == year and start_date.month == month:
+                continue  # Skip tenants starting this month
+        filtered_tenants.append(tenant)
+
+    all_tenants = filtered_tenants
 
     for tenant in all_tenants:
         status = monthly_status.get(tenant.id, {})

@@ -1,0 +1,25 @@
+{
+  "description": "Template for tenant seed data - copy to seed_tenants.json and fill with real data",
+  "last_updated": "2024-12",
+  "properties": {
+    "Property Name": {
+      "units": 5,
+      "notes": "Units A-E"
+    }
+  },
+  "tenants": [
+    {
+      "id": "PROP-A",
+      "name": "Tenant Name",
+      "phone": "+52 XXX XXX XXXX",
+      "property_name": "Property Name",
+      "unit": "A",
+      "rent": 8000,
+      "emergency_contact": null,
+      "emergency_phone": null,
+      "contract_start": "2025-01-01",
+      "contract_end": "2025-12-31",
+      "bank": null
+    }
+  ]
+}

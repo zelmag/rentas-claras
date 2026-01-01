@@ -12,6 +12,14 @@
 rentas_claras.db
 rentas-claras.db
 
+# -----------------------------------------------------------------------------
+# 🔒 SENSITIVE DATA FILES - NEVER COMMIT
+# -----------------------------------------------------------------------------
+# One-time scripts with tenant data
+update_tenants.py
+# Seed data with real tenant info
+data/seed_tenants.json
+
 # Database backups
 *.db.bak
 *.db.backup
