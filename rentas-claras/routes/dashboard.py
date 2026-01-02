@@ -8,7 +8,7 @@ Dashboard page showing overall status at a glance.
 from datetime import datetime
 
 from database import (
-    get_all_tenants,
+    get_billable_tenants,
     get_db_connection,
     get_expiring_contracts,
     get_monthly_status,
@@ -47,8 +47,9 @@ def index():
     # This ensures all pages (dashboard, pagos, state API) use the same month
     year, month, month_name = get_billing_month(today)
 
-    # Get tenants and payment status
-    all_tenants = get_all_tenants()
+    # Get billable tenants using SINGLE SOURCE OF TRUTH
+    # This filters out tenants whose contract starts in the billing month
+    all_tenants = get_billable_tenants(year, month)
     monthly_status = get_monthly_status(year, month)
 
     # Calculate totals

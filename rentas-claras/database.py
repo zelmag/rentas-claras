@@ -720,6 +720,40 @@ def get_tenants_by_property() -> Dict[str, List[Tenant]]:
     return grouped
 
 
+def get_billable_tenants(year: int, month: int) -> List[Tenant]:
+    """
+    Get tenants who owe rent for a specific billing month.
+
+    This is the SINGLE SOURCE OF TRUTH for determining which tenants
+    should appear in payment tracking and dashboard pending counts.
+
+    Excludes:
+    - Inactive tenants (already filtered by get_all_tenants)
+    - Tenants whose contract_start is in the billing month (they don't
+      owe rent for their first month if they start on the 1st)
+
+    Args:
+        year: The billing year (e.g., 2026)
+        month: The billing month (1-12)
+
+    Returns:
+        List of Tenant objects who owe rent for this month
+    """
+    from services.dates import parse_date
+
+    all_tenants = get_all_tenants()
+    billable = []
+
+    for tenant in all_tenants:
+        if tenant.contract_start:
+            start_date = parse_date(tenant.contract_start)
+            if start_date and start_date.year == year and start_date.month == month:
+                continue  # Skip tenants starting this month
+        billable.append(tenant)
+
+    return billable
+
+
 def get_tenant_by_id(tenant_id: str) -> Optional[Tenant]:
     """Get a single tenant by their ID."""
     conn = get_db_connection()

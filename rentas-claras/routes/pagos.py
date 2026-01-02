@@ -12,6 +12,7 @@ from datetime import datetime
 from database import (
     get_all_tenants,
     get_available_months,
+    get_billable_tenants,
     get_expiring_contracts,
     get_last_sync_time,
     get_message_counts_for_month,
@@ -101,21 +102,10 @@ def index():
     monthly_status = get_monthly_status(year, month)
     message_counts = get_message_counts_for_month(year, month)
 
-    # Get tenants grouped by property
-    all_tenants = get_all_tenants()
+    # Get billable tenants using SINGLE SOURCE OF TRUTH
+    # This filters out tenants whose contract starts in the billing month
+    all_tenants = get_billable_tenants(year, month)
     tenants_by_property = {}
-
-    # Filter out tenants whose contract starts in the current billing month
-    # (they don't owe rent for their first month if they start on the 1st)
-    filtered_tenants = []
-    for tenant in all_tenants:
-        if tenant.contract_start:
-            start_date = parse_date(tenant.contract_start)
-            if start_date and start_date.year == year and start_date.month == month:
-                continue  # Skip tenants starting this month
-        filtered_tenants.append(tenant)
-
-    all_tenants = filtered_tenants
 
     for tenant in all_tenants:
         status = monthly_status.get(tenant.id, {})
