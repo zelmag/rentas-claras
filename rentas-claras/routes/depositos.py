@@ -16,7 +16,7 @@ from database import get_all_tenants, get_db_connection, get_last_sync_time
 
 from flask import Blueprint, jsonify, render_template, request
 from routes.auth import login_required
-from services.dates import calculate_relative_time, format_date_spanish
+from services.dates import calculate_relative_time, format_date_spanish, parse_date
 from services.validation import validate_deposit_update
 
 
@@ -182,9 +182,19 @@ def depositos():
                 property_totals[prop]["pending"] += tenant.deposit_amount
                 pending_total += tenant.deposit_amount
 
-    # Sort tenants within each property by unit
+    # Sort tenants within each property by contract_start date (most recent first)
+    def get_contract_start_sort_key(tenant):
+        """Return sort key for contract_start - most recent first, None values last."""
+        if tenant.contract_start:
+            parsed = parse_date(tenant.contract_start)
+            if parsed:
+                # Negative timestamp for descending order (most recent first)
+                return (0, -parsed.timestamp())
+        # Tenants without contract_start go last
+        return (1, 0)
+
     for prop in tenants_by_property:
-        tenants_by_property[prop].sort(key=lambda t: t.unit)
+        tenants_by_property[prop].sort(key=get_contract_start_sort_key)
 
     # Property colors (matching contratos.html)
     property_colors = ["blue", "brown", "green", "purple", "gold"]
