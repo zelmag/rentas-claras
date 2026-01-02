@@ -7,6 +7,8 @@ Dashboard page showing overall status at a glance.
 
 from datetime import datetime
 
+from zoneinfo import ZoneInfo
+
 from database import (
     get_billable_tenants,
     get_db_connection,
@@ -26,7 +28,9 @@ dashboard_bp = Blueprint("dashboard", __name__)
 @login_required
 def index():
     """Dashboard home page with overall status."""
-    today = datetime.now()
+    # Use Monterrey timezone for greeting (parents are in Monterrey, Mexico)
+    monterrey_tz = ZoneInfo("America/Monterrey")
+    today = datetime.now(monterrey_tz)
     hour = today.hour
 
     # Time-based greeting in Spanish
