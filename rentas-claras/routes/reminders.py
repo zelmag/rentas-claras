@@ -19,6 +19,7 @@ from datetime import datetime
 
 from database import (
     get_all_tenants,
+    get_billable_tenants,
     get_db_connection,
     get_message_counts_for_month,
     get_monthly_status,
@@ -61,7 +62,9 @@ def recordatorios_page():
     year, month, month_name = get_billing_month(today)
 
     # Get all tenants and their payment status
-    all_tenants = get_all_tenants()
+    # Use get_billable_tenants to sync with pagos page (excludes tenants
+    # whose contract_start is in the billing month - they haven't moved in yet)
+    all_tenants = get_billable_tenants(year, month)
     monthly_status = get_monthly_status(year, month)
     message_counts = get_message_counts_for_month(year, month)
 
@@ -166,7 +169,8 @@ def get_reminders_preview():
     today = datetime.now()
     year, month, month_name = get_billing_month(today)
 
-    all_tenants = get_all_tenants()
+    # Use get_billable_tenants to sync with pagos page
+    all_tenants = get_billable_tenants(year, month)
     monthly_status = get_monthly_status(year, month)
 
     unpaid = []
