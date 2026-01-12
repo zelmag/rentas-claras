@@ -31,6 +31,7 @@ def register_blueprints(app: Flask) -> None:
     from routes.reminders import reminders_bp
     from routes.state import state_bp
     from routes.tenants import tenants_bp
+    from routes.voice import voice_bp
     from routes.webhook import webhook_bp
     from routes.whatsapp import whatsapp_bp
 
@@ -46,3 +47,4 @@ def register_blueprints(app: Flask) -> None:
     app.register_blueprint(tenants_bp)
     app.register_blueprint(state_bp)
     app.register_blueprint(reminders_bp)
+    app.register_blueprint(voice_bp)  # Voice agent API

@@ -1,0 +1,325 @@
+/* =========================================================================
+   VOICE AGENT STYLES
+   
+   Design Philosophy:
+   - 80px button (exceeds WCAG 44px minimum for 60+ users)
+   - High contrast (green on white)
+   - Clear visual states (idle, recording, processing)
+   - Fixed position above bottom nav
+   - Pulsing animation when recording to show "it's listening"
+   
+   States:
+   - .idle (default): Green button, mic icon
+   - .recording: Red pulsing button, "Escuchando..."
+   - .processing: Gray button, spinner
+   - .speaking: Green button, showing response
+   ========================================================================= */
+
+/* =========================
+   CONTAINER & POSITIONING
+   ========================= */
+
+.voice-agent-container {
+    position: fixed;
+    bottom: 90px; /* Above the bottom nav (which is ~65px + safe area) */
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 99; /* Below nav (100) but above content */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Adjust for safe area on iPhones */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+    .voice-agent-container {
+        bottom: calc(90px + env(safe-area-inset-bottom));
+    }
+}
+
+/* =========================
+   THE MIC BUTTON
+   ========================= */
+
+.voice-mic-btn {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    border: none;
+    background: var(--green, #2D6A4F);
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+    transition: all 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+.voice-mic-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 25px rgba(0, 0, 0, 0.3);
+}
+
+.voice-mic-btn:active {
+    transform: scale(0.95);
+}
+
+/* Focus state for accessibility */
+.voice-mic-btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(45, 106, 79, 0.4), 0 4px 20px rgba(0, 0, 0, 0.25);
+}
+
+/* =========================
+   BUTTON STATES
+   ========================= */
+
+/* RECORDING STATE - Red pulsing button */
+.voice-mic-btn.recording {
+    background: #DC2626; /* Red */
+    animation: pulse-recording 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-recording {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7);
+    }
+    50% {
+        box-shadow: 0 0 0 15px rgba(220, 38, 38, 0);
+    }
+}
+
+/* PROCESSING STATE - Gray button */
+.voice-mic-btn.processing {
+    background: var(--gray, #4A5568);
+    cursor: wait;
+}
+
+/* SPEAKING STATE - Green with subtle glow */
+.voice-mic-btn.speaking {
+    background: var(--green, #2D6A4F);
+    box-shadow: 0 0 20px rgba(45, 106, 79, 0.5);
+}
+
+/* ERROR STATE - Red static */
+.voice-mic-btn.error {
+    background: var(--red, #9B2C2C);
+}
+
+/* =========================
+   MIC ICON & SPINNER
+   ========================= */
+
+.voice-icon {
+    width: 36px;
+    height: 36px;
+    stroke-width: 2;
+}
+
+.voice-spinner {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.spinner-circle {
+    width: 28px;
+    height: 28px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* =========================
+   BUTTON LABEL
+   ========================= */
+
+.voice-btn-label {
+    font-size: var(--text-sm, 15px);
+    color: var(--gray, #4A5568);
+    font-weight: 500;
+    text-align: center;
+    margin: 0;
+    transition: opacity 0.2s ease;
+}
+
+/* Hide label when recording (overlay shows status instead) */
+.voice-agent-container.recording .voice-btn-label,
+.voice-agent-container.processing .voice-btn-label,
+.voice-agent-container.speaking .voice-btn-label {
+    opacity: 0;
+}
+
+/* =========================
+   OVERLAY (Full-screen feedback)
+   ========================= */
+
+.voice-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.95);
+    z-index: 98; /* Below button */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    transition: opacity 0.2s ease;
+}
+
+/* Hide search box when voice overlay is active */
+.voice-agent-container.recording ~ .container .search-box,
+.voice-agent-container.processing ~ .container .search-box,
+.voice-agent-container.speaking ~ .container .search-box,
+body:has(.voice-agent-container.recording) .search-box,
+body:has(.voice-agent-container.processing) .search-box,
+body:has(.voice-agent-container.speaking) .search-box {
+    display: none !important;
+}
+
+.voice-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.voice-overlay-content {
+    max-width: 350px;
+    text-align: center;
+}
+
+/* =========================
+   STATUS TEXT
+   ========================= */
+
+.voice-status {
+    font-size: var(--text-xl, 24px);
+    font-weight: 700;
+    color: var(--green, #2D6A4F);
+    margin-bottom: 16px;
+}
+
+/* Recording status is red */
+.voice-overlay.recording .voice-status {
+    color: #DC2626;
+}
+
+/* Processing status is gray */
+.voice-overlay.processing .voice-status {
+    color: var(--gray, #4A5568);
+}
+
+/* =========================
+   TRANSCRIPT (What user said)
+   ========================= */
+
+.voice-transcript {
+    font-size: var(--text-base, 17px);
+    color: var(--gray, #4A5568);
+    margin-bottom: 24px;
+    font-style: italic;
+    min-height: 24px;
+}
+
+.voice-transcript:empty {
+    display: none;
+}
+
+.voice-transcript::before {
+    content: '"';
+}
+
+.voice-transcript:not(:empty)::after {
+    content: '"';
+}
+
+/* =========================
+   RESPONSE (What agent says)
+   ========================= */
+
+.voice-response {
+    font-size: var(--text-lg, 20px);
+    color: #1A202C;
+    line-height: 1.5;
+    margin-bottom: 20px;
+    font-weight: 500;
+}
+
+.voice-response:empty {
+    display: none;
+}
+
+/* =========================
+   REPLAY BUTTON
+   ========================= */
+
+.voice-replay-btn {
+    background: var(--green-light, #D8F3DC);
+    color: var(--green-dark, #1B4332);
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: var(--text-base, 17px);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.voice-replay-btn:hover {
+    background: var(--green, #2D6A4F);
+    color: white;
+}
+
+/* =========================
+   UTILITY CLASSES
+   ========================= */
+
+.hidden {
+    display: none !important;
+}
+
+/* =========================
+   RESPONSIVE ADJUSTMENTS
+   ========================= */
+
+/* Smaller phones (iPhone SE) - slightly smaller button */
+@media (max-width: 375px) {
+    .voice-mic-btn {
+        width: 72px;
+        height: 72px;
+    }
+    
+    .voice-icon {
+        width: 32px;
+        height: 32px;
+    }
+    
+    .voice-agent-container {
+        bottom: 85px;
+    }
+}
+
+/* Desktop - position differently since nav is at top */
+@media (min-width: 1024px) {
+    .voice-agent-container {
+        bottom: 24px;
+        right: 24px;
+        left: auto;
+        transform: none;
+    }
+}

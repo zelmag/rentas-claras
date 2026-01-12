@@ -7,6 +7,7 @@
 {% endblock %}
 
 {% block styles %}
+<link rel="stylesheet" href="/static/css/voice.css">
 <style>
     * { box-sizing: border-box; }
 
@@ -1425,6 +1426,9 @@
 {% endblock %}
 
 {% block body %}
+    <!-- Voice Agent Button -->
+    {% include 'partials/voice_button.html' %}
+
     <!-- Config for JS -->
     <div id="config"
          data-year="{{ year }}"
@@ -2757,9 +2761,14 @@
                 }
             });
 
-            updateSummary();
+        updateSummary();
         });
     </script>
+{% endblock %}
+
+{% block scripts %}
+<!-- Voice Agent: Speech-to-Text (M2) -->
+<script src="/static/js/voice.js"></script>
 {% endblock %}
 
 {% block bottom_nav %}{% endblock %}

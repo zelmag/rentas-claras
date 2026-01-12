@@ -1,0 +1,81 @@
+<!-- Voice Agent Button - Push-to-Talk for 60+ year old landlords -->
+<!--
+    WHAT THIS IS:
+    A big green microphone button that lets Mamá and Papá ask questions
+    about their rental properties using voice instead of typing.
+
+    HOW IT WORKS:
+    1. User presses and holds the button
+    2. Button turns red, shows "Escuchando..."
+    3. User speaks their question
+    4. User releases button
+    5. Button shows "Pensando..." while processing
+    6. Response is spoken aloud and shown as text
+
+    STATES:
+    - idle: Green button, ready to use
+    - recording: Red pulsing button, "Escuchando..."
+    - processing: Gray button with spinner, "Pensando..."
+    - speaking: Green button, showing response
+
+    STRINGS:
+    All UI strings are in data-* attributes on the container.
+    This makes them easy to change without hunting through HTML.
+-->
+
+<div id="voice-agent-container" 
+     class="voice-agent-container"
+     data-lang="es-MX"
+     data-str-idle="Mantén para hablar"
+     data-str-listening="Escuchando..."
+     data-str-processing="Pensando..."
+     data-str-error="No entendí. ¿Puedes repetir?"
+     data-str-offline="Sin conexión. Usa la pantalla por ahora."
+     data-str-no-speech="No escuché nada. Intenta de nuevo."
+     data-str-replay="🔄 Repetir"
+     data-str-help="Puedo decirte quién ha pagado, contratos, y depósitos. Pregunta lo que quieras."
+     data-str-fallback="No entendí. Intenta preguntar: ¿Quiénes no han pagado?"
+     aria-label="Asistente de voz">
+
+    <!-- Overlay that appears during voice interaction -->
+    <div id="voice-overlay" class="voice-overlay hidden">
+        <div class="voice-overlay-content">
+            <!-- Status text (updated by JS from data-str-* attributes) -->
+            <p id="voice-status" class="voice-status"></p>
+
+            <!-- Transcript (what user said) -->
+            <p id="voice-transcript" class="voice-transcript"></p>
+
+            <!-- Response text (what agent says back) -->
+            <p id="voice-response" class="voice-response"></p>
+
+            <!-- Replay button (hidden until response is ready) -->
+            <button id="voice-replay-btn" class="voice-replay-btn hidden" aria-label="Repetir respuesta">
+            </button>
+        </div>
+    </div>
+
+    <!-- The main mic button -->
+    <button
+        id="voice-mic-btn"
+        class="voice-mic-btn"
+        aria-label="Mantén presionado para hablar"
+        title="Mantén presionado para preguntar"
+    >
+        <!-- Mic icon (shown in idle/recording state) -->
+        <svg id="voice-mic-icon" class="voice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+            <line x1="12" y1="19" x2="12" y2="23"></line>
+            <line x1="8" y1="23" x2="16" y2="23"></line>
+        </svg>
+
+        <!-- Spinner (shown during processing) -->
+        <div id="voice-spinner" class="voice-spinner hidden">
+            <div class="spinner-circle"></div>
+        </div>
+    </button>
+
+    <!-- Status label below button (initialized by JS from data-str-idle) -->
+    <p id="voice-btn-label" class="voice-btn-label"></p>
+</div>
