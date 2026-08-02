@@ -110,9 +110,11 @@ def validate_tenant_id(tenant_id: Any) -> Tuple[bool, Optional[str]]:
     if len(tenant_id) > 20:
         return False, "tenant_id is too long (max 20 characters)"
 
-    # Allow flexible format since IDs are system-generated
-    # Just ensure it's alphanumeric with possible dash/underscore
-    if not re.match(r"^[A-Za-z0-9_-]+$", tenant_id):
+    # Allow flexible format since IDs are system-generated from property
+    # name/unit, which may include accented letters (e.g. "Álamos") or
+    # spaces (e.g. unit "Local 1"). \w is Unicode-aware in Python 3, so
+    # this already covers accented letters.
+    if not re.match(r"^[\w\s-]+$", tenant_id, re.UNICODE):
         return False, "tenant_id contains invalid characters"
 
     return True, None
